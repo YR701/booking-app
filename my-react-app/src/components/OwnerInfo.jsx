@@ -1,7 +1,7 @@
 import './OwnerInfo.css'
 import { useState } from 'react';
 function OwnerInfo({ ownerName, ownerEmail }) {
-    
+    //maybe we need to fliter owners who have available time slots? but for now we just show all the owners.
     const ownersData = {
         1: {
             id: 1,
@@ -75,13 +75,21 @@ function OwnerInfo({ ownerName, ownerEmail }) {
                 <div>
                     <h2>Available Slots</h2>
                     <div className="owner-info">
-                        <h2>{currentOwner.name}</h2>
-                        <h3>{currentOwner.email}</h3>
+                        <div className="owner-header">
+                            <div>
+                                <h2>{currentOwner.name}</h2>
+                                <h3>{currentOwner.email}</h3>
+                            </div>
+                            <div className="owner-email">
+                                <button onClick={() => window.location.href = `mailto:${currentOwner.email}`}>SendMessage</button>
+                            </div>
+                        </div>
+                    
                         <div className='slots-list'>
                             {currentOwner.timeSlots.map((slot, index) => (
                                 <div className='slots-item' key={index}>
                                     <p className="slot-time">{slot}</p>
-                                    <button onClick={() => handleBook(slot)}>Book</button>
+                                    <button onClick={() => handleBook(slot)}>Book Office Hour</button>
                                 </div>
                             ))}
 

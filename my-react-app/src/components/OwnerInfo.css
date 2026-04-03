@@ -42,7 +42,37 @@
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     width: 96%;
-    margin: 5px;
+    margin: 20px;
+}
+
+.owner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px;
+}
+
+
+.owner-email {
+    font-size: 20px;
+    justify-content: flex-end;
+    display: flex;
+}
+
+.owner-email button{
+    align-items: col;
+    background-color: #ed1b2f;
+    border: 1px solid #ffffff;
+    color: #000000;
+    padding: 10px 60px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px;
+}
+
+.owner-email button:hover {
+    background-color: #757575;
+    color: #000000;
 }
 
 .slots-list {
