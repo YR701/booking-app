@@ -10,6 +10,7 @@ function Appointment(appointment, onEmail, onCancel) {
                 <button onClick={() => onCancel(appointment.id)}> Cancel</button>
             </div>
         </div>
+
     );
 }
 
