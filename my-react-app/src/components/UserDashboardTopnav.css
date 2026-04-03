@@ -1,0 +1,35 @@
+.topnav{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #ddd;
+}
+
+.topnav img {
+  width: 200px;
+  height: 80px;
+}
+
+.topnav h2 {
+  margin: 0;
+  font-size: 50px;
+  color: #ed1b2f;
+  font-style: bold;
+}
+
+.topnav button {
+  background-color: #ed1b2f;
+  border: 1px solid white;
+  color: #000000;
+  padding: 8px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.topnav button:hover {
+  background-color: #757575;
+  color: #000000;
+}
