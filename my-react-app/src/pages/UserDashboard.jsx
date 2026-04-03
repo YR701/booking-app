@@ -14,15 +14,8 @@ function Dashboard() {
         userEmail="student@mail.mcgill.ca" 
         onLogout={handleLogout} 
       />
-      <div className='appointment'>
-        <h2>My Appointments</h2>
-        <Appointment />
-      </div>
-
-      <div className="OwnerInfo">
-        <h2>Make a New Appointment</h2>
-        <OwnerInfo ownerName="Prof. Smith" ownerEmail="smith@mcgill.ca" />
-      </div>
+      <Appointment />
+      <OwnerInfo/>
 
     </div>
   )
