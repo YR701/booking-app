@@ -35,12 +35,6 @@ function Appointment() {
         setAppointments(appointments.filter(appointment => appointment.id !== id));
     };
 
-    //email owner
-    function onEmail(email) {
-        console.log(`Emailing owner at: ${email}`);
-        window.location.href = `mailto:${email}`;
-    }
-
     return (
         <div className="appointment">
             <h1>My Appointments</h1>
@@ -52,7 +46,7 @@ function Appointment() {
                         <h2>{appointment.ownerName}</h2>
                         <p>{appointment.date} {appointment.startTime} - {appointment.endTime}</p>
                         <div className="appointment-buttons">
-                            <button onClick={() => onEmail(appointment.ownerEmail)}>Email</button>
+                            <a href={`mailto:${appointment.ownerEmail}`}>Email</a>
                             <button onClick={() => onCancel(appointment.id)}> Cancel</button>
                         </div>
                     </div>

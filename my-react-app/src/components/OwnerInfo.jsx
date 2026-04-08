@@ -1,6 +1,6 @@
 import './OwnerInfo.css'
 import { useState } from 'react';
-function OwnerInfo({ ownerName, ownerEmail }) {
+function OwnerInfo() {
     //maybe we need to fliter owners who have available time slots? but for now we just show all the owners.
     const ownersData = {
         1: {

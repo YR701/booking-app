@@ -3,7 +3,7 @@ import UserDashboardTopnav from '../components/UserDashboardTopnav';
 import Appointment from '../components/Appointment';
 import OwnerInfo from '../components/OwnerInfo';
 
-function Dashboard() {
+function Dashboard({ onBackHome }) {
   const handleLogout = () => {
     console.log('Logout clicked')
   }
@@ -12,7 +12,8 @@ function Dashboard() {
     <div>
       <UserDashboardTopnav 
         userEmail="student@mail.mcgill.ca" 
-        onLogout={handleLogout} 
+        onLogout={handleLogout}
+        onBackHome={onBackHome}
       />
       <Appointment />
       <OwnerInfo/>

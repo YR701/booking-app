@@ -20,6 +20,11 @@
   font-style: bold;
 }
 
+.topnav-actions {
+  display: flex;
+  align-items: center;
+}
+
 .topnav button {
   background-color: #ed1b2f;
   border: 1px solid white;
@@ -33,4 +38,21 @@
 .topnav button:hover {
   background-color: #757575;
   color: #000000;
+}
+
+@media (max-width: 900px) {
+  .topnav {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .topnav h2 {
+    font-size: 32px;
+  }
+
+  .topnav-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
