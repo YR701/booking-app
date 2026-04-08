@@ -1,3 +1,4 @@
+// Author: Jenny Hua
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import Dashboard from './pages/UserDashboard';
