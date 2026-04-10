@@ -1,0 +1,34 @@
+# --- Frontend (fe / Vite + React) ---
+fe/node_modules/
+fe/dist/
+fe/dist-ssr/
+fe/.vite/
+
+# --- Backend (be / Node) ---
+be/node_modules/
+
+# --- Vite cache anywhere (legacy paths, nested apps) ---
+**/.vite/
+
+# --- Logs ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Local env files ---
+*.local
+
+# --- Editor & OS ---
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
