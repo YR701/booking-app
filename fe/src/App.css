@@ -1,17 +1,30 @@
 /* Author: Jenny Hua */
 .page {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 24px;
+  width: 100%;
+  max-width: 100%;
+  flex: 1 0 auto;
+  margin: 0;
+  padding: clamp(16px, 3vw, 32px);
+  padding-bottom: clamp(24px, 5vh, 48px);
+  min-width: 0;
+}
+
+.page .grid,
+.page .card {
+  min-width: 0;
 }
 
 .main-topbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  width: 100%;
+  padding: clamp(10px, 2vw, 16px) clamp(12px, 3vw, 24px);
+  margin: 0 0 clamp(16px, 2vw, 24px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   background: #ffffff;
 }
 
@@ -22,8 +35,9 @@
 }
 
 .brand img {
-  width: 180px;
+  width: clamp(100px, 22vw, 180px);
   height: auto;
+  max-width: 100%;
 }
 
 .nav-actions {
@@ -33,9 +47,12 @@
 
 .hero {
   border: 2px solid var(--accent);
+  border-radius: 10px;
   background: #ffffff;
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: clamp(16px, 3vw, 24px);
+  margin-bottom: clamp(16px, 2vw, 24px);
+  width: 100%;
+  max-width: 100%;
 }
 
 .subtitle {
@@ -63,6 +80,7 @@
 
 .card {
   border: 1px solid var(--border);
+  border-radius: 10px;
   background: #ffffff;
   padding: 20px;
 }
@@ -89,6 +107,7 @@
 
 .item {
   border: 1px solid var(--border);
+  border-radius: 10px;
   padding: 12px;
   background: #fffafa;
 }
@@ -102,6 +121,7 @@
 
 .notice {
   border-left: 4px solid var(--accent);
+  border-radius: 10px;
   background: #fff0f2;
   padding: 10px 12px;
   margin: 0 0 16px;
@@ -118,9 +138,11 @@
 
 .button.secondary {
   display: inline-block;
+  border-radius: 5px;
   background: var(--secondary-button-bg);
   color: var(--text-h);
   text-decoration: none;
+  padding: 10px 12px;
 }
 
 .owner-line,
@@ -135,6 +157,7 @@ button {
   font: inherit;
   padding: 10px 12px;
   border: 1px solid var(--border);
+  border-radius: 5px;
 }
 
 button {
@@ -147,12 +170,24 @@ button {
 @media (max-width: 800px) {
   .main-topbar {
     flex-direction: column;
-    gap: 12px;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .main-topbar .brand {
+    display: flex;
+    justify-content: center;
   }
 
   .main-topbar h1 {
-    font-size: 2rem;
+    font-size: clamp(1.35rem, 5vw, 2rem);
     text-align: center;
+    width: 100%;
+  }
+
+  .nav-actions {
+    justify-content: center;
+    width: 100%;
   }
 
   .grid.two {
@@ -163,5 +198,32 @@ button {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-topbar h1 {
+    font-size: 1.25rem;
+  }
+
+  .form input,
+  .form select,
+  .form button[type='submit'] {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .card select {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions .button.secondary {
+    text-align: center;
   }
 }
