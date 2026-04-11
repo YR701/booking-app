@@ -3,9 +3,8 @@
 .appointment {
     display: flex;
     flex-direction: column; 
-    align-items: left;
     background-color: #5d67702c;
-    padding: 20px;
+    padding: 2%;
     box-shadow: 0 2px 8px #0000001a;
     margin-bottom: 5px;
 }
@@ -15,29 +14,26 @@
     padding: 10px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    width: 96%;
     margin: 5px;
-    display: flex;          
+    display: flex;    
+    flex-wrap: wrap;      
     justify-content: space-between;  
     align-items: center;
 }
 
 .appointment-info h2 {
-    min-width: 200px;
-    text-align: left;
-    padding: 8px 8px;
+    min-width: 120px;
+    font-size: clamp(14px, 4vw, 20px);;
 }
 
 .appointment-info p {
-    margin: 5px 0;
-    font-size: 20px;
+    margin: 0;
+    font-size: clamp(12px, 3.5vw, 18px);
     color: #000000;
-    min-width: 300px;
     text-align: left;
 }
 
-.appointment-info button, a{
+.appointment-info button, .appointment-info a {
     background-color: var(--accent);
     border: 1px solid #ffffff;
     color: #000000;
@@ -47,21 +43,21 @@
     margin: 10px;
     text-align: center;
     font-size: 15px;
-    text-decoration: none
+    text-decoration: none;
+    white-space: nowrap;
 }
 
-.appointment-info button:hover {
+.appointment-info button:hover, .appointment-info a:hover {
     background-color: #757575;
-    color: #000000;
+    color: #ffffff;
 }
 
 /* OwnerInfo Section */
 .OwnerInfo {
     display: flex;
     flex-direction: column; 
-    align-items: left;
     background-color: #5d67702c;
-    padding: 20px;
+    padding: 2%;
     box-shadow: 0 2px 8px #0000001a;
     margin-bottom: 5px;
 }
@@ -70,28 +66,16 @@
     padding: 10px;
     border-radius: 10px;
     text-align: left;
-    width: 96%;
-    margin: 5px;
-}
-
-.owner-list h2 {
-    float: left;
+    width: 100%;
 }
 
 .owner-list select{
     width: 100%;
-    padding: 12px 20px;
-    margin: 8px 0;
-    display: inline-block;
+    padding: 12px;
+    margin: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 16px;
-}
-
-.owner-list select:focus {
-    border-color: var(--accent);
-    outline: none;
+    font-size: clamp(14px, 4vw, 16px);
 }
 
 .owner-info {
@@ -99,70 +83,111 @@
     padding: 10px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 96%;
-    margin: 20px;
+    width: 98%;
+    margin: 16px;
 }
 
 .owner-header {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    margin: 20px;
+    margin: 16px;
+    gap: 12px;
 }
 
+.owner-header h2 {
+    font-size: clamp(16px, 4.5vw, 24px);
+}
 
-.owner-email {
-    font-size: 20px;
-    justify-content: flex-end;
-    display: flex;
+.owner-header h3 {
+    font-size: clamp(14px, 4vw, 20px);
 }
 
 .owner-email button{
-    align-items: col;
     background-color: var(--accent);
     border: 1px solid #ffffff;
     color: #000000;
-    padding: 10px 60px;
+    padding: 10px 25px;
     border-radius: 5px;
     cursor: pointer;
-    margin: 10px;
+    font-size: clamp(12px, 3.5vw, 14px);
+    white-space: nowrap;
 }
 
 .owner-email button:hover {
     background-color: #757575;
-    color: #000000;
+    color: #ffffff;
 }
 
 .slots-list {
     display: flex;
     flex-direction: column;
-    border-radius: 10px;
-    padding: 10px;
+    gap: 10px;
+    padding: 5px;
 }
 
 .slots-item {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;  
+    gap: 10px;
     border: 2px solid #000000;
-    width: 96%;
-    margin: 10px;
+    border-radius: 10px;
     padding: 12px 16px;
 }
 
-.slots-list button{
-    float: right;
-    align-items: col;
-    background-color: var(--accent);
-    border: 1px solid #ffffff;
+.slot-time {
+    margin: 0;
+    font-size: clamp(12px, 3.5vw, 14px);
     color: #000000;
-    padding: 10px 60px;
+    flex: 1;
+}
+
+.slots-list button{
+    background-color: var(--accent);
+    border: none;
+    color: #000000;
+    padding: 10px 25px;
     border-radius: 5px;
     cursor: pointer;
-    margin: 10px;
+    font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .slots-list button:hover {
     background-color: #757575;
-    color: #000000;
+    color: #ffffff;
+}
+
+/* Responsive Design for smaller screens */
+@media (max-width: 900px) {
+    .appointment-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .appointment-info h2,
+    .appointment-info p {
+        text-align: center;
+        width: 100%;
+    }
+    
+    .owner-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .slots-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .slots-item button {
+        width: 100%;
+    }
+    
+    .owner-email button {
+        width: 100%;
+    }
 }

@@ -3,20 +3,20 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    padding: 10px 3%;
     background-color: #ffffff;
     border-bottom: 1px solid #ddd;
     margin-bottom: 5px;
 }
 
 .topnav img {
-  width: 200px;
-  height: 80px;
+  width: min(200px, 25vw);
+  height: auto;
 }
 
 .topnav h2 {
   margin: 0;
-  font-size: 50px;
+  font-size: clamp(24px, 5vw, 50px);
   color: var(--accent);
   font-style: bold;
 }
@@ -24,6 +24,7 @@
 .topnav-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .topnav button {
@@ -33,27 +34,22 @@
   padding: 8px 20px;
   border-radius: 5px;
   cursor: pointer;
-  margin-left: 10px;
+  margin-left: clamp(12px, 3vw, 14px);;
 }
 
 .topnav button:hover {
   background-color: #757575;
-  color: #000000;
+  color: #ffffff;
 }
 
 @media (max-width: 900px) {
   .topnav {
     flex-direction: column;
-    gap: 12px;
     text-align: center;
   }
 
-  .topnav h2 {
-    font-size: 32px;
-  }
-
   .topnav-actions {
-    flex-wrap: wrap;
     justify-content: center;
+    width: 100%;
   }
 }
