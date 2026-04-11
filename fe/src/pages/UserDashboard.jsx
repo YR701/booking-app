@@ -4,7 +4,7 @@ import UserDashboardTopnav from '../components/DashboardTopnav';
 //import UserCalendar from '../components/UserCalendar';
 import { useState } from 'react';
 
-function UserDashboard({handleLogout, user}) {
+function UserDashboard({ handleLogout, user }) {
   //UserCalendar back to dashboard function
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -100,6 +100,8 @@ function UserDashboard({handleLogout, user}) {
     }
   }
 
+  //handle request a meeting, send a message to the owner
+
   function handleBook(slot) {
     console.log('Booking:', slot, 'with', currentOwner.name)
     alert(`Booked ${slot} with ${currentOwner.name}`);
@@ -129,9 +131,9 @@ function UserDashboard({handleLogout, user}) {
           ))
         )}
       </div>
-      
+
       <div className="OwnerInfo">
-        <h1>Make a New Appointment</h1>
+        <h1>All available slots</h1>
         <div className='owner-list'>
           <select name="owners" id="owners" onChange={handleOwnerChange} value={selectedOwnerId === null ? '' : selectedOwnerId}>
             <option value="">-- Select an owner --</option>
@@ -151,8 +153,8 @@ function UserDashboard({handleLogout, user}) {
                   <h2>{currentOwner.name}</h2>
                   <h3>{currentOwner.email}</h3>
                 </div>
-                <div className="owner-email">
-                  <button onClick={() => window.location.href = `mailto:${currentOwner.email}`}>SendMessage</button>
+                <div className="owner-contact">
+                  <button className="email-button" onClick={() => window.location.href = `mailto:${currentOwner.email}`}>Send Message</button>
                 </div>
               </div>
 
@@ -163,8 +165,48 @@ function UserDashboard({handleLogout, user}) {
                     <button onClick={() => handleBook(slot)}>Book Office Hour</button>
                   </div>
                 ))}
-
               </div>
+              <div className="request-meeting">
+                <h3>Request a Meeting with {currentOwner.name}</h3>
+                <div className='request-form'>
+                  <div className='request-form-item'>
+                    <label htmlFor="time">From</label>
+                    <input type="datetime-local" id="startTime" />
+                  </div>
+                  <div className='request-form-item'>
+                    <label htmlFor="time">To</label>
+                    <input type="datetime-local" id="endTime" />
+                  </div>
+                  <div className='request-form-item'>
+                    <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason'/>
+                  </div>
+                  <button onClick={() => {
+                    const startTime = document.getElementById('startTime').value;
+                    const endTime = document.getElementById('endTime').value;
+                    const reason = document.getElementById('reason').value;
+
+                    const requestData = {
+                      ownersId: currentOwner.id,
+                      ownerName: currentOwner.name,
+                      ownerEmail: currentOwner.email,
+                      userId: user?.id,
+                      userName: user?.name,
+                      userEmail: user?.email,
+                      startTime: startTime,
+                      endTime: endTime,
+                      reason: reason,
+                      status: 'pending'
+                    };
+                    console.log(requestData);
+                    alert(`Requested a meeting with ${currentOwner.name} from ${startTime} to ${endTime} for reason: ${reason}`);
+
+                    document.getElementById('startTime').value = '';
+                    document.getElementById('endTime').value = '';
+                    document.getElementById('reason').value = '';
+                  }}>Submit</button>
+                </div>
+              </div>
+
             </div>
           </div>
         ) : (
