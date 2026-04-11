@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import UserDashboard from './pages/UserDashboard';
 //import OwnerDashboard from './pages/OwnerDashboard';
+import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
+// import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
 import mcgillLogo from './assets/mcgill_logo.png';
 
 const API_BASE = 'http://localhost:4000/api';
@@ -66,6 +68,7 @@ function App() {
     startTime: '',
     endTime: '',
   });
+  const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
     async function loadPage() {
@@ -313,6 +316,26 @@ function App() {
     // }
   }
 
+  if (currentPage === 'type3-create') {
+  return (
+    <Type3CreateRecurringOHPage
+      onBack={() => setCurrentPage('home')}
+      onLogout={logout}
+      user={user}
+    />
+  );
+}
+
+if (currentPage === 'type2-create') {
+  return (
+    <Type2CreateGroupMeetingPage
+      onBack={() => setCurrentPage('home')}
+      onLogout={logout}
+      user={user}
+    />
+  );
+}
+
   return (
     <main className="page">
       <header className="main-topbar">
@@ -322,6 +345,8 @@ function App() {
         <h1>McGill SOCS Booking</h1>
         <div className="nav-actions">
           <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
+          <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
+          <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
         </div>
       </header>
 
