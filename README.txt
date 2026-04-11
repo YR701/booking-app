@@ -4,7 +4,7 @@ Team Members:
 | Name            | Student ID | Work                                                                        |
 |-----------------|------------|-----------------------------------------------------------------------------|
 | Jenny Hua       | 261116384  | Main App UI (App.jsx), Auth Flow, Backend API (index.js), Global CSS        |
-| Yongrong Yang   | 261147878  | User Dashboard UI, Appointment.jsx, OwnerInfo.jsx, Topnav                   |
+| Yongrong Yang   | 261147878  | User Dashboard UI(UserDashBoard.jsx), Topnav.jsx                   |
 | Hanjing Zheng   | 261161202  |                                                                             |
 
 30% Not Coded by Team (External Libraries & Tools):

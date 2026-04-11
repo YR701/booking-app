@@ -1,3 +1,4 @@
+/* Author: Yongrong Yang */
 import './UserDashboardTopnav.css';
 import mcgillLogo from '../assets/mcgill_logo.png';
 
