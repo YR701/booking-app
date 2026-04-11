@@ -139,6 +139,7 @@ function App() {
     setUser(null);
     setMessage('Logged out.');
     setError('');
+    setShowDashboard(false);
   }
 
   function refreshData() {
@@ -298,7 +299,7 @@ function App() {
   }
 
   if (showDashboard) {
-    return <Dashboard onBackHome={() => setShowDashboard(false)} />;
+    return <Dashboard handleLogout={logout} />;
   }
 
   return (
