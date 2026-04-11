@@ -1,13 +1,17 @@
 /* Author: Yongrong Yang */
 import './UserDashboard.css'
 import UserDashboardTopnav from '../components/UserDashboardTopnav';
+//import UserCalendar from '../components/UserCalendar';
 import { useState } from 'react';
 
-function Dashboard({ onBackHome }) {
-  const handleLogout = () => {
-    console.log('Logout clicked')
-  }
+function Dashboard({handleLogout}) {
+  //UserCalendar back to dashboard function
+  const [showCalendar, setShowCalendar] = useState(false);
 
+  if (showCalendar) {
+    return <UserCalendar onBackHome={() => setShowCalendar(false)} />;
+  }
+  
   //appointments functions
   const [appointments, setAppointments] = useState([
     {
@@ -106,7 +110,6 @@ function Dashboard({ onBackHome }) {
       <UserDashboardTopnav
         userEmail="student@mail.mcgill.ca"
         onLogout={handleLogout}
-        onBackHome={onBackHome}
       />
       <div className="appointment">
         <h1>My Appointments</h1>
@@ -125,6 +128,7 @@ function Dashboard({ onBackHome }) {
           ))
         )}
       </div>
+      
       <div className="OwnerInfo">
         <h1>Make a New Appointment</h1>
         <div className='owner-list'>

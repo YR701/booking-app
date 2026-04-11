@@ -9,7 +9,7 @@ function UserDashboardTopnav({ userEmail, onLogout, onBackHome }) {
       <h2>McGill SOCS Booking</h2>
       <div className="topnav-actions">
         <span>{userEmail || 'user@mail.mcgill.ca'}</span>
-        <button className="logout" onClick={onLogout}>Logout</button>
+        <button className="logout-button" onClick={onLogout}>Logout</button>
       </div>
     </div>
   );
