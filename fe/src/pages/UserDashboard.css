@@ -37,7 +37,7 @@
     text-align: left;
 }
 
-.appointment-info button{
+.appointment-info button, a{
     background-color: var(--accent);
     border: 1px solid #ffffff;
     color: #000000;
@@ -47,6 +47,7 @@
     margin: 10px;
     text-align: center;
     font-size: 15px;
+    text-decoration: none
 }
 
 .appointment-info button:hover {

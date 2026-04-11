@@ -4,14 +4,14 @@ import UserDashboardTopnav from '../components/UserDashboardTopnav';
 //import UserCalendar from '../components/UserCalendar';
 import { useState } from 'react';
 
-function Dashboard({handleLogout}) {
+function Dashboard({handleLogout, user}) {
   //UserCalendar back to dashboard function
   const [showCalendar, setShowCalendar] = useState(false);
 
   if (showCalendar) {
     return <UserCalendar onBackHome={() => setShowCalendar(false)} />;
   }
-  
+
   //appointments functions
   const [appointments, setAppointments] = useState([
     {
@@ -108,7 +108,8 @@ function Dashboard({handleLogout}) {
   return (
     <div>
       <UserDashboardTopnav
-        userEmail="student@mail.mcgill.ca"
+        userEmail={user?.email || 'user@mail.mcgill.ca'}
+        userName={user?.name || 'Student'}
         onLogout={handleLogout}
       />
       <div className="appointment">

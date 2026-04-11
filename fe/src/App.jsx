@@ -297,9 +297,16 @@ function App() {
   if (loading) {
     return <main className="page"><p>Loading...</p></main>;
   }
-
+  //tepmorary redirect button to dashboard for testing
   if (showDashboard) {
-    return <Dashboard handleLogout={logout} />;
+    return <Dashboard handleLogout={logout} user={user}/>;
+  }
+
+  //go to dashboard when user logged in
+  if (user) {
+    if (user.role === 'student') {
+      return <Dashboard handleLogout={logout} user={user}/>;
+    }
   }
 
   return (
@@ -328,7 +335,6 @@ function App() {
       {inviteOwnerId && <p className="notice">Invitation link mode is active.</p>}
       {message && <p className="notice success">{message}</p>}
       {error && <p className="notice error">{error}</p>}
-
       {!user ? (
         <section className="grid two">
           <form className="card form" onSubmit={register}>
