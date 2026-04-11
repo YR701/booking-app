@@ -300,7 +300,7 @@ function App() {
   }
   //tepmorary redirect button to dashboard for testing
   if (showDashboard) {
-    return <Dashboard handleLogout={logout} user={user}/>;
+    return <UserDashboard handleLogout={logout} user={user}/>;
   }
 
   //go to dashboard when logged in
