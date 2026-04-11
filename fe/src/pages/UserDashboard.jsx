@@ -1,10 +1,10 @@
 /* Author: Yongrong Yang */
 import './UserDashboard.css'
-import UserDashboardTopnav from '../components/UserDashboardTopnav';
+import UserDashboardTopnav from '../components/DashboardTopnav';
 //import UserCalendar from '../components/UserCalendar';
 import { useState } from 'react';
 
-function Dashboard({handleLogout, user}) {
+function UserDashboard({handleLogout, user}) {
   //UserCalendar back to dashboard function
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -175,4 +175,4 @@ function Dashboard({handleLogout, user}) {
   )
 }
 
-export default Dashboard;
+export default UserDashboard;

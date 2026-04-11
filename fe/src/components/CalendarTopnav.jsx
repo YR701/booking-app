@@ -1,5 +1,5 @@
 /* Author: Yongrong Yang */
-import './UserDashboardTopnav.css';
+import './DashboardTopnav.css';
 import mcgillLogo from '../assets/mcgill_logo.png';
 
 function UserCalendarTopnav({ userEmail, onLogout, onBackHome }) {
@@ -16,4 +16,4 @@ function UserCalendarTopnav({ userEmail, onLogout, onBackHome }) {
   );
 }
 
-export default UserDashboardTopnav;
+export default UserCalendarTopnav;

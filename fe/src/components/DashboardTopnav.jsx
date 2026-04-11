@@ -1,5 +1,5 @@
 /* Author: Yongrong Yang */
-import './UserDashboardTopnav.css';
+import './DashboardTopnav.css';
 import mcgillLogo from '../assets/mcgill_logo.png';
 
 function UserDashboardTopnav({ userEmail, userName, onLogout }) {

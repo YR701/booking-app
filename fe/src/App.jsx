@@ -1,7 +1,8 @@
 // Author: Jenny Hua
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
-import Dashboard from './pages/UserDashboard';
+import UserDashboard from './pages/UserDashboard';
+//import OwnerDashboard from './pages/OwnerDashboard';
 import mcgillLogo from './assets/mcgill_logo.png';
 
 const API_BASE = 'http://localhost:4000/api';
@@ -302,11 +303,14 @@ function App() {
     return <Dashboard handleLogout={logout} user={user}/>;
   }
 
-  //go to dashboard when user logged in
+  //go to dashboard when logged in
   if (user) {
     if (user.role === 'student') {
-      return <Dashboard handleLogout={logout} user={user}/>;
+      return <UserDashboard handleLogout={logout} user={user}/>;
     }
+    // } else if (user.role === 'owner') {
+    //   return <OwnerDashboard handleLogout={logout} user={user}/>;
+    // }
   }
 
   return (
@@ -335,6 +339,7 @@ function App() {
       {inviteOwnerId && <p className="notice">Invitation link mode is active.</p>}
       {message && <p className="notice success">{message}</p>}
       {error && <p className="notice error">{error}</p>}
+      
       {!user ? (
         <section className="grid two">
           <form className="card form" onSubmit={register}>
