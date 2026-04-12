@@ -5,7 +5,9 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import UserDashboard from './pages/UserDashboard';
 import mcgillLogo from './assets/mcgill_logo.png';
 
-//import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
+import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
+import Type3OwnerOfficeHoursPage from './pages/Type3OwnerOfficeHoursPage';
+import Type3OfficeHoursPublicPage from './pages/Type3OfficeHoursPublicPage';
 // import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
 
 const API_BASE = 'http://localhost:4000/api';
@@ -70,7 +72,15 @@ function App() {
   });
 
   const [currentPage, setCurrentPage] = useState('home');
+  const [type3Draft, setType3Draft] = useState({
+    title: 'COMP 307 Office Hours',
+    description: '',
+    weeks: 4,
+    savedBaseSlots: [],
+  });
+
   const [showDashboard, setShowDashboard] = useState(false);
+
 
   useEffect(() => {
     async function loadPage() {
@@ -318,12 +328,46 @@ function App() {
     // }
   }
 
+  // if (currentPage === 'type3-create') {
+  //   return (
+  //     <Type3CreateRecurringOHPage
+  //       onBack={() => setCurrentPage('home')}
+  //       onLogout={logout}
+  //       user={user}
+  //     />
+  //   );
+  // }
+
   if (currentPage === 'type3-create') {
+    return (
+      <Type3CreateRecurringOHPage
+        onBack={() => setCurrentPage('home')}
+        onLogout={logout}
+        user={user}
+        type3Draft={type3Draft}
+        setType3Draft={setType3Draft}
+      />
+    );
+  }
+
+  if (currentPage === 'type3-owner') {
+    return (
+      <Type3OwnerOfficeHoursPage
+        onBack={() => setCurrentPage('home')}
+        onLogout={logout}
+        user={user}
+        type3Draft={type3Draft}
+      />
+    );
+}
+
+if (currentPage === 'type3-public') {
   return (
-    <Type3CreateRecurringOHPage
+    <Type3OfficeHoursPublicPage
       onBack={() => setCurrentPage('home')}
       onLogout={logout}
       user={user}
+      type3Draft={type3Draft}
     />
   );
 }
@@ -348,6 +392,8 @@ if (currentPage === 'type2-create') {
         <div className="nav-actions">
           <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
           <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
+          <button onClick={() => setCurrentPage('type3-owner')}>Type 3 Owner</button>
+          <button onClick={() => setCurrentPage('type3-public')}>Type 3 Public</button>
           <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
         </div>
       </header>
