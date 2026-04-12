@@ -1,10 +1,7 @@
 // Author: Jenny Hua
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
-import UserDashboard from './pages/UserDashboard';
-//import OwnerDashboard from './pages/OwnerDashboard';
-import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
-// import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
+import OwnerDashboard from './pages/OwnerDashboard';
 import mcgillLogo from './assets/mcgill_logo.png';
 
 const API_BASE = 'http://localhost:4000/api';
@@ -59,7 +56,6 @@ function App() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '' });
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [slotForm, setSlotForm] = useState({
@@ -68,7 +64,6 @@ function App() {
     startTime: '',
     endTime: '',
   });
-  const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
     async function loadPage() {
@@ -143,7 +138,6 @@ function App() {
     setUser(null);
     setMessage('Logged out.');
     setError('');
-    setShowDashboard(false);
   }
 
   function refreshData() {
@@ -301,40 +295,6 @@ function App() {
   if (loading) {
     return <main className="page"><p>Loading...</p></main>;
   }
-  //tepmorary redirect button to dashboard for testing
-  if (showDashboard) {
-    return <UserDashboard handleLogout={logout} user={user}/>;
-  }
-
-  //go to dashboard when logged in
-  if (user) {
-    if (user.role === 'student') {
-      return <UserDashboard handleLogout={logout} user={user}/>;
-    }
-    // } else if (user.role === 'owner') {
-    //   return <OwnerDashboard handleLogout={logout} user={user}/>;
-    // }
-  }
-
-  if (currentPage === 'type3-create') {
-  return (
-    <Type3CreateRecurringOHPage
-      onBack={() => setCurrentPage('home')}
-      onLogout={logout}
-      user={user}
-    />
-  );
-}
-
-if (currentPage === 'type2-create') {
-  return (
-    <Type2CreateGroupMeetingPage
-      onBack={() => setCurrentPage('home')}
-      onLogout={logout}
-      user={user}
-    />
-  );
-}
 
   return (
     <main className="page">
@@ -343,11 +303,6 @@ if (currentPage === 'type2-create') {
           <img src={mcgillLogo} alt="McGill logo" />
         </div>
         <h1>McGill SOCS Booking</h1>
-        <div className="nav-actions">
-          <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
-          <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
-          <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
-        </div>
       </header>
 
       <header className="hero">
@@ -364,7 +319,7 @@ if (currentPage === 'type2-create') {
       {inviteOwnerId && <p className="notice">Invitation link mode is active.</p>}
       {message && <p className="notice success">{message}</p>}
       {error && <p className="notice error">{error}</p>}
-      
+
       {!user ? (
         <section className="grid two">
           <form className="card form" onSubmit={register}>
@@ -423,7 +378,7 @@ if (currentPage === 'type2-create') {
               <strong>{user.name}</strong>
               <p>{user.email}</p>
             </div>
-            <button onClick={logout}>Logout</button>
+            <button type="button" onClick={logout}>Logout</button>
           </section>
 
           <section className="grid two">
@@ -444,12 +399,12 @@ if (currentPage === 'type2-create') {
                           href={createMailto(
                             slot.owner.email,
                             `Question about ${slot.title}`,
-                            'Hello,'
+                            'Hello,',
                           )}
                         >
                           Email owner
                         </a>
-                        <button onClick={() => cancelBooking(slot.id)}>Cancel</button>
+                        <button type="button" onClick={() => cancelBooking(slot.id)}>Cancel</button>
                       </div>
                     </div>
                   ))}
@@ -490,7 +445,7 @@ if (currentPage === 'type2-create') {
                       {slot.bookedBy ? (
                         <p>Reserved</p>
                       ) : (
-                        <button onClick={() => bookSlot(slot.id)}>Book slot</button>
+                        <button type="button" onClick={() => bookSlot(slot.id)}>Book slot</button>
                       )}
                     </div>
                   ))}
@@ -500,81 +455,17 @@ if (currentPage === 'type2-create') {
           </section>
 
           {user.role === 'owner' && (
-            <section className="grid two">
-              <form className="card form" onSubmit={createSlot}>
-                <h2>Create slot</h2>
-                <input
-                  placeholder="Slot title"
-                  value={slotForm.title}
-                  onChange={(event) =>
-                    setSlotForm({ ...slotForm, title: event.target.value })
-                  }
-                />
-                <input
-                  type="date"
-                  value={slotForm.date}
-                  onChange={(event) =>
-                    setSlotForm({ ...slotForm, date: event.target.value })
-                  }
-                />
-                <input
-                  type="time"
-                  value={slotForm.startTime}
-                  onChange={(event) =>
-                    setSlotForm({ ...slotForm, startTime: event.target.value })
-                  }
-                />
-                <input
-                  type="time"
-                  value={slotForm.endTime}
-                  onChange={(event) =>
-                    setSlotForm({ ...slotForm, endTime: event.target.value })
-                  }
-                />
-                <button type="submit">Create private slot</button>
-              </form>
-
-              <section className="card">
-                <h2>Owner slots</h2>
-                <p className="invite-link">Invitation URL: {invitationUrl || 'Loading...'}</p>
-                {myOwnerSlots.length === 0 ? (
-                  <p>No slots created yet.</p>
-                ) : (
-                  <div className="list">
-                    {myOwnerSlots.map((slot) => (
-                      <div className="item" key={slot.id}>
-                        <p><strong>{slot.title}</strong></p>
-                        <p>{formatDateTime(slot.start)}</p>
-                        <p>{slot.isActive ? 'Public' : 'Private'}</p>
-                        <p>
-                          {slot.bookedBy
-                            ? `Booked by ${slot.bookedBy.name}`
-                            : 'Not booked'}
-                        </p>
-                        <div className="actions">
-                          <button onClick={() => toggleSlot(slot)}>
-                            {slot.isActive ? 'Make private' : 'Activate'}
-                          </button>
-                          {slot.bookedBy && (
-                            <a
-                              className="button secondary"
-                              href={createMailto(
-                                slot.bookedBy.email,
-                                `Regarding ${slot.title}`,
-                                'Hello,'
-                              )}
-                            >
-                              Email student
-                            </a>
-                          )}
-                          <button onClick={() => deleteSlot(slot)}>Delete</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            </section>
+            <OwnerDashboard
+              slotForm={slotForm}
+              setSlotForm={setSlotForm}
+              onCreateSlot={createSlot}
+              myOwnerSlots={myOwnerSlots}
+              invitationUrl={invitationUrl}
+              onToggleSlot={toggleSlot}
+              onDeleteSlot={deleteSlot}
+              formatDateTime={formatDateTime}
+              createMailto={createMailto}
+            />
           )}
         </>
       )}

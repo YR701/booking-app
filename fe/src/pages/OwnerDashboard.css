@@ -1,1 +1,4 @@
-/* Author: Jenny Hua */
+/* Author: Jenny Hua — layout hooks for owner section; shared styles in App.css */
+.owner-dashboard.grid.two {
+  margin-bottom: 20px;
+}

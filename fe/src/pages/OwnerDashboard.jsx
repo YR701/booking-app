@@ -1,21 +1,100 @@
 // Author: Jenny Hua
-import './OwnerDashboard.css'
-import OwnerDashboardTopnav from '../components/DashboardTopnav';
-import mcgillLogo from '../assets/mcgill_logo.png';
-import { useState } from 'react';
+import './OwnerDashboard.css';
 
-function OwnerDashboard({ handleLogout, user }) {
-    return (
-        <div>
-            {/* Use the same topnav as user dashboard might looks better */}
-            <OwnerDashboardTopnav
-                userEmail={user?.email || 'user@mcgill.ca'}
-                userName={user?.name || 'Stuff'}
-                onLogout={handleLogout}
-            />
-            {/* Owner dashboard content goes here */}
-        </div>
-    );
+/**
+ * Owner-only UI: create private slots, invitation URL, manage slots.
+ * Wired from App.jsx with shared API handlers.
+ */
+function OwnerDashboard({
+  slotForm,
+  setSlotForm,
+  onCreateSlot,
+  myOwnerSlots,
+  invitationUrl,
+  onToggleSlot,
+  onDeleteSlot,
+  formatDateTime,
+  createMailto,
+}) {
+  return (
+    <section className="owner-dashboard grid two">
+      <form className="card form" onSubmit={onCreateSlot}>
+        <h2>Create slot</h2>
+        <input
+          placeholder="Slot title"
+          value={slotForm.title}
+          onChange={(event) =>
+            setSlotForm({ ...slotForm, title: event.target.value })
+          }
+        />
+        <input
+          type="date"
+          value={slotForm.date}
+          onChange={(event) =>
+            setSlotForm({ ...slotForm, date: event.target.value })
+          }
+        />
+        <input
+          type="time"
+          value={slotForm.startTime}
+          onChange={(event) =>
+            setSlotForm({ ...slotForm, startTime: event.target.value })
+          }
+        />
+        <input
+          type="time"
+          value={slotForm.endTime}
+          onChange={(event) =>
+            setSlotForm({ ...slotForm, endTime: event.target.value })
+          }
+        />
+        <button type="submit">Create private slot</button>
+      </form>
+
+      <section className="card">
+        <h2>Owner slots</h2>
+        <p className="invite-link">Invitation URL: {invitationUrl || 'Loading...'}</p>
+        {myOwnerSlots.length === 0 ? (
+          <p>No slots created yet.</p>
+        ) : (
+          <div className="list">
+            {myOwnerSlots.map((slot) => (
+              <div className="item" key={slot.id}>
+                <p><strong>{slot.title}</strong></p>
+                <p>{formatDateTime(slot.start)}</p>
+                <p>{slot.isActive ? 'Public' : 'Private'}</p>
+                <p>
+                  {slot.bookedBy
+                    ? `Booked by ${slot.bookedBy.name}`
+                    : 'Not booked'}
+                </p>
+                <div className="actions">
+                  <button type="button" onClick={() => onToggleSlot(slot)}>
+                    {slot.isActive ? 'Make private' : 'Activate'}
+                  </button>
+                  {slot.bookedBy && (
+                    <a
+                      className="button secondary"
+                      href={createMailto(
+                        slot.bookedBy.email,
+                        `Regarding ${slot.title}`,
+                        'Hello,',
+                      )}
+                    >
+                      Email student
+                    </a>
+                  )}
+                  <button type="button" onClick={() => onDeleteSlot(slot)}>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </section>
+  );
 }
 
 export default OwnerDashboard;
