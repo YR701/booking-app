@@ -37,7 +37,7 @@
     background-color: var(--accent);
     border: 1px solid #ffffff;
     color: #000000;
-    padding: 8px 50px;
+    padding: 8px 20px;
     border-radius: 5px;
     cursor: pointer;
     margin: 10px;
@@ -83,8 +83,9 @@
     padding: 10px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 98%;
-    margin: 16px;
+    width: 100%;
+    margin: 16px 0;
+    box-sizing: border-box;
 }
 
 .owner-header {
@@ -255,6 +256,34 @@
     }
     
     .owner-contact button {
+        width: 100%;
+    }
+
+    .appointment-info button,
+    .appointment-info a {
+        width: 100%;
+        margin: 6px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .appointment,
+    .OwnerInfo {
+        padding: 12px;
+    }
+
+    .owner-list select {
+        margin: 8px 0;
+    }
+
+    .owner-info,
+    .request-meeting {
+        margin: 12px 0;
+        padding: 12px;
+    }
+
+    .slots-list button,
+    .request-form button {
         width: 100%;
     }
 }

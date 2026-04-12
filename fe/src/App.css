@@ -43,6 +43,8 @@
 .nav-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .hero {
@@ -204,6 +206,15 @@ button {
 @media (max-width: 480px) {
   .main-topbar h1 {
     font-size: 1.25rem;
+  }
+
+  .nav-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nav-actions button {
+    width: 100%;
   }
 
   .form input,
