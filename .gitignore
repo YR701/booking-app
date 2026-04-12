@@ -4,10 +4,8 @@ fe/dist/
 fe/dist-ssr/
 fe/.vite/
 
-# --- Python (not used by Node stack; ignore if copied by mistake) ---
-venv/
-.venv/
-__pycache__/
+# --- Database (db / SQL) ---
+db/.env
 
 # --- Backend (be / Node) ---
 be/node_modules/
