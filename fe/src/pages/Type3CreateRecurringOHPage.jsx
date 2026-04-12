@@ -43,7 +43,7 @@ function generateWeeklyRepeatedEvents(baseSlots, weeks, title) {
 
       allEvents.push({
         id: `${slot.id}-week-${weekIndex + 1}`,
-        title: displayTitle,
+        title: slot.title || displayTitle,
         start: repeatedStart,
         end: repeatedEnd,
         extendedProps: {
@@ -58,19 +58,18 @@ function generateWeeklyRepeatedEvents(baseSlots, weeks, title) {
   return allEvents;
 }
 
-function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
+function Type3CreateRecurringOHPage({
+  onBack,
+  onLogout,
+  user,
+  type3Draft,
+  setType3Draft,
+}) {
   const defaultEditor = {
     start: '',
     end: '',
   };
 
-  const [formData, setFormData] = useState({
-    title: 'COMP 307 Office Hours',
-    description: '',
-    weeks: 4,
-  });
-
-  const [savedBaseSlots, setSavedBaseSlots] = useState([]);
   const [selectedSavedSlotId, setSelectedSavedSlotId] = useState(null);
   const [slotEditor, setSlotEditor] = useState(defaultEditor);
   const [message, setMessage] = useState('');
@@ -86,44 +85,50 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
   }, [slotEditor]);
 
   const savedEvents = useMemo(() => {
-    return generateWeeklyRepeatedEvents(savedBaseSlots, formData.weeks, formData.title);
-  }, [savedBaseSlots, formData.weeks, formData.title]);
+    return generateWeeklyRepeatedEvents(
+      type3Draft.savedBaseSlots,
+      type3Draft.weeks,
+      type3Draft.title
+    );
+  }, [type3Draft]);
 
   const unsavedPreviewEvents = useMemo(() => {
     if (!isEditorComplete) return [];
 
     const tempSlot = {
       id: 'unsaved-preview-slot',
+      title: type3Draft.title?.trim() || 'Office Hour',
       start: new Date(slotEditor.start),
       end: new Date(slotEditor.end),
     };
 
-    const previewTitle = formData.title?.trim() || 'Office Hour';
-
-    return generateWeeklyRepeatedEvents([tempSlot], formData.weeks, previewTitle).map((eventItem) => ({
+    return generateWeeklyRepeatedEvents(
+      [tempSlot],
+      type3Draft.weeks,
+      type3Draft.title
+    ).map((eventItem) => ({
       ...eventItem,
       id: `preview-${eventItem.id}`,
-      title: previewTitle,
       extendedProps: {
         ...eventItem.extendedProps,
         isUnsavedPreview: true,
       },
     }));
-  }, [slotEditor, formData.weeks, formData.title, isEditorComplete]);
+  }, [slotEditor, type3Draft, isEditorComplete]);
 
   const calendarEvents = useMemo(() => {
     return [...savedEvents, ...unsavedPreviewEvents];
   }, [savedEvents, unsavedPreviewEvents]);
 
   const sortedSavedSlots = useMemo(() => {
-    return [...savedBaseSlots].sort(
+    return [...type3Draft.savedBaseSlots].sort(
       (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
     );
-  }, [savedBaseSlots]);
+  }, [type3Draft.savedBaseSlots]);
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
-    setFormData((current) => ({
+    setType3Draft((current) => ({
       ...current,
       [name]: value,
     }));
@@ -138,12 +143,10 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
 
   const handleEditorChange = (event) => {
     const { name, value } = event.target;
-
     setSlotEditor((current) => ({
       ...current,
       [name]: value,
     }));
-
     setMessage('');
     setError('');
   };
@@ -172,7 +175,6 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
       start: toDateTimeLocalValue(start),
       end: toDateTimeLocalValue(end),
     });
-
     setSelectedSavedSlotId(null);
     setMessage('');
     setError('');
@@ -186,7 +188,9 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
     const baseSlotId = calendarEvent.extendedProps?.baseSlotId;
     if (!baseSlotId) return;
 
-    const matchedSavedSlot = savedBaseSlots.find((slot) => slot.id === baseSlotId);
+    const matchedSavedSlot = type3Draft.savedBaseSlots.find(
+      (slot) => slot.id === baseSlotId
+    );
     if (!matchedSavedSlot) return;
 
     setSelectedSavedSlotId(baseSlotId);
@@ -212,21 +216,22 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
     const end = new Date(slotEditor.end);
 
     if (selectedSavedSlotId) {
-      setSavedBaseSlots((current) =>
-        current.map((slot) =>
+      setType3Draft((current) => ({
+        ...current,
+        savedBaseSlots: current.savedBaseSlots.map((slot) =>
           slot.id === selectedSavedSlotId
             ? {
                 ...slot,
-                title: formData.title.trim() || 'Office Hour',
+                title: current.title.trim() || 'Office Hour',
                 start,
                 end,
               }
             : slot
-        )
-      );
+        ),
+      }));
       setMessage('Recurring office-hour slot updated.');
     } else {
-      const duplicateExists = savedBaseSlots.some(
+      const duplicateExists = type3Draft.savedBaseSlots.some(
         (slot) =>
           new Date(slot.start).getTime() === start.getTime() &&
           new Date(slot.end).getTime() === end.getTime()
@@ -239,12 +244,15 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
 
       const newSlot = {
         id: `saved-slot-${Date.now()}`,
-        title: formData.title.trim() || 'Office Hour',
+        title: type3Draft.title.trim() || 'Office Hour',
         start,
         end,
       };
 
-      setSavedBaseSlots((current) => [...current, newSlot]);
+      setType3Draft((current) => ({
+        ...current,
+        savedBaseSlots: [...current.savedBaseSlots, newSlot],
+      }));
       setMessage('Recurring office-hour slot saved.');
     }
 
@@ -252,7 +260,10 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
   };
 
   const handleRemoveSavedSlot = (slotId) => {
-    setSavedBaseSlots((current) => current.filter((slot) => slot.id !== slotId));
+    setType3Draft((current) => ({
+      ...current,
+      savedBaseSlots: current.savedBaseSlots.filter((slot) => slot.id !== slotId),
+    }));
 
     if (selectedSavedSlotId === slotId) {
       resetEditor();
@@ -266,44 +277,6 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
     resetEditor();
     setMessage('');
     setError('');
-  };
-
-  const handleSubmitAllDraft = (event) => {
-    event.preventDefault();
-    setMessage('');
-    setError('');
-
-    if (savedBaseSlots.length === 0) {
-      setError('Please save at least one recurring office-hour slot first.');
-      return;
-    }
-
-    const weeks = Number(formData.weeks);
-    if (!weeks || weeks < 1) {
-      setError('Repeat weeks must be at least 1.');
-      return;
-    }
-
-    const payload = {
-      title: formData.title,
-      description: formData.description,
-      repeatWeeklyForWeeks: weeks,
-      savedRecurringBaseSlots: savedBaseSlots.map((slot) => ({
-        title: slot.title,
-        start: new Date(slot.start).toISOString(),
-        end: new Date(slot.end).toISOString(),
-      })),
-      previewOccurrences: savedEvents.map((eventItem) => ({
-        title: eventItem.title,
-        start: new Date(eventItem.start).toISOString(),
-        end: new Date(eventItem.end).toISOString(),
-        weekIndex: eventItem.extendedProps.weekIndex,
-        baseSlotId: eventItem.extendedProps.baseSlotId,
-      })),
-    };
-
-    console.log('Final Type 3 payload:', payload);
-    setMessage('Draft prepared. Check console output.');
   };
 
   return (
@@ -327,7 +300,7 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
         {error && <p className="notice error">{error}</p>}
 
         <section className="booking-layout">
-          <form className="card booking-form" onSubmit={handleSubmitAllDraft}>
+          <section className="card booking-form">
             <h2>Recurring Office Hours Settings</h2>
 
             <label>
@@ -335,7 +308,7 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
               <input
                 type="text"
                 name="title"
-                value={formData.title}
+                value={type3Draft.title}
                 onChange={handleFormChange}
                 placeholder="Enter office hours title"
               />
@@ -345,7 +318,7 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
               Description
               <textarea
                 name="description"
-                value={formData.description}
+                value={type3Draft.description}
                 onChange={handleFormChange}
                 placeholder="Optional short description"
               />
@@ -378,7 +351,7 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
                   type="number"
                   name="weeks"
                   min="1"
-                  value={formData.weeks}
+                  value={type3Draft.weeks}
                   onChange={handleFormChange}
                 />
               </label>
@@ -406,13 +379,7 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
                 Save Recurring Office Hours
               </button>
             </div>
-
-            <div className="form-actions">
-              <button type="submit" className="button secondary">
-                Prepare Final Draft Payload
-              </button>
-            </div>
-          </form>
+          </section>
 
           <section className="card booking-side-panel">
             <h2>Saved Recurring Slots</h2>
@@ -457,7 +424,7 @@ function Type3CreateRecurringOHPage({ onBack, onLogout, user }) {
                         <p className="summary-title">{slot.title || 'Office Hour'}</p>
                         <p>Start: {formatReadableDateTime(slot.start)}</p>
                         <p>End: {formatReadableDateTime(slot.end)}</p>
-                        <p>Repeated weekly for {Math.max(1, Number(formData.weeks) || 1)} week(s)</p>
+                        <p>Repeated weekly for {Math.max(1, Number(type3Draft.weeks) || 1)} week(s)</p>
                       </div>
 
                       <button
