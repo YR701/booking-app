@@ -5,7 +5,7 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import UserDashboard from './pages/UserDashboard';
 import mcgillLogo from './assets/mcgill_logo.png';
 
-import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
+//import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
 // import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
 
 const API_BASE = 'http://localhost:4000/api';
@@ -70,6 +70,7 @@ function App() {
   });
 
   const [currentPage, setCurrentPage] = useState('home');
+  const [showDashboard, setShowDashboard] = useState(false);
 
   useEffect(() => {
     async function loadPage() {
@@ -297,10 +298,6 @@ function App() {
     } catch (err) {
       setError(err.message);
     }
-  }
-
-  if (loading) {
-    return <main className="page"><p>Loading...</p></main>;
   }
 
   if (loading) {
