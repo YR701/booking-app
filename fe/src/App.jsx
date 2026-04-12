@@ -2,7 +2,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import OwnerDashboard from './pages/OwnerDashboard';
+import UserDashboard from './pages/UserDashboard';
 import mcgillLogo from './assets/mcgill_logo.png';
+
+import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
+// import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
 
 const API_BASE = 'http://localhost:4000/api';
 const TOKEN_KEY = 'comp307-booking-token';
@@ -64,6 +68,8 @@ function App() {
     startTime: '',
     endTime: '',
   });
+
+  const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
     async function loadPage() {
@@ -138,6 +144,7 @@ function App() {
     setUser(null);
     setMessage('Logged out.');
     setError('');
+    setShowDashboard(false);
   }
 
   function refreshData() {
@@ -296,6 +303,44 @@ function App() {
     return <main className="page"><p>Loading...</p></main>;
   }
 
+  if (loading) {
+    return <main className="page"><p>Loading...</p></main>;
+  }
+  //tepmorary redirect button to dashboard for testing
+  if (showDashboard) {
+    return <UserDashboard handleLogout={logout} user={user}/>;
+  }
+
+  //go to dashboard when logged in
+  if (user) {
+    if (user.role === 'student') {
+      return <UserDashboard handleLogout={logout} user={user}/>;
+    }
+    // } else if (user.role === 'owner') {
+    //   return <OwnerDashboard handleLogout={logout} user={user}/>;
+    // }
+  }
+
+  if (currentPage === 'type3-create') {
+  return (
+    <Type3CreateRecurringOHPage
+      onBack={() => setCurrentPage('home')}
+      onLogout={logout}
+      user={user}
+    />
+  );
+}
+
+if (currentPage === 'type2-create') {
+  return (
+    <Type2CreateGroupMeetingPage
+      onBack={() => setCurrentPage('home')}
+      onLogout={logout}
+      user={user}
+    />
+  );
+}
+
   return (
     <main className="page">
       <header className="main-topbar">
@@ -303,6 +348,11 @@ function App() {
           <img src={mcgillLogo} alt="McGill logo" />
         </div>
         <h1>McGill SOCS Booking</h1>
+        <div className="nav-actions">
+          <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
+          <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
+          <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
+        </div>
       </header>
 
       <header className="hero">
