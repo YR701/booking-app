@@ -1,17 +1,19 @@
 // Author: Jenny Hua
 const express = require('express');
-const { readStore } = require('../store');
-const { formatSlot } = require('../utils/slotFormat');
+const pool = require('../../db/db');
+const { SLOT_SELECT, formatSlot } = require('../utils/slotFormat');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
 router.get('/me/bookings', authMiddleware, async (req, res) => {
-  const store = await readStore();
-  const bookings = store.slots
-    .filter((slot) => slot.bookedByUserId === req.user.id)
-    .sort((left, right) => left.start.localeCompare(right.start))
-    .map((slot) => formatSlot(store, slot));
+  const [rows] = await pool.execute(
+    `${SLOT_SELECT}
+     WHERE s.booked_by_user_id = ?
+     ORDER BY s.start_time ASC`,
+    [req.user.id],
+  );
+  const bookings = rows.map(formatSlot);
 
   res.json({ bookings });
 });

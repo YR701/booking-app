@@ -1,7 +1,7 @@
 // Author: Jenny Hua
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config');
-const { readStore } = require('../store');
+const pool = require('../../db/db');
 
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -12,14 +12,16 @@ async function authMiddleware(req, res, next) {
   try {
     const token = authHeader.slice(7);
     const payload = jwt.verify(token, JWT_SECRET);
-    const store = await readStore();
-    const user = store.users.find((entry) => entry.id === payload.sub);
+    const [rows] = await pool.execute(
+      'SELECT id, name, email, role FROM users WHERE id = ? LIMIT 1',
+      [payload.sub],
+    );
+    const user = rows[0];
 
     if (!user) {
       return res.status(401).json({ error: 'User account no longer exists.' });
     }
 
-    req.store = store;
     req.user = user;
     return next();
   } catch {

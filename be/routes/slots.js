@@ -1,8 +1,7 @@
 // Author: Jenny Hua
 const express = require('express');
-const crypto = require('crypto');
-const { readStore, writeStore } = require('../store');
-const { formatSlot } = require('../utils/slotFormat');
+const pool = require('../../db/db');
+const { SLOT_SELECT, formatSlot } = require('../utils/slotFormat');
 const { buildMailto } = require('../utils/mailto');
 const { authMiddleware, ownerOnly } = require('../middleware/auth');
 
@@ -23,74 +22,78 @@ router.post('/slots', authMiddleware, ownerOnly, async (req, res) => {
     return res.status(400).json({ error: 'End time must be after the start time.' });
   }
 
-  const store = await readStore();
-  const slot = {
-    id: crypto.randomUUID(),
-    ownerId: req.user.id,
-    title,
-    start,
-    end,
-    location,
-    notes,
-    isActive: false,
-    bookedByUserId: null,
-  };
+  const [result] = await pool.execute(
+    `INSERT INTO slots (owner_id, title, start_time, end_time, location, notes, is_active, booked_by_user_id)
+     VALUES (?, ?, ?, ?, ?, ?, 0, NULL)`,
+    [req.user.id, title, new Date(start), new Date(end), location, notes || null],
+  );
+  const [rows] = await pool.execute(
+    `${SLOT_SELECT}
+     WHERE s.id = ?
+     LIMIT 1`,
+    [result.insertId],
+  );
 
-  store.slots.push(slot);
-  await writeStore(store);
-
-  res.status(201).json({ slot: formatSlot(store, slot) });
+  res.status(201).json({ slot: formatSlot(rows[0]) });
 });
 
 router.patch('/slots/:slotId/activate', authMiddleware, ownerOnly, async (req, res) => {
   const isActive = Boolean(req.body.isActive);
-  const store = await readStore();
-  const slot = store.slots.find(
-    (entry) => entry.id === req.params.slotId && entry.ownerId === req.user.id,
+  const [updateResult] = await pool.execute(
+    'UPDATE slots SET is_active = ? WHERE id = ? AND owner_id = ?',
+    [isActive ? 1 : 0, req.params.slotId, req.user.id],
   );
+
+  if (!updateResult.affectedRows) {
+    return res.status(404).json({ error: 'Slot not found.' });
+  }
+
+  const [rows] = await pool.execute(
+    `${SLOT_SELECT}
+     WHERE s.id = ? AND s.owner_id = ?
+     LIMIT 1`,
+    [req.params.slotId, req.user.id],
+  );
+
+  return res.json({ slot: formatSlot(rows[0]) });
+});
+
+router.delete('/slots/:slotId', authMiddleware, ownerOnly, async (req, res) => {
+  const [rows] = await pool.execute(
+    `${SLOT_SELECT}
+     WHERE s.id = ? AND s.owner_id = ?
+     LIMIT 1`,
+    [req.params.slotId, req.user.id],
+  );
+  const slot = rows[0];
 
   if (!slot) {
     return res.status(404).json({ error: 'Slot not found.' });
   }
 
-  slot.isActive = isActive;
-  await writeStore(store);
-
-  return res.json({ slot: formatSlot(store, slot) });
-});
-
-router.delete('/slots/:slotId', authMiddleware, ownerOnly, async (req, res) => {
-  const store = await readStore();
-  const slotIndex = store.slots.findIndex(
-    (entry) => entry.id === req.params.slotId && entry.ownerId === req.user.id,
-  );
-
-  if (slotIndex === -1) {
-    return res.status(404).json({ error: 'Slot not found.' });
-  }
-
-  const [deletedSlot] = store.slots.splice(slotIndex, 1);
-  const bookedUser = deletedSlot.bookedByUserId
-    ? store.users.find((user) => user.id === deletedSlot.bookedByUserId)
-    : null;
-
-  await writeStore(store);
+  await pool.execute('DELETE FROM slots WHERE id = ? AND owner_id = ?', [
+    req.params.slotId,
+    req.user.id,
+  ]);
 
   return res.json({
-    deletedSlotId: deletedSlot.id,
-    notificationMailto: bookedUser
+    deletedSlotId: slot.id,
+    notificationMailto: slot.bookedUserIdValue
       ? buildMailto(
-          bookedUser.email,
+          slot.bookedUserEmail,
           'Booking slot deleted',
-          `Hello ${bookedUser.name},\n\nThe slot "${deletedSlot.title}" was deleted and is no longer available.`,
+          `Hello ${slot.bookedUserName},\n\nThe slot "${slot.title}" was deleted and is no longer available.`,
         )
       : null,
   });
 });
 
 router.post('/slots/:slotId/book', authMiddleware, async (req, res) => {
-  const store = await readStore();
-  const slot = store.slots.find((entry) => entry.id === req.params.slotId);
+  const [rows] = await pool.execute(
+    'SELECT id, owner_id AS ownerId, is_active AS isActive, booked_by_user_id AS bookedByUserId FROM slots WHERE id = ? LIMIT 1',
+    [req.params.slotId],
+  );
+  const slot = rows[0];
 
   if (!slot) {
     return res.status(404).json({ error: 'Slot not found.' });
@@ -108,31 +111,58 @@ router.post('/slots/:slotId/book', authMiddleware, async (req, res) => {
     return res.status(409).json({ error: 'That slot has already been reserved.' });
   }
 
-  slot.bookedByUserId = req.user.id;
-  await writeStore(store);
+  const [updateResult] = await pool.execute(
+    `UPDATE slots
+     SET booked_by_user_id = ?
+     WHERE id = ? AND booked_by_user_id IS NULL AND is_active = 1`,
+    [req.user.id, req.params.slotId],
+  );
 
-  return res.json({ slot: formatSlot(store, slot) });
+  if (!updateResult.affectedRows) {
+    return res.status(409).json({ error: 'That slot has already been reserved.' });
+  }
+
+  const [slotRows] = await pool.execute(
+    `${SLOT_SELECT}
+     WHERE s.id = ?
+     LIMIT 1`,
+    [req.params.slotId],
+  );
+
+  return res.json({ slot: formatSlot(slotRows[0]) });
 });
 
 router.delete('/slots/:slotId/booking', authMiddleware, async (req, res) => {
-  const store = await readStore();
-  const slot = store.slots.find((entry) => entry.id === req.params.slotId);
+  const [rows] = await pool.execute(
+    `${SLOT_SELECT}
+     WHERE s.id = ?
+     LIMIT 1`,
+    [req.params.slotId],
+  );
+  const slot = rows[0];
 
   if (!slot || slot.bookedByUserId !== req.user.id) {
     return res.status(404).json({ error: 'Booking not found.' });
   }
 
-  const owner = store.users.find((user) => user.id === slot.ownerId);
-  slot.bookedByUserId = null;
-  await writeStore(store);
+  await pool.execute(
+    'UPDATE slots SET booked_by_user_id = NULL WHERE id = ? AND booked_by_user_id = ?',
+    [req.params.slotId, req.user.id],
+  );
+  const [updatedRows] = await pool.execute(
+    `${SLOT_SELECT}
+     WHERE s.id = ?
+     LIMIT 1`,
+    [req.params.slotId],
+  );
 
   return res.json({
-    slot: formatSlot(store, slot),
-    notificationMailto: owner
+    slot: formatSlot(updatedRows[0]),
+    notificationMailto: slot.ownerUserId
       ? buildMailto(
-          owner.email,
+          slot.ownerEmail,
           'Booking cancelled',
-          `Hello ${owner.name},\n\nThe booking for "${slot.title}" has been cancelled and the slot is available again.`,
+          `Hello ${slot.ownerName},\n\nThe booking for "${slot.title}" has been cancelled and the slot is available again.`,
         )
       : null,
   });

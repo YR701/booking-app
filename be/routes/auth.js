@@ -1,8 +1,7 @@
 // Author: Jenny Hua
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-const { readStore, writeStore } = require('../store');
+const pool = require('../../db/db');
 const { publicUser } = require('../utils/users');
 const { buildToken } = require('../utils/jwt');
 const { isMcGillEmail, isOwnerEmail } = require('../utils/mcgill');
@@ -25,24 +24,28 @@ router.post('/auth/register', async (req, res) => {
       .json({ error: 'Only @mcgill.ca and @mail.mcgill.ca addresses can register.' });
   }
 
-  const store = await readStore();
-  const existingUser = store.users.find((user) => user.email === email);
+  const [existingRows] = await pool.execute(
+    'SELECT id FROM users WHERE email = ? LIMIT 1',
+    [email],
+  );
+  const existingUser = existingRows[0];
 
   if (existingUser) {
     return res.status(409).json({ error: 'That email is already registered.' });
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  const role = isOwnerEmail(email) ? 'owner' : 'student';
+  const [result] = await pool.execute(
+    'INSERT INTO users (name, email, passwordhash, role) VALUES (?, ?, ?, ?)',
+    [name, email, passwordHash, role],
+  );
   const user = {
-    id: crypto.randomUUID(),
+    id: result.insertId,
     name,
     email,
-    passwordHash,
-    role: isOwnerEmail(email) ? 'owner' : 'student',
+    role,
   };
-
-  store.users.push(user);
-  await writeStore(store);
 
   res.status(201).json({
     token: buildToken(user),
@@ -53,8 +56,20 @@ router.post('/auth/register', async (req, res) => {
 router.post('/auth/login', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
-  const store = await readStore();
-  const user = store.users.find((entry) => entry.email === email);
+  const [rows] = await pool.execute(
+    'SELECT id, name, email, passwordhash, role FROM users WHERE email = ? LIMIT 1',
+    [email],
+  );
+  const row = rows[0];
+  const user = row
+    ? {
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        passwordHash: row.passwordhash,
+        role: row.role,
+      }
+    : null;
 
   if (!user) {
     return res.status(401).json({ error: 'Invalid email or password.' });
@@ -72,8 +87,11 @@ router.post('/auth/login', async (req, res) => {
 });
 
 router.get('/auth/me', authMiddleware, async (req, res) => {
-  const freshStore = await readStore();
-  const freshUser = freshStore.users.find((user) => user.id === req.user.id);
+  const [rows] = await pool.execute(
+    'SELECT id, name, email, role FROM users WHERE id = ? LIMIT 1',
+    [req.user.id],
+  );
+  const freshUser = rows[0];
   if (!freshUser) {
     return res.status(401).json({ error: 'User account no longer exists.' });
   }
