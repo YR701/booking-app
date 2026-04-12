@@ -168,18 +168,126 @@
   border: 1px solid #fecaca;
 }
 
-/* Optional: nicer card spacing if your global .card class is simple */
 .card.booking-form,
 .card.booking-side-panel,
 .card.calendar-section {
   padding: 20px;
 }
 
-/* Improve button alignment in this page */
 .inline-actions button,
 .form-actions button,
 .summary-item button {
   white-space: nowrap;
+}
+
+/* Invitee sections */
+.invitee-preview-box {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #f9fafb;
+  padding: 12px;
+}
+
+.invitee-preview-box p {
+  margin: 0;
+}
+
+.invitee-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.invitee-list li {
+  margin-bottom: 6px;
+  color: #374151;
+}
+
+.invitee-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.invitee-chip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.invitee-chip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+}
+
+/* Saved slot invitee management */
+.saved-invitees-box {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.invitee-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.invitee-inline-input {
+  flex: 1;
+  min-width: 220px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+}
+
+.small-button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.slot-top-actions {
+  margin-top: 10px;
+}
+
+.collapsible-section {
+  margin-top: 12px;
+}
+
+.invitee-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  margin: 10px 0;
+}
+
+.invitee-list-scroll {
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Optional disabled button look */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Mobile / tablet */
@@ -195,5 +303,23 @@
   .summary-item {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .invitee-input-row {
+    grid-template-columns: 1fr;
+  }
+
+  .invitee-chip {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .invitee-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .invitee-inline-input {
+    min-width: 100%;
   }
 }
