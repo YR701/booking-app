@@ -7,6 +7,7 @@
     background-color: #ffffff;
     border-bottom: 1px solid #ddd;
     margin-bottom: 5px;
+    flex-wrap: wrap;
 }
 
 .topnav img {
@@ -25,6 +26,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  gap: 10px;
 }
 
 .topnav button {
@@ -34,7 +36,6 @@
   padding: 8px 20px;
   border-radius: 5px;
   cursor: pointer;
-  margin-left: clamp(12px, 3vw, 14px);;
 }
 
 .topnav button:hover {
@@ -51,5 +52,10 @@
   .topnav-actions {
     justify-content: center;
     width: 100%;
+  }
+
+  .topnav button {
+    width: 100%;
+    margin: 5px 0;
   }
 }

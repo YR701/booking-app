@@ -175,6 +175,7 @@ function UserDashboard({ handleLogout, user }) {
           appointments.map(appointment => (
             <div className="appointment-info" key={appointment.id}>
               <h2>{appointment.owner?.name}</h2>
+              <p>{appointment.title}</p>
               <p>
                 {new Date(appointment.start).toLocaleDateString()}
                 {new Date(appointment.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
