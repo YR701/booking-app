@@ -3,17 +3,16 @@
 .appointment {
     display: flex;
     flex-direction: column; 
-    background-color: #5d67702c;
+    background-color: #ffffff;
     padding: 2%;
     box-shadow: 0 2px 8px #0000001a;
-    margin-bottom: 5px;
 }
 
 .appointment-info {
     background-color: #ffffff;
     padding: 10px;
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 2px solid var(--border);
     margin: 5px;
     display: flex;    
     flex-wrap: wrap;      
@@ -33,7 +32,7 @@
     text-align: left;
 }
 
-.appointment-info button, .appointment-info a {
+.appointment-info button {
     background-color: var(--accent);
     border: 1px solid #ffffff;
     color: #000000;
@@ -47,7 +46,7 @@
     white-space: nowrap;
 }
 
-.appointment-info button:hover, .appointment-info a:hover {
+.appointment-info button:hover {
     background-color: #757575;
     color: #ffffff;
 }
@@ -56,7 +55,7 @@
 .OwnerInfo {
     display: flex;
     flex-direction: column; 
-    background-color: #5d67702c;
+    background-color: #ffffff;
     padding: 2%;
     box-shadow: 0 2px 8px #0000001a;
     margin-bottom: 5px;
@@ -233,6 +232,7 @@
     .appointment-info {
         flex-direction: column;
         text-align: center;
+
     }
     
     .appointment-info h2,
@@ -244,6 +244,7 @@
     .owner-header {
         flex-direction: column;
         text-align: center;
+
     }
     
     .slots-item {
@@ -257,12 +258,6 @@
     
     .owner-contact button {
         width: 100%;
-    }
-
-    .appointment-info button,
-    .appointment-info a {
-        width: 100%;
-        margin: 6px 0;
     }
 }
 

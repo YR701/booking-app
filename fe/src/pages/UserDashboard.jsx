@@ -124,7 +124,9 @@ function UserDashboard({ handleLogout, user }) {
               <h2>{appointment.ownerName}</h2>
               <p>{appointment.date} {appointment.startTime} - {appointment.endTime}</p>
               <div className="appointment-buttons">
-                <a href={`mailto:${appointment.ownerEmail}`}>Email</a>
+                <button onClick={() => window.location.href = `mailto:${appointment.ownerEmail}`}>
+                  Email
+                </button>
                 <button onClick={() => onCancel(appointment.id)}> Cancel</button>
               </div>
             </div>
@@ -178,7 +180,7 @@ function UserDashboard({ handleLogout, user }) {
                     <input type="datetime-local" id="endTime" />
                   </div>
                   <div className='request-form-item'>
-                    <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason'/>
+                    <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason' />
                   </div>
                   <button onClick={() => {
                     const startTime = document.getElementById('startTime').value;

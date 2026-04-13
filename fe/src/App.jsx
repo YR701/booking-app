@@ -323,20 +323,8 @@ function App() {
   }
   //tepmorary redirect button to dashboard for testing
   if (showDashboard) {
-    return <UserDashboard handleLogout={logout} user={user}/>;
+    return <UserDashboard handleLogout={logout} user={user} />;
   }
-
-  //go to dashboard when logged in
-  if (user) {
-    if (user.role === 'student') {
-      return <UserDashboard handleLogout={logout} user={user}/>;
-    }
-    // } else if (user.role === 'owner') {
-    //   return <OwnerDashboard handleLogout={logout} user={user}/>;
-    // }
-  }
-
-
   // if (currentPage === 'type2-create') {
   //   return (
   //     <Type2CreateGroupMeetingPage
@@ -389,20 +377,19 @@ function App() {
         type3Draft={type3Draft}
       />
     );
-}
+  }
 
-if (currentPage === 'type3-public') {
-  return (
-    <Type3OfficeHoursPublicPage
-      onBack={() => setCurrentPage('home')}
-      onLogout={logout}
-      user={user}
-      type3Draft={type3Draft}
-    />
-  );
-}
-
-
+  if (currentPage === 'type3-public') {
+    return (
+      <Type3OfficeHoursPublicPage
+        onBack={() => setCurrentPage('home')}
+        onLogout={logout}
+        user={user}
+        type3Draft={type3Draft}
+      />
+    );
+  }
+  
   return (
     <main className="page">
       <header className="main-topbar">
@@ -499,6 +486,9 @@ if (currentPage === 'type3-public') {
               formatDateTime={formatDateTime}
               createMailto={createMailto}
             />
+          )}
+          {user.role === 'student' && (
+            <UserDashboard handleLogout={logout} user={user} />
           )}
         </>
       )}
