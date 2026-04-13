@@ -5,7 +5,7 @@ import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
 import { buildMailto } from '../utils/mailto';
 
-function UserDashboard({ handleLogout, user }) {
+function UserDashboard({ onLogout, user }) {
   //UserCalendar back to dashboard function
   const [showCalendar, setShowCalendar] = useState(false);
   const [appointments, setAppointments] = useState([]);
@@ -241,7 +241,7 @@ function UserDashboard({ handleLogout, user }) {
       <DashboardTopnav
         userEmail={user?.email || 'user@mail.mcgill.ca'}
         userName={user?.name || 'Student'}
-        onLogout={handleLogout}
+        onLogout={onLogout}
       />
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
