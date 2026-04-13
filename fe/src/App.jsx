@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import OwnerDashboard from './pages/OwnerDashboard';
 import UserDashboard from './pages/UserDashboard';
+import BookingPage from './pages/BookingPage';
 import mcgillLogo from './assets/mcgill_logo.png';
 
 import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
@@ -88,6 +89,7 @@ function App() {
 
 
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showBookingPage, setShowBookingPage] = useState(false);
 
 
   useEffect(() => {
@@ -164,6 +166,7 @@ function App() {
     setMessage('Logged out.');
     setError('');
     setShowDashboard(false);
+    setShowBookingPage(false)
   }
 
   function refreshData() {
@@ -324,10 +327,19 @@ function App() {
   if (user && (user.role === 'student' || showDashboard)) {
     return (
       <main className="page">
-        <UserDashboard handleLogout={logout} user={user}/>
+        <UserDashboard onLogout={logout} user={user}/>
       </main>
     );
   }
+
+
+  if (showBookingPage) {
+  return (
+    <main className="page">
+      <BookingPage onLogout={logout} user={user} />
+    </main>
+  );
+}
   // if (currentPage === 'type2-create') {
   //   return (
   //     <Type2CreateGroupMeetingPage
@@ -404,6 +416,7 @@ function App() {
             <h1>McGill SOCS Booking</h1>
             <div className="nav-actions">
               <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
+              <button onClick={() => setShowBookingPage(true)}>Booking Page</button>
               <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
               <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
               <button onClick={() => setCurrentPage('type3-owner')}>Type 3 Owner</button>
@@ -492,7 +505,6 @@ function App() {
           user={user}
           message={message}
           error={error}
-          onOpenUserDashboard={() => setShowDashboard(true)}
         />
       )}
     </main>

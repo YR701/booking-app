@@ -1,0 +1,65 @@
+/* Author: Yongrong Yang */
+
+/* User Appointment Section */
+.slots {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    padding: 2%;
+    box-shadow: 0 2px 8px #0000001a;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    gap: 10px;
+    margin: 5px;
+}
+
+.slots-info {
+    background-color: #ffffff;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    margin: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.slots-info h2 {
+    min-width: 120px;
+    font-size: clamp(14px, 4vw, 20px);
+    ;
+}
+
+.slots-info p {
+    margin: 0;
+    font-size: clamp(12px, 3.5vw, 18px);
+    color: #000000;
+    text-align: left;
+}
+
+.slots-info button {
+    background-color: var(--accent);
+    border: 1px solid #ffffff;
+    color: #000000;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px;
+    text-align: center;
+    font-size: 15px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.slots-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.slots-info button:hover {
+    background-color: #757575;
+    color: #ffffff;
+}

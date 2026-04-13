@@ -20,7 +20,6 @@ function OwnerDashboard({
   user,
   message,
   error,
-  onOpenUserDashboard,
 }) {
   return (
     <div>
@@ -29,9 +28,6 @@ function OwnerDashboard({
         userName={user?.name || 'Owner'}
         onLogout={onLogout}
       />
-      <div className="owner-dashboard-actions">
-        <button type="button" onClick={onOpenUserDashboard}>Open booking page</button>
-      </div>
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
       <section className="owner-dashboard grid two">
