@@ -2,7 +2,7 @@
 import './DashboardTopnav.css';
 import mcgillLogo from '../assets/mcgill_logo.png';
 
-function UserDashboardTopnav({ userEmail, userName, onLogout }) {
+function DashboardTopnav({ userEmail, userName, onLogout }) {
   return (
     <div className="topnav">
       <img src={mcgillLogo} alt="McGill Logo" />
@@ -15,4 +15,4 @@ function UserDashboardTopnav({ userEmail, userName, onLogout }) {
   );
 }
 
-export default UserDashboardTopnav;
+export default DashboardTopnav;

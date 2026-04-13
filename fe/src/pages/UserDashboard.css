@@ -1,4 +1,5 @@
 /* Author: Yongrong Yang */
+
 /* User Appointment Section */
 .appointment {
     display: flex;
@@ -225,6 +226,24 @@
 .request-form button:hover {
     background-color: #757575;
     color: #ffffff;
+}
+
+/* Message Styles */
+.notice {
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  background: #fff0f2;
+  padding: 10px 12px;
+  margin: 0 0 16px;
+}
+
+.notice.success {
+  background: #fff5f6;
+}
+
+.notice.error {
+  background: #ffe8eb;
+  border-left-color: #8f1228;
 }
 
 /* Responsive Design for smaller screens */

@@ -389,91 +389,121 @@ function App() {
       />
     );
   }
-  
+
   return (
     <main className="page">
-      <header className="main-topbar">
-        <div className="brand">
-          <img src={mcgillLogo} alt="McGill logo" />
-        </div>
-        <h1>McGill SOCS Booking</h1>
-        <div className="nav-actions">
-          <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
-          <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
-          <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
-          <button onClick={() => setCurrentPage('type3-owner')}>Type 3 Owner</button>
-          <button onClick={() => setCurrentPage('type3-public')}>Type 3 Public</button>
-        </div>
-      </header>
-
-      <header className="hero">
-        <p className="subtitle">
-          Simple office-hour booking for McGill students, TAs, and professors.
-        </p>
-        <ul className="rules">
-          <li>Only McGill emails can register.</li>
-          <li>Only `@mcgill.ca` users can create and manage slots.</li>
-          <li>New slots are private until the owner activates them.</li>
-        </ul>
-      </header>
-
-      {inviteOwnerId && <p className="notice">Invitation link mode is active.</p>}
-      {message && <p className="notice success">{message}</p>}
-      {error && <p className="notice error">{error}</p>}
-
       {!user ? (
-        <section className="grid two">
-          <form className="card form" onSubmit={register}>
-            <h2>Register</h2>
-            <input
-              placeholder="Full name"
-              value={registerForm.name}
-              onChange={(event) =>
-                setRegisterForm({ ...registerForm, name: event.target.value })
-              }
-            />
-            <input
-              type="email"
-              placeholder="name@mcgill.ca"
-              value={registerForm.email}
-              onChange={(event) =>
-                setRegisterForm({ ...registerForm, email: event.target.value })
-              }
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={registerForm.password}
-              onChange={(event) =>
-                setRegisterForm({ ...registerForm, password: event.target.value })
-              }
-            />
-            <button type="submit">Create account</button>
-          </form>
+        <>
+          <header className="main-topbar">
+            <div className="brand">
+              <img src={mcgillLogo} alt="McGill logo" />
+            </div>
+            <h1>McGill SOCS Booking</h1>
+            <div className="nav-actions">
+              <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
+              <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
+              <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
+              <button onClick={() => setCurrentPage('type3-owner')}>Type 3 Owner</button>
+              <button onClick={() => setCurrentPage('type3-public')}>Type 3 Public</button>
+            </div>
+          </header>
 
-          <form className="card form" onSubmit={login}>
-            <h2>Login</h2>
-            <input
-              type="email"
-              placeholder="student@mail.mcgill.ca"
-              value={loginForm.email}
-              onChange={(event) =>
-                setLoginForm({ ...loginForm, email: event.target.value })
-              }
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={loginForm.password}
-              onChange={(event) =>
-                setLoginForm({ ...loginForm, password: event.target.value })
-              }
-            />
-            <button type="submit">Login</button>
-          </form>
-        </section>
+          <header className="hero">
+            <p className="subtitle">
+              Simple office-hour booking for McGill students, TAs, and professors.
+            </p>
+            <ul className="rules">
+              <li>Only McGill emails can register.</li>
+              <li>Only `@mcgill.ca` users can create and manage slots.</li>
+              <li>New slots are private until the owner activates them.</li>
+            </ul>
+          </header>
+
+          {inviteOwnerId && <p className="notice">Invitation link mode is active.</p>}
+          {message && <p className="notice success">{message}</p>}
+          {error && <p className="notice error">{error}</p>}
+
+          <section className="grid two">
+            <form className="card form" onSubmit={register}>
+              <h2>Register</h2>
+              <input
+                placeholder="Full name"
+                value={registerForm.name}
+                onChange={(event) =>
+                  setRegisterForm({ ...registerForm, name: event.target.value })
+                }
+              />
+              <input
+                type="email"
+                placeholder="name@mcgill.ca"
+                value={registerForm.email}
+                onChange={(event) =>
+                  setRegisterForm({ ...registerForm, email: event.target.value })
+                }
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={registerForm.password}
+                onChange={(event) =>
+                  setRegisterForm({ ...registerForm, password: event.target.value })
+                }
+              />
+              <button type="submit">Create account</button>
+            </form>
+
+            <form className="card form" onSubmit={login}>
+              <h2>Login</h2>
+              <input
+                type="email"
+                placeholder="student@mail.mcgill.ca"
+                value={loginForm.email}
+                onChange={(event) =>
+                  setLoginForm({ ...loginForm, email: event.target.value })
+                }
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={loginForm.password}
+                onChange={(event) =>
+                  setLoginForm({ ...loginForm, password: event.target.value })
+                }
+              />
+              <button type="submit">Login</button>
+            </form>
+          </section>
+        </>
       ) : (
         <>
+          <header className="main-topbar">
+            <div className="brand">
+              <img src={mcgillLogo} alt="McGill logo" />
+            </div>
+            <h1>McGill SOCS Booking</h1>
+            <div className="nav-actions">
+              <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
+              <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
+              <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
+              <button onClick={() => setCurrentPage('type3-owner')}>Type 3 Owner</button>
+              <button onClick={() => setCurrentPage('type3-public')}>Type 3 Public</button>
+            </div>
+          </header>
+
+          <header className="hero">
+            <p className="subtitle">
+              Simple office-hour booking for McGill students, TAs, and professors.
+            </p>
+            <ul className="rules">
+              <li>Only McGill emails can register.</li>
+              <li>Only `@mcgill.ca` users can create and manage slots.</li>
+              <li>New slots are private until the owner activates them.</li>
+            </ul>
+          </header>
+
+          {inviteOwnerId && <p className="notice">Invitation link mode is active.</p>}
+          {message && <p className="notice success">{message}</p>}
+          {error && <p className="notice error">{error}</p>}
           {user.role === 'owner' && (
             <OwnerDashboard
               slotForm={slotForm}
@@ -485,6 +515,10 @@ function App() {
               onDeleteSlot={deleteSlot}
               formatDateTime={formatDateTime}
               createMailto={createMailto}
+              onLogout={logout}
+              user={user}
+              message={message}
+              error={error}
             />
           )}
           {user.role === 'student' && (

@@ -1,119 +1,172 @@
 /* Author: Yongrong Yang */
 import './UserDashboard.css'
-import UserDashboardTopnav from '../components/DashboardTopnav';
+import DashboardTopnav from '../components/DashboardTopnav';
 //import UserCalendar from '../components/UserCalendar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function UserDashboard({ handleLogout, user }) {
   //UserCalendar back to dashboard function
   const [showCalendar, setShowCalendar] = useState(false);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [selectedOwnerId, setSelectedOwnerId] = useState(null);
+  const [owners, setOwners] = useState([]);
+  const [slots, setSlots] = useState([]);
+  const [currentOwner, setCurrentOwner] = useState(null);
 
   if (showCalendar) {
     return <UserCalendar onBackHome={() => setShowCalendar(false)} />;
   }
 
   //appointments functions
-  const [appointments, setAppointments] = useState([
-    {
-      id: 1,
-      ownerName: "Prof. Smith",
-      ownerEmail: "smith@mcgill.ca",
-      date: "2024-04-15",
-      startTime: "9:00 AM",
-      endTime: "10:00 AM"
-    },
-    {
-      id: 2,
-      ownerName: "Prof. Johnson",
-      ownerEmail: "johnson@mcgill.ca",
-      date: "2024-04-16",
-      startTime: "2:00 PM",
-      endTime: "3:00 PM"
-    },
-    {
-      id: 3,
-      ownerName: "Prof. Williams",
-      ownerEmail: "williams@mcgill.ca",
-      date: "2024-04-18",
-      startTime: "11:00 AM",
-      endTime: "12:00 PM"
+  useEffect(() => {
+    fetchAppointments();
+    fetchOwners();
+  }, []);
+
+  const fetchAppointments = async () => {
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch('http://localhost:4000/api/me/bookings', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch appointments');
+      }
+
+      const data = await response.json();
+      setAppointments(data.bookings);
+      setError('');
+    } catch (error) {
+      console.error(error);
+      setError('Error loading appointments. Please try again later.');
+      setAppointments([]);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   //cancel appointment
-  function onCancel(id) {
-    console.log(`Canceled appointment with id: ${id}`);
-    setAppointments(appointments.filter(appointment => appointment.id !== id));
+  const onCancel = async (id) => {
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch(`http://localhost:4000/api/slots/${id}/booking`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error('Failed to cancel appointment');
+      }
+      setMessage('Appointment canceled successfully');
+      setError('');
+      fetchAppointments();
+    } catch (error) {
+      console.error(error);
+      setError('Error canceling appointment. Please try again later.');
+      setMessage('');
+    }
   };
 
 
   //owner info functions
-  //maybe we need to fliter owners who have available time slots? but for now we just show all the owners.
-  const ownersData = {
-    1: {
-      id: 1,
-      name: "Prof. Smith",
-      email: "smith@mcgill.ca",
-      timeSlots: [
-        "2024-04-15 9:00 AM - 10:00 AM",
-        "2024-04-15 10:00 AM - 11:00 AM",
-        "2024-04-15 11:00 AM - 12:00 PM",
-      ]
-    },
-    2: {
-      id: 2,
-      name: "Prof. Johnson",
-      email: "johnson@mcgill.ca",
-      timeSlots: [
-        "2024-04-16 1:00 PM - 2:00 PM",
-        "2024-04-16 2:00 PM - 3:00 PM",
-        "2024-04-17 9:00 AM - 10:00 AM",
-      ]
-    },
-    3: {
-      id: 3,
-      name: "Prof. Williams",
-      email: "williams@mcgill.ca",
-      timeSlots: [
-        "2024-04-18 10:00 AM - 11:00 AM",
-        "2024-04-18 11:00 AM - 12:00 PM",
-        "2024-04-19 2:00 PM - 3:00 PM",
-      ]
-    },
+  const fetchOwners = async () => {
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch('http://localhost:4000/api/owners', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch owners');
+      }
+      const data = await response.json();
+      setOwners(data.owners);
+      setError('');
+    } catch (error) {
+      console.error(error);
+      setError('Error loading owners. Please try again later.');
+      setMessage('');
+      setOwners([]);
+    }
+  };
+
+  const fetchSlots = async (ownerId) => {
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch(`http://localhost:4000/api/owners/${ownerId}/slots`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch slots');
+      }
+      const data = await response.json();
+      setCurrentOwner(data.owner);
+      setSlots(data.slots);
+      setError('');
+    } catch (error) {
+      console.error(error);
+      setError('Error loading slots. Please try again later.');
+      setSlots([]);
+    }
   }
 
-  const [selectedOwnerId, setSelectedOwnerId] = useState(null);
 
-  //get the current selected owner
-  let currentOwner = null;
-  if (selectedOwnerId !== null) {
-    currentOwner = ownersData[selectedOwnerId];
-  }
-
-  function handleOwnerChange(event) {
+  const handleOwnerChange = async (event) => {
     const value = event.target.value;
 
     if (value === '') {
       setSelectedOwnerId(null);
+      setCurrentOwner(null);
+      setSlots([]);
     } else {
-      setSelectedOwnerId(parseInt(value));
+      setSelectedOwnerId(value);
+      await fetchSlots(value);
     }
   }
 
   //handle request a meeting, send a message to the owner
+  const handleBook = (slot) => {
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = fetch('http://localhost:4000/api/meetings/request', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        const errorData = awaitresponse.json();
+        throw new Error('Failed to request a meeting');
+      }
 
-  function handleBook(slot) {
-    console.log('Booking:', slot, 'with', currentOwner.name)
-    alert(`Booked ${slot} with ${currentOwner.name}`);
+      setMessage('Meeting request sent successfully');
+      setError('');
+    } catch (error) {
+      console.error(error);
+      setError('Error requesting a meeting. Please try again later.');
+      setMessage('');
+    }
   }
 
   return (
     <div>
-      <UserDashboardTopnav
+      <DashboardTopnav
         userEmail={user?.email || 'user@mail.mcgill.ca'}
         userName={user?.name || 'Student'}
         onLogout={handleLogout}
       />
+      {message && <div className="notice success">{message}</div>}
+      {error && <div className="notice error">{error}</div>}
       <div className="appointment">
         <h1>My Appointments</h1>
         {appointments.length === 0 ? (
@@ -121,10 +174,13 @@ function UserDashboard({ handleLogout, user }) {
         ) : (
           appointments.map(appointment => (
             <div className="appointment-info" key={appointment.id}>
-              <h2>{appointment.ownerName}</h2>
-              <p>{appointment.date} {appointment.startTime} - {appointment.endTime}</p>
+              <h2>{appointment.owner?.name}</h2>
+              <p>
+                {new Date(appointment.start).toLocaleDateString()}
+                {new Date(appointment.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                {new Date(appointment.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
               <div className="appointment-buttons">
-                <button onClick={() => window.location.href = `mailto:${appointment.ownerEmail}`}>
+                <button onClick={() => window.location.href = `mailto:${appointment.owner?.email}`}>
                   Email
                 </button>
                 <button onClick={() => onCancel(appointment.id)}> Cancel</button>
@@ -137,15 +193,16 @@ function UserDashboard({ handleLogout, user }) {
       <div className="OwnerInfo">
         <h1>All available slots</h1>
         <div className='owner-list'>
-          <select name="owners" id="owners" onChange={handleOwnerChange} value={selectedOwnerId === null ? '' : selectedOwnerId}>
+          <select name="owners" id="owners" onChange={handleOwnerChange} value={selectedOwnerId || ''}>
             <option value="">-- Select an owner --</option>
-            {Object.values(ownersData).map(owner => (
+            {owners.map(owner => (
               <option key={owner.id} value={owner.id}>
                 {owner.name}
               </option>
             ))}
           </select>
         </div>
+
         {currentOwner !== null ? (
           <div>
             <h2>Available Slots</h2>
@@ -161,13 +218,16 @@ function UserDashboard({ handleLogout, user }) {
               </div>
 
               <div className='slots-list'>
-                {currentOwner.timeSlots.map((slot, index) => (
-                  <div className='slots-item' key={index}>
-                    <p className="slot-time">{slot}</p>
+                {slots.map((slot) => (
+                  <div className='slots-item' key={slot.id}>
+                    <p className="slot-time">
+                      {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                      {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     <button onClick={() => handleBook(slot)}>Book Office Hour</button>
                   </div>
                 ))}
               </div>
+
               <div className="request-meeting">
                 <h3>Request a Meeting with {currentOwner.name}</h3>
                 <div className='request-form'>
