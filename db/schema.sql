@@ -24,3 +24,33 @@ CREATE TABLE IF NOT EXISTS slots (
     CONSTRAINT fk_slots_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_slots_booked_by FOREIGN KEY (booked_by_user_id) REFERENCES users (id) ON DELETE SET NULL
 );
+
+-- Type1 Request a Meeting
+CREATE TABLE IF NOT EXISTS request (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    requester_id INT NOT NULL,
+    owner_id INT NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    reason TEXT NULL,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_request_requester FOREIGN KEY (requester_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_request_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
+    
+);
+
+-- Type2 Group Meeting
+-- CREATE TABLE IF NOT EXISTS group (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     owner_id INT NOT NULL,
+--     title VARCHAR(500) NOT NULL,
+--     start_time DATETIME NOT NULL,
+--     end_time DATETIME NOT NULL,
+--     notes TEXT NULL,
+--     invitees TEXT NULL, -- Store invitee user IDs as a comma-separated string
+--     slots_list TEXT NULL,
+--     status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+--     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     CONSTRAINT fk_group_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE

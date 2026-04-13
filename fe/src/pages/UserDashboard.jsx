@@ -1,4 +1,5 @@
 /* Author: Yongrong Yang */
+import { useState } from 'react';
 import './UserDashboard.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 
@@ -29,6 +30,65 @@ function UserDashboard({
   showOwnerBackButton = false,
   onBackToOwnerDashboard,
 }) {
+  const [requestForm, setRequestForm] = useState({
+    startTime: '',
+    endTime: '',
+    reason: '',
+  });
+  const [requestMessage, setRequestMessage] = useState('');
+  const [requestError, setRequestError] = useState('');
+
+  async function handleRequest(event) {
+    event.preventDefault();
+    setRequestMessage('');
+    setRequestError('');
+
+    if (!selectedOwner) {
+      setRequestError('Please select an owner first.');
+      return;
+    }
+
+    const { startTime, endTime, reason } = requestForm;
+    if (!startTime || !endTime || !reason.trim()) {
+      setRequestError('Please fill in all fields to request a meeting.');
+      return;
+    }
+
+    if (startTime >= endTime) {
+      setRequestError('Start time must be before end time.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch('http://localhost:4000/api/meetings/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ownerId: selectedOwner.id,
+          title: `Meeting Request with ${selectedOwner.name}`,
+          startTime,
+          endTime,
+          reason: reason.trim(),
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to request a meeting.');
+      }
+
+      setRequestMessage(data.message || 'Meeting request sent successfully.');
+      setRequestForm({ startTime: '', endTime: '', reason: '' });
+    } catch (requestErr) {
+      console.error(requestErr);
+      setRequestError(requestErr.message);
+    }
+  }
+
   return (
     <div>
       <DashboardTopnav
@@ -45,6 +105,8 @@ function UserDashboard({
       )}
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
+      {requestMessage && <div className="notice success">{requestMessage}</div>}
+      {requestError && <div className="notice error">{requestError}</div>}
 
       <div className="appointment">
         <h1>My Appointments</h1>
@@ -134,6 +196,55 @@ function UserDashboard({
                   ))}
                 </div>
               )}
+              <div className="request-meeting">
+                <h3>Request a Meeting with {selectedOwner.name}</h3>
+                <form className="request-form" onSubmit={handleRequest}>
+                  <div className="request-form-item">
+                    <label htmlFor="startTime">From</label>
+                    <input
+                      type="datetime-local"
+                      id="startTime"
+                      value={requestForm.startTime}
+                      onChange={(event) =>
+                        setRequestForm((current) => ({
+                          ...current,
+                          startTime: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="request-form-item">
+                    <label htmlFor="endTime">To</label>
+                    <input
+                      type="datetime-local"
+                      id="endTime"
+                      value={requestForm.endTime}
+                      onChange={(event) =>
+                        setRequestForm((current) => ({
+                          ...current,
+                          endTime: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="request-form-item">
+                    <input
+                      type="text"
+                      id="reason"
+                      placeholder="Reason for meeting"
+                      className="request-reason"
+                      value={requestForm.reason}
+                      onChange={(event) =>
+                        setRequestForm((current) => ({
+                          ...current,
+                          reason: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <button type="submit">Submit</button>
+                </form>
+              </div>
             </div>
           </div>
         ) : (
