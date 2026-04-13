@@ -3,10 +3,14 @@
 /* User Appointment Section */
 .appointment {
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
     background-color: #ffffff;
     padding: 2%;
     box-shadow: 0 2px 8px #0000001a;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    gap: 10px;
+    margin: 5px;
 }
 
 .appointment-info {
@@ -15,15 +19,16 @@
     border-radius: 10px;
     border: 2px solid var(--border);
     margin: 5px;
-    display: flex;    
-    flex-wrap: wrap;      
-    justify-content: space-between;  
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
     align-items: center;
 }
 
 .appointment-info h2 {
     min-width: 120px;
-    font-size: clamp(14px, 4vw, 20px);;
+    font-size: clamp(14px, 4vw, 20px);
+    ;
 }
 
 .appointment-info p {
@@ -55,11 +60,15 @@
 /* OwnerInfo Section */
 .OwnerInfo {
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
     background-color: #ffffff;
     padding: 2%;
-    box-shadow: 0 2px 8px #0000001a;
     margin-bottom: 5px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px #0000001a;
+    border-radius: 10px;
+    gap: 10px;
+    margin: 5px;
 }
 
 .owner-list {
@@ -69,7 +78,7 @@
     width: 100%;
 }
 
-.owner-list select{
+.owner-list select {
     width: 100%;
     padding: 12px;
     margin: 8px;
@@ -105,7 +114,7 @@
     font-size: clamp(14px, 4vw, 20px);
 }
 
-.owner-contact button{
+.owner-contact button {
     background-color: var(--accent);
     border: 1px solid #ffffff;
     color: #000000;
@@ -133,7 +142,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: center;  
+    align-items: center;
     gap: 10px;
     border: 2px solid var(--border);
     border-radius: 10px;
@@ -147,7 +156,7 @@
     flex: 1;
 }
 
-.slots-list button{
+.slots-list button {
     background-color: var(--accent);
     border: none;
     color: #000000;
@@ -168,8 +177,10 @@
     padding: 3%;
     margin: 6px;
     border-radius: 10px;
-    border: 2px solid var(--border);
+    border: 1px solid var(--border);
     box-shadow: 0 2px 8px #0000001a;
+    gap: 10px;
+    margin: 5px;
 }
 
 .request-meeting h3 {
@@ -213,7 +224,7 @@
 
 }
 
-.request-form button{
+.request-form button {
     background-color: var(--accent);
     border: none;
     color: #000000;
@@ -230,20 +241,20 @@
 
 /* Message Styles */
 .notice {
-  border-left: 4px solid var(--accent);
-  border-radius: 10px;
-  background: #fff0f2;
-  padding: 10px 12px;
-  margin: 0 0 16px;
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    background: #fff0f2;
+    padding: 10px 12px;
+    margin: 0 0 16px;
 }
 
 .notice.success {
-  background: #fff5f6;
+    background: #fff5f6;
 }
 
 .notice.error {
-  background: #ffe8eb;
-  border-left-color: #8f1228;
+    background: #ffe8eb;
+    border-left-color: #8f1228;
 }
 
 /* Responsive Design for smaller screens */
@@ -253,51 +264,29 @@
         text-align: center;
 
     }
-    
+
     .appointment-info h2,
     .appointment-info p {
         text-align: center;
         width: 100%;
     }
-    
+
     .owner-header {
         flex-direction: column;
         text-align: center;
 
     }
-    
+
     .slots-item {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .slots-item button {
         width: 100%;
     }
-    
+
     .owner-contact button {
-        width: 100%;
-    }
-}
-
-@media (max-width: 480px) {
-    .appointment,
-    .OwnerInfo {
-        padding: 12px;
-    }
-
-    .owner-list select {
-        margin: 8px 0;
-    }
-
-    .owner-info,
-    .request-meeting {
-        margin: 12px 0;
-        padding: 12px;
-    }
-
-    .slots-list button,
-    .request-form button {
         width: 100%;
     }
 }

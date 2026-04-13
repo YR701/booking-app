@@ -17,6 +17,7 @@ function UserDashboard({ handleLogout, user }) {
   const [slots, setSlots] = useState([]);
   const [currentOwner, setCurrentOwner] = useState(null);
   const [requests, setRequests] = useState([]);
+  const [selectedRequestOwnerId, setSelectedRequestOwnerId] = useState('');
 
   if (showCalendar) {
     return <UserCalendar onBackHome={() => setShowCalendar(false)} />;
@@ -139,17 +140,18 @@ function UserDashboard({ handleLogout, user }) {
       await fetchSlots(value);
     }
   }
-  
+
   //request a meeting functions
 
   //handle request a meeting, send a message to the owner
-  const handleRequest = async() => {
+  const handleRequest = async () => {
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
     const reason = document.getElementById('reason').value;
+    const ownerId = currentOwner.id;
 
     //verify the input info
-    if (!startTime || !endTime || !reason) {
+    if (!startTime || !endTime || !reason || !ownerId) {
       alert('Please fill in all fields to request a meeting.');
       return;
     }
@@ -158,16 +160,22 @@ function UserDashboard({ handleLogout, user }) {
       return;
     }
 
+    const selectedOwner = owners.find(owner => owner.id === ownerId);
+    if (!selectedOwner) {
+      alert('Invalid owner selected.');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('comp307-booking-token');
-      const response =  await fetch('http://localhost:4000/api/meetings/request', {
+      const response = await fetch('http://localhost:4000/api/meetings/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          ownerId: currentOwner.id,
+          ownerId: ownerId,
           title: 'Meeting Request',
           startTime: startTime,
           endTime: endTime,
@@ -187,6 +195,7 @@ function UserDashboard({ handleLogout, user }) {
       document.getElementById('startTime').value = '';
       document.getElementById('endTime').value = '';
       document.getElementById('reason').value = '';
+      setSelectedRequestOwnerId('');
 
       //update the request list
       await fetchRequests();
@@ -195,7 +204,8 @@ function UserDashboard({ handleLogout, user }) {
       const subject = 'New Meeting Request';
       const body = `You have a new meeting request from ${user.name} (${user.email}).\n\nReason: ${reason}\n\nRequested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
       const mailtoLink = buildMailto(currentOwner.email, subject, body);
-      window.location.href = mailtoLink;
+      console.log('Generated mailto link:', mailtoLink);
+      //window.location.href = mailtoLink;
 
     } catch (error) {
       console.error(error);
@@ -269,7 +279,7 @@ function UserDashboard({ handleLogout, user }) {
                 {new Date(request.start).toLocaleDateString()}
                 {new Date(request.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
                 {new Date(request.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </p>
+              </p>
               <p>{request.status}</p>
             </div>
           ))
@@ -313,29 +323,39 @@ function UserDashboard({ handleLogout, user }) {
                   </div>
                 ))}
               </div>
-
-              <div className="request-meeting">
-                <h3>Request a Meeting with {currentOwner.name}</h3>
-                <div className='request-form'>
-                  <div className='request-form-item'>
-                    <label htmlFor="time">From</label>
-                    <input type="datetime-local" id="startTime" />
-                  </div>
-                  <div className='request-form-item'>
-                    <label htmlFor="time">To</label>
-                    <input type="datetime-local" id="endTime" />
-                  </div>
-                  <div className='request-form-item'>
-                    <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason' />
-                  </div>
-                  <button onClick={handleRequest}>Submit</button>
-                </div>
-              </div>
             </div>
           </div>
         ) : (
           <p>Please select an owner to see available time slots.</p>
         )}
+      </div>
+      <div className="request-meeting">
+        <h3>Request a Meeting </h3>
+        <div className='request-form'>
+          <div className='request-form-item'>
+            <label>Select a Professor</label>
+            <select id="ownersID" onChange={(e) => setSelectedRequestOwnerId(e.target.value)}>
+              <option value="">-- Select an owner --</option>
+              {owners.map(owner => (
+                <option key={owner.id} value={owner.id}>
+                  {owner.name}
+                </option>
+              ))}
+            </select>
+            <div className='request-form-item'>
+              <label htmlFor="time">From</label>
+              <input type="datetime-local" id="startTime" />
+            </div>
+            <div className='request-form-item'>
+              <label htmlFor="time">To</label>
+              <input type="datetime-local" id="endTime" />
+            </div>
+            <div className='request-form-item'>
+              <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason' />
+            </div>
+            <button onClick={handleRequest}>Submit</button>
+          </div>
+        </div>
       </div>
     </div>
   )
