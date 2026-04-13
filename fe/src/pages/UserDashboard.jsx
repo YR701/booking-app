@@ -135,25 +135,53 @@ function UserDashboard({ handleLogout, user }) {
   }
 
   //handle request a meeting, send a message to the owner
-  const handleBook = (slot) => {
+  const handleRequest = async() => {
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    const reason = document.getElementById('reason').value;
+
+    //verify the input info
+    if (!startTime || !endTime || !reason) {
+      alert('Please fill in all fields to request a meeting.');
+      return;
+    }
+    if (startTime >= endTime) {
+      alert('Start time must be before end time.');
+      return;
+    }
+
+
     try {
       const token = localStorage.getItem('comp307-booking-token');
-      const response = fetch('http://localhost:4000/api/meetings/request', {
+      const response =  await fetch('http://localhost:4000/api/meetings/request', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        body: JSON.stringify({
+          ownerId: currentOwner.id,
+          title: 'Meeting Request with ' + currentOwner.name,
+          startTime: startTime,
+          endTime: endTime,
+          reason: reason
+        })
       });
+
       if (!response.ok) {
-        const errorData = awaitresponse.json();
+        const errorData = await response.json();
         throw new Error('Failed to request a meeting');
       }
 
       setMessage('Meeting request sent successfully');
       setError('');
+
+      document.getElementById('startTime').value = '';
+      document.getElementById('endTime').value = '';
+      document.getElementById('reason').value = '';
     } catch (error) {
       console.error(error);
-      setError('Error requesting a meeting. Please try again later.');
+      setError(error.message);
       setMessage('');
     }
   }
@@ -243,33 +271,9 @@ function UserDashboard({ handleLogout, user }) {
                   <div className='request-form-item'>
                     <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason' />
                   </div>
-                  <button onClick={() => {
-                    const startTime = document.getElementById('startTime').value;
-                    const endTime = document.getElementById('endTime').value;
-                    const reason = document.getElementById('reason').value;
-
-                    const requestData = {
-                      ownersId: currentOwner.id,
-                      ownerName: currentOwner.name,
-                      ownerEmail: currentOwner.email,
-                      userId: user?.id,
-                      userName: user?.name,
-                      userEmail: user?.email,
-                      startTime: startTime,
-                      endTime: endTime,
-                      reason: reason,
-                      status: 'pending'
-                    };
-                    console.log(requestData);
-                    alert(`Requested a meeting with ${currentOwner.name} from ${startTime} to ${endTime} for reason: ${reason}`);
-
-                    document.getElementById('startTime').value = '';
-                    document.getElementById('endTime').value = '';
-                    document.getElementById('reason').value = '';
-                  }}>Submit</button>
+                  <button onClick={handleRequest}>Submit</button>
                 </div>
               </div>
-
             </div>
           </div>
         ) : (
