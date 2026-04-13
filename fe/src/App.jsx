@@ -321,9 +321,28 @@ function App() {
   if (loading) {
     return <main className="page"><p>Loading...</p></main>;
   }
-  //tepmorary redirect button to dashboard for testing
-  if (showDashboard) {
-    return <UserDashboard handleLogout={logout} user={user} />;
+  if (user && (user.role === 'student' || showDashboard)) {
+    return (
+      <main className="page">
+        <UserDashboard
+          handleLogout={logout}
+          user={user}
+          myBookings={myBookings}
+          owners={owners}
+          slots={slots}
+          selectedOwnerId={selectedOwnerId}
+          selectedOwner={selectedOwner}
+          inviteOwnerId={inviteOwnerId}
+          onSelectOwner={selectOwner}
+          onBookSlot={bookSlot}
+          onCancelBooking={cancelBooking}
+          message={message}
+          error={error}
+          showOwnerBackButton={user.role === 'owner'}
+          onBackToOwnerDashboard={() => setShowDashboard(false)}
+        />
+      </main>
+    );
   }
   // if (currentPage === 'type2-create') {
   //   return (
@@ -475,56 +494,22 @@ function App() {
           </section>
         </>
       ) : (
-        <>
-          <header className="main-topbar">
-            <div className="brand">
-              <img src={mcgillLogo} alt="McGill logo" />
-            </div>
-            <h1>McGill SOCS Booking</h1>
-            <div className="nav-actions">
-              <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
-              <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
-              <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
-              <button onClick={() => setCurrentPage('type3-owner')}>Type 3 Owner</button>
-              <button onClick={() => setCurrentPage('type3-public')}>Type 3 Public</button>
-            </div>
-          </header>
-
-          <header className="hero">
-            <p className="subtitle">
-              Simple office-hour booking for McGill students, TAs, and professors.
-            </p>
-            <ul className="rules">
-              <li>Only McGill emails can register.</li>
-              <li>Only `@mcgill.ca` users can create and manage slots.</li>
-              <li>New slots are private until the owner activates them.</li>
-            </ul>
-          </header>
-
-          {inviteOwnerId && <p className="notice">Invitation link mode is active.</p>}
-          {message && <p className="notice success">{message}</p>}
-          {error && <p className="notice error">{error}</p>}
-          {user.role === 'owner' && (
-            <OwnerDashboard
-              slotForm={slotForm}
-              setSlotForm={setSlotForm}
-              onCreateSlot={createSlot}
-              myOwnerSlots={myOwnerSlots}
-              invitationUrl={invitationUrl}
-              onToggleSlot={toggleSlot}
-              onDeleteSlot={deleteSlot}
-              formatDateTime={formatDateTime}
-              createMailto={createMailto}
-              onLogout={logout}
-              user={user}
-              message={message}
-              error={error}
-            />
-          )}
-          {user.role === 'student' && (
-            <UserDashboard handleLogout={logout} user={user} />
-          )}
-        </>
+        <OwnerDashboard
+          slotForm={slotForm}
+          setSlotForm={setSlotForm}
+          onCreateSlot={createSlot}
+          myOwnerSlots={myOwnerSlots}
+          invitationUrl={invitationUrl}
+          onToggleSlot={toggleSlot}
+          onDeleteSlot={deleteSlot}
+          formatDateTime={formatDateTime}
+          createMailto={createMailto}
+          onLogout={logout}
+          user={user}
+          message={message}
+          error={error}
+          onOpenUserDashboard={() => setShowDashboard(true)}
+        />
       )}
     </main>
   );

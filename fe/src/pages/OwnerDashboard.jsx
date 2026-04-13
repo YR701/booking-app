@@ -1,5 +1,6 @@
 // Author: Jenny Hua
 import './OwnerDashboard.css';
+import DashboardTopnav from '../components/DashboardTopnav';
 
 /**
  * Owner-only UI: create private slots, invitation URL, manage slots.
@@ -15,85 +16,102 @@ function OwnerDashboard({
   onDeleteSlot,
   formatDateTime,
   createMailto,
+  onLogout,
+  user,
+  message,
+  error,
+  onOpenUserDashboard,
 }) {
   return (
-    <section className="owner-dashboard grid two">
-      <form className="card form" onSubmit={onCreateSlot}>
-        <h2>Create slot</h2>
-        <input
-          placeholder="Slot title"
-          value={slotForm.title}
-          onChange={(event) =>
-            setSlotForm({ ...slotForm, title: event.target.value })
-          }
-        />
-        <input
-          type="date"
-          value={slotForm.date}
-          onChange={(event) =>
-            setSlotForm({ ...slotForm, date: event.target.value })
-          }
-        />
-        <input
-          type="time"
-          value={slotForm.startTime}
-          onChange={(event) =>
-            setSlotForm({ ...slotForm, startTime: event.target.value })
-          }
-        />
-        <input
-          type="time"
-          value={slotForm.endTime}
-          onChange={(event) =>
-            setSlotForm({ ...slotForm, endTime: event.target.value })
-          }
-        />
-        <button type="submit">Create private slot</button>
-      </form>
+    <div>
+      <DashboardTopnav
+        userEmail={user?.email || 'owner@mcgill.ca'}
+        userName={user?.name || 'Owner'}
+        onLogout={onLogout}
+      />
+      <div className="owner-dashboard-actions">
+        <button type="button" onClick={onOpenUserDashboard}>Open booking page</button>
+      </div>
+      {message && <div className="notice success">{message}</div>}
+      {error && <div className="notice error">{error}</div>}
+      <section className="owner-dashboard grid two">
+        <form className="card form" onSubmit={onCreateSlot}>
+          <h2>Create slot</h2>
+          <input
+            placeholder="Slot title"
+            value={slotForm.title}
+            onChange={(event) =>
+              setSlotForm({ ...slotForm, title: event.target.value })
+            }
+          />
+          <input
+            type="date"
+            value={slotForm.date}
+            onChange={(event) =>
+              setSlotForm({ ...slotForm, date: event.target.value })
+            }
+          />
+          <input
+            type="time"
+            value={slotForm.startTime}
+            onChange={(event) =>
+              setSlotForm({ ...slotForm, startTime: event.target.value })
+            }
+          />
+          <input
+            type="time"
+            value={slotForm.endTime}
+            onChange={(event) =>
+              setSlotForm({ ...slotForm, endTime: event.target.value })
+            }
+          />
+          <button type="submit">Create private slot</button>
+        </form>
 
-      <section className="card">
-        <h2>Owner slots</h2>
-        <p className="invite-link">Invitation URL: {invitationUrl || 'Loading...'}</p>
-        {myOwnerSlots.length === 0 ? (
-          <p>No slots created yet.</p>
-        ) : (
-          <div className="list">
-            {myOwnerSlots.map((slot) => (
-              <div className="item" key={slot.id}>
-                <p><strong>{slot.title}</strong></p>
-                <p>{formatDateTime(slot.start)}</p>
-                <p>{slot.isActive ? 'Public' : 'Private'}</p>
-                <p>
-                  {slot.bookedBy
-                    ? `Booked by ${slot.bookedBy.name}`
-                    : 'Not booked'}
-                </p>
-                <div className="actions">
-                  <button type="button" onClick={() => onToggleSlot(slot)}>
-                    {slot.isActive ? 'Make private' : 'Activate'}
-                  </button>
-                  {slot.bookedBy && (
-                    <a
-                      className="button secondary"
-                      href={createMailto(
-                        slot.bookedBy.email,
-                        `Regarding ${slot.title}`,
-                        'Hello,',
-                      )}
-                    >
-                      Email student
-                    </a>
-                  )}
-                  <button type="button" onClick={() => onDeleteSlot(slot)}>
-                    Delete
-                  </button>
+        <section className="card">
+          <h2>Owner slots</h2>
+          <p className="invite-link">Invitation URL: {invitationUrl || 'Loading...'}</p>
+          {myOwnerSlots.length === 0 ? (
+            <p>No slots created yet.</p>
+          ) : (
+            <div className="list">
+              {myOwnerSlots.map((slot) => (
+                <div className="item" key={slot.id}>
+                  <p><strong>{slot.title}</strong></p>
+                  <p>{formatDateTime(slot.start)}</p>
+                  <p>{slot.isActive ? 'Public' : 'Private'}</p>
+                  <p>
+                    {slot.bookedBy
+                      ? `Booked by ${slot.bookedBy.name}`
+                      : 'Not booked'}
+                  </p>
+                  <div className="actions">
+                    <button type="button" onClick={() => onToggleSlot(slot)}>
+                      {slot.isActive ? 'Make private' : 'Activate'}
+                    </button>
+                    {slot.bookedBy && (
+                      <a
+                        className="button secondary"
+                        href={createMailto(
+                          slot.bookedBy.email,
+                          `Regarding ${slot.title}`,
+                          'Hello,',
+                        )}
+                      >
+                        Email student
+                      </a>
+                    )}
+                    <button type="button" onClick={() => onDeleteSlot(slot)}>
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </section>
       </section>
-    </section>
+    </div>
   );
 }
 

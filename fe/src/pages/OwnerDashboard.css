@@ -2,3 +2,9 @@
 .owner-dashboard.grid.two {
   margin-bottom: 20px;
 }
+
+.owner-dashboard-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}

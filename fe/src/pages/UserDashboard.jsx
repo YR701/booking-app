@@ -1,5 +1,6 @@
 /* Author: Yongrong Yang */
-import './UserDashboard.css'
+import { useState } from 'react';
+import './UserDashboard.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 //import UserCalendar from '../components/UserCalendar';
 import { useState, useEffect } from 'react';
@@ -155,8 +156,9 @@ function UserDashboard({ handleLogout, user }) {
       alert('Please fill in all fields to request a meeting.');
       return;
     }
+
     if (startTime >= endTime) {
-      alert('Start time must be before end time.');
+      setRequestError('Start time must be before end time.');
       return;
     }
 
@@ -172,7 +174,7 @@ function UserDashboard({ handleLogout, user }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           ownerId: ownerId,
@@ -182,10 +184,10 @@ function UserDashboard({ handleLogout, user }) {
           reason: reason
         })
       });
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error('Failed to request a meeting');
+        throw new Error(data.error || 'Failed to request a meeting.');
       }
 
       setMessage('Meeting request sent successfully');
@@ -243,26 +245,42 @@ function UserDashboard({ handleLogout, user }) {
         userName={user?.name || 'Student'}
         onLogout={handleLogout}
       />
+      {showOwnerBackButton && (
+        <div className="dashboard-actions">
+          <button type="button" onClick={onBackToOwnerDashboard}>
+            Back to owner dashboard
+          </button>
+        </div>
+      )}
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
+      {requestMessage && <div className="notice success">{requestMessage}</div>}
+      {requestError && <div className="notice error">{requestError}</div>}
+
       <div className="appointment">
         <h1>My Appointments</h1>
-        {appointments.length === 0 ? (
+        {myBookings.length === 0 ? (
           <p>No appointments booked.</p>
         ) : (
-          appointments.map(appointment => (
+          myBookings.map((appointment) => (
             <div className="appointment-info" key={appointment.id}>
-              <h2>{appointment.owner?.name}</h2>
-              <p>{appointment.title}</p>
-              <p>
-                {new Date(appointment.start).toLocaleDateString()}
-                {new Date(appointment.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                {new Date(appointment.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+              <div>
+                <h2>{appointment.title}</h2>
+                <p>{appointment.owner?.name}</p>
+                <p>{formatSlotTimeRange(appointment)}</p>
+              </div>
               <div className="appointment-buttons">
-                <button onClick={() => window.location.href = `mailto:${appointment.owner?.email}`}>
-                  Email
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = `mailto:${appointment.owner?.email}`;
+                  }}
+                >
+                  Email owner
                 </button>
-                <button onClick={() => onCancel(appointment.id)}> Cancel</button>
+                <button type="button" onClick={() => onCancelBooking(appointment.id)}>
+                  Cancel
+                </button>
               </div>
             </div>
           ))
@@ -287,29 +305,39 @@ function UserDashboard({ handleLogout, user }) {
       </div>
 
       <div className="OwnerInfo">
-        <h1>All available slots</h1>
-        <div className='owner-list'>
-          <select name="owners" id="owners" onChange={handleOwnerChange} value={selectedOwnerId || ''}>
-            <option value="">-- Select an owner --</option>
-            {owners.map(owner => (
-              <option key={owner.id} value={owner.id}>
-                {owner.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <h1>{inviteOwnerId ? 'Invitation booking page' : 'All available slots'}</h1>
+        {!inviteOwnerId && (
+          <div className="owner-list">
+            <select name="owners" id="owners" onChange={(event) => onSelectOwner(event.target.value)} value={selectedOwnerId || ''}>
+              <option value="">-- Select an owner --</option>
+              {owners.map((owner) => (
+                <option key={owner.id} value={owner.id}>
+                  {owner.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        {currentOwner !== null ? (
+        {selectedOwner ? (
           <div>
             <h2>Available Slots</h2>
             <div className="owner-info">
               <div className="owner-header">
                 <div>
-                  <h2>{currentOwner.name}</h2>
-                  <h3>{currentOwner.email}</h3>
+                  <h2>{selectedOwner.name}</h2>
+                  <h3>{selectedOwner.email}</h3>
                 </div>
                 <div className="owner-contact">
-                  <button className="email-button" onClick={() => window.location.href = `mailto:${currentOwner.email}`}>Send Message</button>
+                  <button
+                    className="email-button"
+                    type="button"
+                    onClick={() => {
+                      window.location.href = `mailto:${selectedOwner.email}`;
+                    }}
+                  >
+                    Send Message
+                  </button>
                 </div>
               </div>
 
@@ -358,7 +386,7 @@ function UserDashboard({ handleLogout, user }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default UserDashboard;
