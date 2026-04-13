@@ -324,23 +324,7 @@ function App() {
   if (user && (user.role === 'student' || showDashboard)) {
     return (
       <main className="page">
-        <UserDashboard
-          handleLogout={logout}
-          user={user}
-          myBookings={myBookings}
-          owners={owners}
-          slots={slots}
-          selectedOwnerId={selectedOwnerId}
-          selectedOwner={selectedOwner}
-          inviteOwnerId={inviteOwnerId}
-          onSelectOwner={selectOwner}
-          onBookSlot={bookSlot}
-          onCancelBooking={cancelBooking}
-          message={message}
-          error={error}
-          showOwnerBackButton={user.role === 'owner'}
-          onBackToOwnerDashboard={() => setShowDashboard(false)}
-        />
+        <UserDashboard handleLogout={logout} user={user}/>
       </main>
     );
   }
