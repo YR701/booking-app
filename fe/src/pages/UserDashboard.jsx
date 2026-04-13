@@ -3,6 +3,7 @@ import './UserDashboard.css'
 import DashboardTopnav from '../components/DashboardTopnav';
 //import UserCalendar from '../components/UserCalendar';
 import { useState, useEffect } from 'react';
+import { buildMailto } from '../utils/mailto';
 
 function UserDashboard({ handleLogout, user }) {
   //UserCalendar back to dashboard function
@@ -15,6 +16,7 @@ function UserDashboard({ handleLogout, user }) {
   const [owners, setOwners] = useState([]);
   const [slots, setSlots] = useState([]);
   const [currentOwner, setCurrentOwner] = useState(null);
+  const [requests, setRequests] = useState([]);
 
   if (showCalendar) {
     return <UserCalendar onBackHome={() => setShowCalendar(false)} />;
@@ -24,6 +26,7 @@ function UserDashboard({ handleLogout, user }) {
   useEffect(() => {
     fetchAppointments();
     fetchOwners();
+    fetchRequests();
   }, []);
 
   const fetchAppointments = async () => {
@@ -76,6 +79,8 @@ function UserDashboard({ handleLogout, user }) {
 
 
   //owner info functions
+
+  //get all the available owners for the dropdown list
   const fetchOwners = async () => {
     try {
       const token = localStorage.getItem('comp307-booking-token');
@@ -98,6 +103,7 @@ function UserDashboard({ handleLogout, user }) {
     }
   };
 
+  //fetch the available slots of the selected owner
   const fetchSlots = async (ownerId) => {
     try {
       const token = localStorage.getItem('comp307-booking-token');
@@ -120,7 +126,7 @@ function UserDashboard({ handleLogout, user }) {
     }
   }
 
-
+  //select different owner to see their available slots
   const handleOwnerChange = async (event) => {
     const value = event.target.value;
 
@@ -133,6 +139,8 @@ function UserDashboard({ handleLogout, user }) {
       await fetchSlots(value);
     }
   }
+  
+  //request a meeting functions
 
   //handle request a meeting, send a message to the owner
   const handleRequest = async() => {
@@ -150,7 +158,6 @@ function UserDashboard({ handleLogout, user }) {
       return;
     }
 
-
     try {
       const token = localStorage.getItem('comp307-booking-token');
       const response =  await fetch('http://localhost:4000/api/meetings/request', {
@@ -161,7 +168,7 @@ function UserDashboard({ handleLogout, user }) {
         },
         body: JSON.stringify({
           ownerId: currentOwner.id,
-          title: 'Meeting Request with ' + currentOwner.name,
+          title: 'Meeting Request',
           startTime: startTime,
           endTime: endTime,
           reason: reason
@@ -176,13 +183,46 @@ function UserDashboard({ handleLogout, user }) {
       setMessage('Meeting request sent successfully');
       setError('');
 
+      //clear the form
       document.getElementById('startTime').value = '';
       document.getElementById('endTime').value = '';
       document.getElementById('reason').value = '';
+
+      //update the request list
+      await fetchRequests();
+
+      //send email notification to the owner
+      const subject = 'New Meeting Request';
+      const body = `You have a new meeting request from ${user.name} (${user.email}).\n\nReason: ${reason}\n\nRequested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
+      const mailtoLink = buildMailto(currentOwner.email, subject, body);
+      window.location.href = mailtoLink;
+
     } catch (error) {
       console.error(error);
       setError(error.message);
       setMessage('');
+    }
+  }
+
+  const fetchRequests = async () => {
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch('http://localhost:4000/api/meetings/requests', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch requests');
+      }
+      const data = await response.json();
+      console.log('Requests data:', data.requests);
+      setRequests(data.requests);
+      setError('');
+    } catch (error) {
+      console.error(error);
+      setError('Error loading requests. Please try again later.');
+      setRequests([]);
     }
   }
 
@@ -214,6 +254,23 @@ function UserDashboard({ handleLogout, user }) {
                 </button>
                 <button onClick={() => onCancel(appointment.id)}> Cancel</button>
               </div>
+            </div>
+          ))
+        )}
+        <h1> My Meeting Requests Status</h1>
+        {requests.length === 0 ? (
+          <p>No meeting requests.</p>
+        ) : (
+          requests.map(request => (
+            <div className="appointment-info" key={request.id}>
+              <h2>{request.owner?.name}</h2>
+              <p>{request.title}</p>
+              <p>
+                {new Date(request.start).toLocaleDateString()}
+                {new Date(request.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                {new Date(request.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+              <p>{request.status}</p>
             </div>
           ))
         )}

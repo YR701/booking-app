@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../../db/db');
 const { authMiddleware } = require('../middleware/auth');
+const { REQUEST_SELECT, formatRequest } = require('../utils/requestFormat');
 
 router.post('/meetings/request', authMiddleware, async (req, res) => {
     const { ownerId, title, startTime, endTime, reason } = req.body;
@@ -14,7 +15,7 @@ router.post('/meetings/request', authMiddleware, async (req, res) => {
     try {
         const [result] = await pool.execute(
             `INSERT INTO request (requester_id, owner_id, title, start_time, end_time, reason, status)
-             VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
+             VALUES (?, ?, ?, ?, ?, ?, 'Pending')`,
             [req.user.id, ownerId, title, new Date(startTime), new Date(endTime), reason]
         );
 
@@ -31,14 +32,13 @@ router.post('/meetings/request', authMiddleware, async (req, res) => {
 
 router.get('/meetings/requests', authMiddleware, async (req, res) => {
     try {
-        const [requests] = await pool.execute(
-            `SELECT r.id, r.requester_id, r.owner_id, r.title, r.start_time, r.end_time, r.reason, r.status, u.name AS requester_name, o.name AS owner_name
-             FROM request r
-             JOIN users u ON r.requester_id = u.id
-             JOIN users o ON r.owner_id = o.id
-             WHERE r.requester_id = ?`,
+        const [rows] = await pool.execute(
+            `${REQUEST_SELECT}
+             WHERE r.requester_id = ? 
+             ORDER BY r.created_at DESC`,
             [req.user.id]
         );
+        const requests = rows.map(formatRequest);
         return res.json({ requests });
     } catch (error) {
         console.error('Error fetching meeting requests:', error);

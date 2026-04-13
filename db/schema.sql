@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS request (
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
     reason TEXT NULL,
-    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_request_requester FOREIGN KEY (requester_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_request_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
