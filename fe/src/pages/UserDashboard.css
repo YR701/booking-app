@@ -47,6 +47,13 @@
     white-space: nowrap;
 }
 
+.appointment-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
 .appointment-info button:hover {
     background-color: #757575;
     color: #ffffff;
@@ -115,6 +122,12 @@
     cursor: pointer;
     font-size: clamp(12px, 3.5vw, 14px);
     white-space: nowrap;
+}
+
+.dashboard-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
 }
 
 .owner-contact button:hover {
