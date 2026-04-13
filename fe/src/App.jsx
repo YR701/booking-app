@@ -431,7 +431,7 @@ function App() {
             <ul className="rules">
               <li>Only McGill emails can register.</li>
               <li>Only `@mcgill.ca` users can create and manage slots.</li>
-              <li>New slots are private until the owner activates them.</li>
+              <li>Users can book active slots after logging in.</li>
             </ul>
           </header>
 
