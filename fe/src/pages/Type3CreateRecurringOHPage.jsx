@@ -1,7 +1,7 @@
 /* Author: Hanjing Zheng */
 
 import { useMemo, useState } from 'react';
-import './BookingPages.css';
+import './SchedulerPages.css';
 import UserCalendarTopnav from '../components/CalendarTopnav';
 import CalendarGrid from '../components/CalendarGrid';
 
