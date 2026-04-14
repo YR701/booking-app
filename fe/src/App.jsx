@@ -59,6 +59,7 @@ function App() {
   const [myBookings, setMyBookings] = useState([]);
   const [myOwnerSlots, setMyOwnerSlots] = useState([]);
   const [invitationUrl, setInvitationUrl] = useState('');
+  const [ownerRequests, setOwnerRequests] = useState([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -101,6 +102,7 @@ function App() {
         setSlots([]);
         setMyBookings([]);
         setMyOwnerSlots([]);
+        setOwnerRequests([]);
         setInvitationUrl('');
         setLoading(false);
         return;
@@ -122,6 +124,11 @@ function App() {
           const ownerData = await api('/owner/slots', {}, token);
           setMyOwnerSlots(ownerData.slots);
           setInvitationUrl(ownerData.invitationUrl);
+
+          const receivedRequests = await api('/meetings/requests/received', {}, token);
+          setOwnerRequests(receivedRequests.requests);
+        } else {
+          setOwnerRequests([]);
         }
 
         const nextOwnerId =
@@ -321,25 +328,79 @@ function App() {
     }
   }
 
+
+  //type1 owner requests functions
+  async function approveRequest(requestId) {
+    setMessage('');
+    setError('');
+
+    try {
+      await api(
+        `/meetings/requests/${requestId}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'Approved' }),
+        },
+        token,
+      );
+      setMessage('Request approved.');
+      refreshData();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function rejectRequest(requestId) {
+    setMessage('');
+    setError('');
+
+    try {
+      await api(
+        `/meetings/requests/${requestId}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'Rejected' }),
+        },
+        token,
+      );
+      setMessage('Request rejected.');
+      refreshData();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   if (loading) {
     return <main className="page"><p>Loading...</p></main>;
   }
   if (user && (user.role === 'student' || showDashboard)) {
     return (
       <main className="page">
-        <UserDashboard onLogout={logout} user={user}/>
+        <UserDashboard onLogout={logout} user={user} />
+      </main>
+    );
+  }
+
+  if (inviteOwnerId) {
+    return (
+      <main className="page">
+        <BookingPage
+          onLogout={logout}
+          user={user}
+          inviteOwnerId={inviteOwnerId}
+        />
       </main>
     );
   }
 
 
   if (showBookingPage) {
-  return (
-    <main className="page">
-      <BookingPage onLogout={logout} user={user} />
-    </main>
-  );
-}
+    return (
+      <main className="page">
+        <BookingPage onLogout={logout} user={user} />
+      </main>
+    );
+  }
   // if (currentPage === 'type2-create') {
   //   return (
   //     <Type2CreateGroupMeetingPage
@@ -497,6 +558,9 @@ function App() {
           onCreateSlot={createSlot}
           myOwnerSlots={myOwnerSlots}
           invitationUrl={invitationUrl}
+          ownerRequests={ownerRequests}
+          onApproveRequest={approveRequest}
+          onRejectRequest={rejectRequest}
           onToggleSlot={toggleSlot}
           onDeleteSlot={deleteSlot}
           formatDateTime={formatDateTime}

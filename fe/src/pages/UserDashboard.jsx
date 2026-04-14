@@ -214,6 +214,31 @@ function UserDashboard({ onLogout, user }) {
     }
   }
 
+  const handleCancelRequest = async (requestId) => {
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch(`http://localhost:4000/api/meetings/requests/${requestId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to cancel request');
+      }
+
+      setMessage('Meeting request canceled successfully');
+      setError('');
+      await fetchRequests();
+    } catch (error) {
+      console.error(error);
+      setError(error.message || 'Error canceling request. Please try again later.');
+      setMessage('');
+    }
+  };
+
   const fetchRequests = async () => {
     try {
       const token = localStorage.getItem('comp307-booking-token');
@@ -281,6 +306,11 @@ function UserDashboard({ onLogout, user }) {
                 {new Date(request.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
               <p>{request.status}</p>
+              {request.status === 'Pending' && (
+                <button type="button" onClick={() => handleCancelRequest(request.id)}>
+                  Cancel request
+                </button>
+              )}
             </div>
           ))
         )}
