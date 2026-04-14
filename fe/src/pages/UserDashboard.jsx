@@ -21,7 +21,6 @@ function UserDashboard({
   onSwitchToOwnerDashboard,
 }) {
   //UserCalendar back to dashboard function
-  const [showCalendar, setShowCalendar] = useState(false);
   const [selectedOwnerId, setSelectedOwnerId] = useState(null);
   const [slots, setSlots] = useState([]);
   const [currentOwner, setCurrentOwner] = useState(null);
@@ -33,48 +32,6 @@ function UserDashboard({
   useEffect(() => {
     fetchRequests();
   }, []);
-
-
-  if (showCalendar) {
-    return <UserCalendar onBackHome={() => setShowCalendar(false)} />;
-  }
-
-  //fetch the available slots of the selected owner
-  const fetchSlots = async (ownerId) => {
-    try {
-      const token = localStorage.getItem('comp307-booking-token');
-      const response = await fetch(`http://localhost:4000/api/owners/${ownerId}/slots`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch slots');
-      }
-      const data = await response.json();
-      setCurrentOwner(data.owner);
-      setSlots(data.slots);
-      setLocalError('');
-    } catch (error) {
-      console.error(error);
-      setLocalError('Error loading slots. Please try again later.');
-      setSlots([]);
-    }
-  }
-
-  //select different owner to see their available slots
-  const handleOwnerChange = async (event) => {
-    const value = event.target.value;
-
-    if (value === '') {
-      setSelectedOwnerId(null);
-      setCurrentOwner(null);
-      setSlots([]);
-    } else {
-      setSelectedOwnerId(value);
-      await fetchSlots(value);
-    }
-  }
 
   //cancel appointment
   const onCancel = async (id) => {
@@ -113,18 +70,21 @@ function UserDashboard({
 
     //verify the input info
     if (!startTime || !endTime || !reason || !ownerId) {
-      alert('Please fill in all fields to request a meeting.');
+      setLocalError('Please fill in all fields to request a meeting.');
+      setLocalMessage('');
       return;
     }
     if (startTime >= endTime) {
-      alert('Start time must be before end time.');
+      setLocalError('Start time must be before end time.');
+      setLocalMessage('');
       return;
     }
 
     //verify the selected owner
     const selectedOwner = owners.find(owner => String(owner.id) === String(ownerId));
     if (!selectedOwner) {
-      alert('Invalid owner selected.');
+      setLocalError('Invalid owner selected.');
+      setLocalMessage('');
       return;
     }
 
@@ -205,6 +165,7 @@ function UserDashboard({
     }
   };
 
+  //get all user's sent requests
   const fetchRequests = async () => {
     try {
       const token = localStorage.getItem('comp307-booking-token');
@@ -227,6 +188,48 @@ function UserDashboard({
     }
   };
 
+  //All available slots sections: including owner create one-time slots and office hours
+
+  //select different owner to see their available slots
+  const handleOwnerChange = async (event) => {
+    const value = event.target.value;
+
+    if (value === '') {
+      setSelectedOwnerId(null);
+      setCurrentOwner(null);
+      setSlots([]);
+    } else {
+      setSelectedOwnerId(value);
+      await fetchSlots(value);
+    }
+  }
+
+  //fetch the available slots of the selected owner
+  const fetchSlots = async (ownerId) => {
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch(`http://localhost:4000/api/owners/${ownerId}/slots`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch slots');
+      }
+      const data = await response.json();
+      setCurrentOwner(data.owner);
+      setSlots(data.slots);
+      setLocalError('');
+    } catch (error) {
+      console.error(error);
+      setLocalError('Error loading slots. Please try again later.');
+      setSlots([]);
+    }
+  }
+
+  
+
+
   return (
     <div>
       <DashboardTopnav
@@ -240,7 +243,7 @@ function UserDashboard({
         <div className="inline-actions">
           {user?.role === 'owner' && onSwitchToOwnerDashboard && (
             <button type="button" onClick={onSwitchToOwnerDashboard}>
-              Return to User Dashboard
+              Return to Owner Dashboard
             </button>
           )}
           {onOpenType2Vote && (
@@ -311,6 +314,36 @@ function UserDashboard({
         )}
       </div>
 
+      <div className="request-meeting">
+        <h3>Request a Meeting </h3>
+        <div className='request-form'>
+          <div className='request-form-item'>
+            <label>Select a Professor</label>
+            {/* <select id="ownersID" onChange={(e) => setSelectedRequestOwnerId(e.target.value)}> */}
+            <select id="ownersID" value={selectedRequestOwnerId} onChange={(e) => setSelectedRequestOwnerId(e.target.value)}>
+              <option value="">-- Select an owner --</option>
+              {owners.map(owner => (
+                <option key={owner.id} value={owner.id}>
+                  {owner.name}
+                </option>
+              ))}
+            </select>
+            <div className='request-form-item'>
+              <label htmlFor="time">From</label>
+              <input type="datetime-local" id="startTime" />
+            </div>
+            <div className='request-form-item'>
+              <label htmlFor="time">To</label>
+              <input type="datetime-local" id="endTime" />
+            </div>
+            <div className='request-form-item'>
+              <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason' />
+            </div>
+            <button onClick={handleRequest}>Submit</button>
+          </div>
+        </div>
+      </div>
+
       <div className="OwnerInfo">
         <h1>All available slots</h1>
         <div className='owner-list'>
@@ -355,35 +388,7 @@ function UserDashboard({
           <p>Please select an owner to see available time slots.</p>
         )}
       </div>
-      <div className="request-meeting">
-        <h3>Request a Meeting </h3>
-        <div className='request-form'>
-          <div className='request-form-item'>
-            <label>Select a Professor</label>
-            {/* <select id="ownersID" onChange={(e) => setSelectedRequestOwnerId(e.target.value)}> */}
-            <select id="ownersID" value={selectedRequestOwnerId} onChange={(e) => setSelectedRequestOwnerId(e.target.value)}>
-              <option value="">-- Select an owner --</option>
-              {owners.map(owner => (
-                <option key={owner.id} value={owner.id}>
-                  {owner.name}
-                </option>
-              ))}
-            </select>
-            <div className='request-form-item'>
-              <label htmlFor="time">From</label>
-              <input type="datetime-local" id="startTime" />
-            </div>
-            <div className='request-form-item'>
-              <label htmlFor="time">To</label>
-              <input type="datetime-local" id="endTime" />
-            </div>
-            <div className='request-form-item'>
-              <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason' />
-            </div>
-            <button onClick={handleRequest}>Submit</button>
-          </div>
-        </div>
-      </div>
+      
     </div>
   )
 }
