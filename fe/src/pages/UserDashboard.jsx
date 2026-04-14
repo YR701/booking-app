@@ -12,104 +12,31 @@ function UserDashboard({
   user,
   onOpenType2Vote,
   onOpenType3Public,
+  owners = [],
+  myBookings = [],
+  loading = false,
+  message = '',
+  error = '',
+  onSwitchToOwnerDashboard,
 }) {
   //UserCalendar back to dashboard function
   const [showCalendar, setShowCalendar] = useState(false);
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
   const [selectedOwnerId, setSelectedOwnerId] = useState(null);
-  const [owners, setOwners] = useState([]);
   const [slots, setSlots] = useState([]);
   const [currentOwner, setCurrentOwner] = useState(null);
   const [requests, setRequests] = useState([]);
   const [selectedRequestOwnerId, setSelectedRequestOwnerId] = useState('');
+  const [localMessage, setLocalMessage] = useState('');
+  const [localError, setLocalError] = useState('');
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
 
   if (showCalendar) {
     return <UserCalendar onBackHome={() => setShowCalendar(false)} />;
   }
-
-  //appointments functions
-  useEffect(() => {
-    fetchAppointments();
-    fetchOwners();
-    fetchRequests();
-  }, []);
-
-  const fetchAppointments = async () => {
-    try {
-      const token = localStorage.getItem('comp307-booking-token');
-      const response = await fetch('http://localhost:4000/api/me/bookings', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch appointments');
-      }
-
-      const data = await response.json();
-      setAppointments(data.bookings);
-      setError('');
-    } catch (error) {
-      console.error(error);
-      setError('Error loading appointments. Please try again later.');
-      setAppointments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  //cancel appointment
-  const onCancel = async (id) => {
-    try {
-      const token = localStorage.getItem('comp307-booking-token');
-      const response = await fetch(`http://localhost:4000/api/slots/${id}/booking`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error('Failed to cancel appointment');
-      }
-      setMessage('Appointment canceled successfully');
-      setError('');
-      fetchAppointments();
-    } catch (error) {
-      console.error(error);
-      setError('Error canceling appointment. Please try again later.');
-      setMessage('');
-    }
-  };
-
-
-  //owner info functions
-
-  //get all the available owners for the dropdown list
-  const fetchOwners = async () => {
-    try {
-      const token = localStorage.getItem('comp307-booking-token');
-      const response = await fetch('http://localhost:4000/api/owners', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch owners');
-      }
-      const data = await response.json();
-      setOwners(data.owners);
-      setError('');
-    } catch (error) {
-      console.error(error);
-      setError('Error loading owners. Please try again later.');
-      setMessage('');
-      setOwners([]);
-    }
-  };
 
   //fetch the available slots of the selected owner
   const fetchSlots = async (ownerId) => {
@@ -126,10 +53,10 @@ function UserDashboard({
       const data = await response.json();
       setCurrentOwner(data.owner);
       setSlots(data.slots);
-      setError('');
+      setLocalError('');
     } catch (error) {
       console.error(error);
-      setError('Error loading slots. Please try again later.');
+      setLocalError('Error loading slots. Please try again later.');
       setSlots([]);
     }
   }
@@ -148,35 +75,29 @@ function UserDashboard({
     }
   }
 
-  const handleBook = async (slot) => {
+  //cancel appointment
+  const onCancel = async (id) => {
     try {
       const token = localStorage.getItem('comp307-booking-token');
-      const response = await fetch(`http://localhost:4000/api/slots/${slot.id}/book`, {
-        method: 'POST',
+      const response = await fetch(`http://localhost:4000/api/slots/${id}/booking`, {
+        method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`
         }
       });
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to book office hour');
+        const errorData = await response.json();
+        throw new Error('Failed to cancel appointment');
       }
-
-      setMessage('Office hour booked successfully');
-      setError('');
-      await fetchAppointments();
-
-      if (selectedOwnerId) {
-        await fetchSlots(selectedOwnerId);
-      }
+      setLocalMessage('Appointment canceled successfully');
+      setLocalError('');
+      // Refresh will be handled by parent, or user can re-trigger
     } catch (error) {
       console.error(error);
-      setError(error.message || 'Error booking office hour. Please try again later.');
-      setMessage('');
+      setLocalError('Error canceling appointment. Please try again later.');
+      setLocalMessage('');
     }
   };
-
 
 
   //request a meeting functions
@@ -199,7 +120,7 @@ function UserDashboard({
       return;
     }
 
-    // const selectedOwner = owners.find(owner => owner.id === ownerId);
+    //verify the selected owner
     const selectedOwner = owners.find(owner => String(owner.id) === String(ownerId));
     if (!selectedOwner) {
       alert('Invalid owner selected.');
@@ -229,8 +150,8 @@ function UserDashboard({
         throw new Error(errorData.error || 'Failed to request a meeting');
       }
 
-      setMessage('Meeting request sent successfully');
-      setError('');
+      setLocalMessage('Meeting request sent successfully');
+      setLocalError('');
 
       //clear the form
       document.getElementById('startTime').value = '';
@@ -243,19 +164,21 @@ function UserDashboard({
 
       //send email notification to the owner
       const subject = 'New Meeting Request';
-      const body = `You have a new meeting request from ${user.name} (${user.email}).\n\nReason: ${reason}\n\nRequested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
-      // const mailtoLink = buildMailto(currentOwner.email, subject, body);
+      const body = `You have a new meeting request from ${user.name} (${user.email}).\n\n
+      Reason: ${reason}\n\n
+      Requested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
       const mailtoLink = buildMailto(selectedOwner.email, subject, body);
-      console.log('Generated mailto link:', mailtoLink);
-      //window.location.href = mailtoLink;
+      //console.log('Generated mailto link:', mailtoLink);
+      window.location.href = mailtoLink;
 
     } catch (error) {
       console.error(error);
-      setError(error.message);
-      setMessage('');
+      setLocalError(error.message);
+      setLocalMessage('');
     }
   }
 
+  //cancel a request
   const handleCancelRequest = async (requestId) => {
     try {
       const token = localStorage.getItem('comp307-booking-token');
@@ -271,13 +194,13 @@ function UserDashboard({
         throw new Error(errorData.error || 'Failed to cancel request');
       }
 
-      setMessage('Meeting request canceled successfully');
-      setError('');
+      setLocalMessage('Meeting request canceled successfully');
+      setLocalError('');
       await fetchRequests();
     } catch (error) {
       console.error(error);
-      setError(error.message || 'Error canceling request. Please try again later.');
-      setMessage('');
+      setLocalError(error.message || 'Error canceling request. Please try again later.');
+      setLocalMessage('');
     }
   };
 
@@ -295,13 +218,13 @@ function UserDashboard({
       const data = await response.json();
       console.log('Requests data:', data.requests);
       setRequests(data.requests);
-      setError('');
+      setLocalError('');
     } catch (error) {
       console.error(error);
-      setError('Error loading requests. Please try again later.');
+      setLocalError('Error loading requests. Please try again later.');
       setRequests([]);
     }
-  }
+  };
 
   return (
     <div>
@@ -311,9 +234,15 @@ function UserDashboard({
         onLogout={onLogout}
       />
 
+      {/* testing pages */}
       <div className="testing-nav-buttons" style={{ padding: '16px 24px 0' }}>
         <h2>Testing Pages</h2>
         <div className="inline-actions">
+          {user?.role === 'owner' && onSwitchToOwnerDashboard && (
+            <button type="button" onClick={onSwitchToOwnerDashboard}>
+              Return to Owner Dashboard
+            </button>
+          )}
           {onOpenType2Vote && (
             <button type="button" onClick={onOpenType2Vote}>
               Type 2 Vote
@@ -327,23 +256,23 @@ function UserDashboard({
         </div>
       </div>
 
-
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
+      {localMessage && <div className="notice success">{localMessage}</div>}
+      {localError && <div className="notice error">{localError}</div>}
+      
       <div className="appointment">
         <h1>My Appointments</h1>
-        {/* {appointments.length === 0 ? ( */}
-         {loading ? (
+        {loading ? (
           <p>Loading appointments...</p>
-        ) : appointments.length === 0 ? (
+        ) : myBookings.length === 0 ? (
           <p>No appointments booked.</p>
         ) : (
-          appointments.map(appointment => (
+          myBookings.map(appointment => (
             <div className="appointment-info" key={appointment.id}>
               <h2>{appointment.owner?.name}</h2>
               <p>{appointment.title}</p>
               <p>
-                {/* {new Date(appointment.start).toLocaleDateString()} */}
                 {new Date(appointment.start).toLocaleDateString()}{' '}
                 {new Date(appointment.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
                 {new Date(appointment.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -416,7 +345,7 @@ function UserDashboard({
                       {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
                       {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    <button onClick={() => handleBook(slot)}>Book Office Hour</button>
+                    <button>Book Office Hour</button>
                   </div>
                 ))}
               </div>

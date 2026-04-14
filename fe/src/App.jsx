@@ -7,11 +7,11 @@ import UserDashboard from './pages/UserDashboard';
 import BookingPage from './pages/BookingPage';
 import mcgillLogo from './assets/mcgill_logo.png';
 
-import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
-import Type2GroupMeetingVotePage from './pages/Type2GroupMeetingVotePage';
-import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
-import Type3OwnerOfficeHoursPage from './pages/Type3OwnerOfficeHoursPage';
-import Type3OfficeHoursPublicPage from './pages/Type3OfficeHoursPublicPage';
+// import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
+// import Type2GroupMeetingVotePage from './pages/Type2GroupMeetingVotePage';
+// import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
+// import Type3OwnerOfficeHoursPage from './pages/Type3OwnerOfficeHoursPage';
+// import Type3OfficeHoursPublicPage from './pages/Type3OfficeHoursPublicPage';
 
 const API_BASE = 'http://localhost:4000/api';
 const TOKEN_KEY = 'comp307-booking-token';
@@ -395,7 +395,7 @@ function App() {
   //   );
   // }
 
-  if (inviteOwnerId) {
+  if (inviteOwnerId && user) {
     return (
       <main className="page">
         <BookingPage
@@ -513,6 +513,12 @@ function App() {
           user={user}
           onOpenType2Vote={() => setCurrentPage('type2-vote')}
           onOpenType3Public={() => setCurrentPage('type3-public')}
+          owners={owners}
+          myBookings={myBookings}
+          loading={loading}
+          message={message}
+          error={error}
+          onSwitchToOwnerDashboard={() => setShowDashboard(false)}
         />
       </main>
     );
@@ -551,7 +557,11 @@ function App() {
             </ul>
           </header>
 
-          {inviteOwnerId && <p className="notice">Invitation link mode is active.</p>}
+          {inviteOwnerId && !user ? (
+            <p className="notice">Invitation link detected. Please log in or register to view the owner slots.</p>
+          ) : (
+            inviteOwnerId && <p className="notice">Invitation link mode is active.</p>
+          )}
           {message && <p className="notice success">{message}</p>}
           {error && <p className="notice error">{error}</p>}
 
@@ -628,6 +638,7 @@ function App() {
           onOpenType2Create={() => setCurrentPage('type2-create')}
           onOpenType3Create={() => setCurrentPage('type3-create')}
           onOpenType3Owner={() => setCurrentPage('type3-owner')}
+          onSwitchToUserDashboard={() => setShowDashboard(true)}
         />
       )}
     </main>

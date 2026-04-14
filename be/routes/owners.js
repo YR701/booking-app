@@ -17,7 +17,7 @@ router.get('/owners', authMiddleware, async (_req, res) => {
       u.role,
       COUNT(s.id) AS activeSlotCount
     FROM users u
-    JOIN slots s ON s.owner_id = u.id AND s.is_active = 1
+    JOIN slots s ON s.owner_id = u.id AND s.is_active = 1 AND s.booked_by_user_id IS NULL
     WHERE u.role = 'owner'
     GROUP BY u.id, u.name, u.email, u.role
     ORDER BY u.name ASC
@@ -47,7 +47,7 @@ router.get('/owners/:ownerId/slots', authMiddleware, async (req, res) => {
 
   const [slotRows] = await pool.execute(
     `${SLOT_SELECT}
-     WHERE s.owner_id = ? AND s.is_active = 1
+     WHERE s.owner_id = ? AND s.is_active = 1 AND s.booked_by_user_id IS NULL
      ORDER BY s.start_time ASC`,
     [ownerId],
   );

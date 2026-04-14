@@ -1,24 +1,23 @@
 /* Author: Yongrong Yang */
 import './BookingPage.css';
 import DashboardTopnav from '../components/DashboardTopnav';
-import { useState, useEffect, use } from 'react';
-
+import { useState, useEffect } from 'react';
 
 function BookingPage({ onLogout, user, inviteOwnerId }) {
-
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [slots, setSlots] = useState([]);
     const [owner, setOwner] = useState({});
     const [loading, setLoading] = useState(true);
-    const [showLogin, setShowLogin] = useState(false);
 
     useEffect(() => {
-        if (inviteOwnerId)
+        if (inviteOwnerId) {
             fetchSlots();
+        }
     }, [inviteOwnerId, user]);
 
     const fetchSlots = async () => {
+        setLoading(true);
         try {
             const token = localStorage.getItem('comp307-booking-token');
             const response = await fetch(`http://localhost:4000/api/owners/${inviteOwnerId}/slots`, {
@@ -32,7 +31,6 @@ function BookingPage({ onLogout, user, inviteOwnerId }) {
             const data = await response.json();
             setOwner(data.owner);
             setSlots(data.slots);
-            setShowLogin(false);
             setError('');
         } catch (error) {
             console.error(error);
@@ -43,6 +41,31 @@ function BookingPage({ onLogout, user, inviteOwnerId }) {
         }
     };
 
+    const handleBook = async (slot) => {
+        try {
+            const token = localStorage.getItem('comp307-booking-token');
+            const response = await fetch(`http://localhost:4000/api/slots/${slot.id}/book`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to book office hour');
+      }
+
+            setMessage('Office hour booked successfully');
+            setError('');
+            await fetchSlots();
+        } catch (error) {
+            console.error(error);
+            setError(error.message || 'Error booking office hour. Please try again later.');
+            setMessage('');
+        }
+    };
 
     return (
         <div>
@@ -56,30 +79,34 @@ function BookingPage({ onLogout, user, inviteOwnerId }) {
 
             <div className="slots">
                 <h1>Available Slots</h1>
-                {slots.length === 0 ? (
+                {loading ? (
+                    <p>Loading slots...</p>
+                ) : slots.length === 0 ? (
                     <p>No available slots.</p>
                 ) : (
-                    slots.map(slots => (
-                        <div className="slots-info" key={slots.id}>
-                            <h2>{slots.owner?.name}</h2>
-                            <p>{slots.title}</p>
+                    slots.map((slot) => (
+                        <div className="slots-info" key={slot.id}>
+                            <h2>{slot.owner?.name}</h2>
+                            <p>{slot.title}</p>
                             <p>
-                                {new Date(slots.start).toLocaleDateString()}
-                                {new Date(slots.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                                {new Date(slots.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(slot.start).toLocaleDateString()}{' '}
+                                {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
+                                {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
-                            <div className="slots-buttons">
-                                <button onClick={() => window.location.href = `mailto:${slots.owner?.email}`}>
+                            <div>
+                                <button type="button" onClick={() => handleBook(slot)}>
+                                    Book
+                                </button>
+                                <button type="button" onClick={() => window.location.href = `mailto:${slot.owner?.email}`}>
                                     Email
                                 </button>
-
                             </div>
                         </div>
                     ))
                 )}
             </div>
         </div>
-    )
+    );
 }
 
 export default BookingPage;

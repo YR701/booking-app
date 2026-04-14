@@ -52,13 +52,6 @@
     white-space: nowrap;
 }
 
-.slots-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
 .slots-info button:hover {
     background-color: #757575;
     color: #ffffff;
