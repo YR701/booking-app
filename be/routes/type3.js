@@ -169,4 +169,43 @@ router.post('/type3/slots/:slotId/book', authMiddleware, async (req, res) => {
   }
 });
 
+router.delete('/type3/slots/:slotId', authMiddleware, ownerOnly, async (req, res) => {
+  try {
+    const slotId = Number(req.params.slotId);
+
+    const [rows] = await pool.execute(
+      `
+      SELECT id, owner_id AS ownerId
+      FROM type3_slots
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [slotId]
+    );
+
+    const slot = rows[0];
+
+    if (!slot) {
+      return res.status(404).json({ error: 'Type 3 slot not found.' });
+    }
+
+    if (Number(slot.ownerId) !== Number(req.user.id)) {
+      return res.status(403).json({ error: 'Not authorized to delete this Type 3 slot.' });
+    }
+
+    await pool.execute(
+      `DELETE FROM type3_slots WHERE id = ?`,
+      [slotId]
+    );
+
+    return res.json({
+      deletedSlotId: slotId,
+      message: 'Type 3 slot deleted successfully.',
+    });
+  } catch (error) {
+    console.error('Delete Type 3 slot error:', error);
+    return res.status(500).json({ error: 'Unable to delete Type 3 slot.' });
+  }
+});
+
 module.exports = router;

@@ -48,6 +48,8 @@ function CalendarGrid({
         allDaySlot={false}
         height="90vh"
 
+        slotEventOverlap={false}
+
         /* show full-day range, but open near 08:00 */
         slotMinTime="00:00:00"
         slotMaxTime="24:00:00"

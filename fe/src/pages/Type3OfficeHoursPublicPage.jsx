@@ -1,239 +1,12 @@
 /* Author: Hanjing Zheng */
 
-// import { useMemo, useState } from 'react';
-// import './SchedulerPages.css';
-// import UserCalendarTopnav from '../components/CalendarTopnav';
-// import CalendarGrid from '../components/CalendarGrid';
-
-// function addDays(dateInput, days) {
-//   const next = new Date(dateInput);
-//   next.setDate(next.getDate() + days);
-//   return next;
-// }
-
-// function formatReadableDateTime(dateInput) {
-//   const date = new Date(dateInput);
-//   return date.toLocaleString([], {
-//     dateStyle: 'medium',
-//     timeStyle: 'short',
-//   });
-// }
-
-// function generateWeeklyPublicSlots(baseSlots, weeks) {
-//   const safeWeeks = Math.max(1, Number(weeks) || 1);
-//   const allSlots = [];
-
-//   baseSlots.forEach((slot) => {
-//     const baseStart = new Date(slot.start);
-//     const baseEnd = new Date(slot.end);
-
-//     for (let weekIndex = 0; weekIndex < safeWeeks; weekIndex += 1) {
-//       const repeatedStart = addDays(baseStart, weekIndex * 7);
-//       const repeatedEnd = addDays(baseEnd, weekIndex * 7);
-
-//       allSlots.push({
-//         id: `${slot.id}-week-${weekIndex + 1}`,
-//         baseSlotId: slot.id,
-//         title: slot.title,
-//         start: repeatedStart,
-//         end: repeatedEnd,
-//         bookedBy: null,
-//         weekIndex: weekIndex + 1,
-//       });
-//     }
-//   });
-
-//   return allSlots.sort(
-//     (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
-//   );
-// }
-
-// function Type3OfficeHoursPublicPage({ onBack, onLogout, user, type3Draft }) {
-//   const [bookedSlotIds, setBookedSlotIds] = useState([]);
-//   const [selectedSlotId, setSelectedSlotId] = useState(null);
-//   const [message, setMessage] = useState('');
-//   const [error, setError] = useState('');
-
-//   const publicSlots = useMemo(() => {
-//     return generateWeeklyPublicSlots(type3Draft.savedBaseSlots, type3Draft.weeks);
-//   }, [type3Draft]);
-
-//   const calendarEvents = useMemo(() => {
-//     return publicSlots.map((slot) => ({
-//       id: slot.id,
-//       title: bookedSlotIds.includes(slot.id)
-//         ? `${slot.title} (Booked)`
-//         : slot.title,
-//       start: slot.start,
-//       end: slot.end,
-//       extendedProps: {
-//         baseSlotId: slot.baseSlotId,
-//         weekIndex: slot.weekIndex,
-//         isBooked: bookedSlotIds.includes(slot.id),
-//       },
-//     }));
-//   }, [publicSlots, bookedSlotIds]);
-
-//   const selectedSlot = useMemo(() => {
-//     return publicSlots.find((slot) => slot.id === selectedSlotId) || null;
-//   }, [publicSlots, selectedSlotId]);
-
-//   const handleBookSlot = (slotId) => {
-//     setMessage('');
-//     setError('');
-
-//     if (bookedSlotIds.includes(slotId)) {
-//       setError('This slot is already booked.');
-//       return;
-//     }
-
-//     setBookedSlotIds((current) => [...current, slotId]);
-//     setMessage('Slot booked successfully in frontend preview.');
-//   };
-
-//   const handleCalendarEventClick = (calendarEvent) => {
-//     setSelectedSlotId(calendarEvent.id);
-//     setMessage('');
-//     setError('');
-//   };
-
-//   return (
-//     <>
-//       <UserCalendarTopnav
-//         userEmail={user?.email}
-//         onLogout={onLogout}
-//         onBackHome={onBack}
-//       />
-
-//       <main className="booking-page">
-//         <header className="booking-header">
-//           <h1>Available Office Hours</h1>
-//           <p className="booking-subtitle">
-//             Browse available recurring office-hour sessions and select one to book.
-//           </p>
-//         </header>
-
-//         {message && <p className="notice success">{message}</p>}
-//         {error && <p className="notice error">{error}</p>}
-
-//         <section className="booking-layout">
-//           <section className="card booking-side-panel">
-//             <h2>Available Sessions</h2>
-
-//             {publicSlots.length === 0 ? (
-//               <p>No office-hour sessions are available yet.</p>
-//             ) : (
-//               <div className="summary-list summary-list-scroll">
-//                 {publicSlots.map((slot) => {
-//                   const isBooked = bookedSlotIds.includes(slot.id);
-//                   const isSelected = selectedSlotId === slot.id;
-
-//                   return (
-//                     <div
-//                       key={slot.id}
-//                       className={`summary-item ${isSelected ? 'selected-summary-item' : ''}`}
-//                     >
-//                       <div
-//                         className="summary-main"
-//                         role="button"
-//                         tabIndex={0}
-//                         onClick={() => setSelectedSlotId(slot.id)}
-//                         onKeyDown={(event) => {
-//                           if (event.key === 'Enter' || event.key === ' ') {
-//                             setSelectedSlotId(slot.id);
-//                           }
-//                         }}
-//                       >
-//                         <p className="summary-title">{slot.title}</p>
-//                         <p>Start: {formatReadableDateTime(slot.start)}</p>
-//                         <p>End: {formatReadableDateTime(slot.end)}</p>
-//                         <p>Week {slot.weekIndex}</p>
-//                         <p>Status: {isBooked ? 'Booked' : 'Available'}</p>
-//                       </div>
-
-//                       <button
-//                         type="button"
-//                         className="button secondary"
-//                         onClick={() => handleBookSlot(slot.id)}
-//                         disabled={isBooked}
-//                       >
-//                         {isBooked ? 'Booked' : 'Book'}
-//                       </button>
-//                     </div>
-//                   );
-//                 })}
-//               </div>
-//             )}
-//           </section>
-
-//           <section className="card booking-side-panel">
-//             <h2>Selected Session</h2>
-
-//             {!selectedSlot ? (
-//               <p>Select a session from the list or calendar.</p>
-//             ) : (
-//               <div className="summary-list">
-//                 <div className="summary-item">
-//                   <div className="summary-main">
-//                     <p className="summary-title">{selectedSlot.title}</p>
-//                     <p>Start: {formatReadableDateTime(selectedSlot.start)}</p>
-//                     <p>End: {formatReadableDateTime(selectedSlot.end)}</p>
-//                     <p>Week {selectedSlot.weekIndex}</p>
-//                     <p>
-//                       Status:{' '}
-//                       {bookedSlotIds.includes(selectedSlot.id) ? 'Booked' : 'Available'}
-//                     </p>
-//                   </div>
-
-//                   <button
-//                     type="button"
-//                     className="button secondary"
-//                     onClick={() => handleBookSlot(selectedSlot.id)}
-//                     disabled={bookedSlotIds.includes(selectedSlot.id)}
-//                   >
-//                     {bookedSlotIds.includes(selectedSlot.id) ? 'Booked' : 'Book'}
-//                   </button>
-//                 </div>
-//               </div>
-//             )}
-//           </section>
-//         </section>
-
-//         <section className="card calendar-section">
-//           <div className="calendar-section-header">
-//             <h2>Calendar View</h2>
-//             <p>
-//               Click a session on the calendar to select it. Booked sessions are marked in
-//               the calendar title.
-//             </p>
-//           </div>
-
-//           <CalendarGrid
-//             mode="readonly"
-//             events={calendarEvents}
-//             onSelectEvent={handleCalendarEventClick}
-//           />
-//         </section>
-//       </main>
-//     </>
-//   );
-// }
-
-// export default Type3OfficeHoursPublicPage;
-
-
-/* Author: Hanjing Zheng */
-
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
 import UserCalendarTopnav from '../components/CalendarTopnav';
 import CalendarGrid from '../components/CalendarGrid';
 
-function addDays(dateInput, days) {
-  const next = new Date(dateInput);
-  next.setDate(next.getDate() + days);
-  return next;
-}
+const API_BASE = 'http://localhost:4000/api';
+const TOKEN_KEY = 'comp307-booking-token';
 
 function formatReadableDateTime(dateInput) {
   const date = new Date(dateInput);
@@ -243,95 +16,161 @@ function formatReadableDateTime(dateInput) {
   });
 }
 
-function generateWeeklyPublicSlots(baseSlots, weeks) {
-  const safeWeeks = Math.max(1, Number(weeks) || 1);
-  const allSlots = [];
-
-  baseSlots.forEach((slot) => {
-    const baseStart = new Date(slot.start);
-    const baseEnd = new Date(slot.end);
-
-    for (let weekIndex = 0; weekIndex < safeWeeks; weekIndex += 1) {
-      const repeatedStart = addDays(baseStart, weekIndex * 7);
-      const repeatedEnd = addDays(baseEnd, weekIndex * 7);
-
-      allSlots.push({
-        id: `${slot.id}-week-${weekIndex + 1}`,
-        baseSlotId: slot.id,
-        title: slot.title,
-        start: repeatedStart,
-        end: repeatedEnd,
-        weekIndex: weekIndex + 1,
-        capacity: slot.capacity ?? 1,
-      });
-    }
-  });
-
-  return allSlots.sort(
-    (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
-  );
-}
-
-function Type3OfficeHoursPublicPage({ onBack, onLogout, user, type3Draft }) {
-  const [bookingCounts, setBookingCounts] = useState({});
+function Type3OfficeHoursPublicPage({ onBack, onLogout, user }) {
+  const [publicSlots, setPublicSlots] = useState([]);
+  const [selectedOwnerId, setSelectedOwnerId] = useState('');
   const [selectedSlotId, setSelectedSlotId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [reservingSlotId, setReservingSlotId] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const publicSlots = useMemo(() => {
-    return generateWeeklyPublicSlots(type3Draft.savedBaseSlots, type3Draft.weeks);
-  }, [type3Draft]);
+  const fetchPublicSlots = async () => {
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        setPublicSlots([]);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/type3/slots`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load Type 3 public slots.');
+      }
+
+      setPublicSlots(data.slots || []);
+      setError('');
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError(fetchError.message || 'Unable to load public Type 3 slots.');
+      setPublicSlots([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchPublicSlots();
+  }, [user]);
+
+  const availableOwners = useMemo(() => {
+    const ownerMap = new Map();
+
+    publicSlots.forEach((slot) => {
+      if (slot.owner?.id && slot.owner?.name) {
+        ownerMap.set(String(slot.owner.id), {
+          id: String(slot.owner.id),
+          name: slot.owner.name,
+          email: slot.owner.email || '',
+        });
+      }
+    });
+
+    return [...ownerMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [publicSlots]);
+
+  const filteredSlots = useMemo(() => {
+    const onlyAvailable = publicSlots.filter((slot) => slot.isAvailable);
+
+    if (!selectedOwnerId) {
+      return onlyAvailable.sort(
+        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+      );
+    }
+
+    return onlyAvailable
+      .filter((slot) => String(slot.owner?.id) === String(selectedOwnerId))
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  }, [publicSlots, selectedOwnerId]);
+
+  const selectedOwner = useMemo(() => {
+    return availableOwners.find(
+      (ownerItem) => String(ownerItem.id) === String(selectedOwnerId)
+    ) || null;
+  }, [availableOwners, selectedOwnerId]);
 
   const calendarEvents = useMemo(() => {
-    return publicSlots.map((slot) => {
-      const bookedCount = bookingCounts[slot.id] || 0;
-      const isFull = bookedCount >= slot.capacity;
-
-      return {
-        id: slot.id,
-        title: isFull
-          ? `${slot.title} (Full)`
-          : `${slot.title} (${bookedCount}/${slot.capacity})`,
-        start: slot.start,
-        end: slot.end,
-        extendedProps: {
-          baseSlotId: slot.baseSlotId,
-          weekIndex: slot.weekIndex,
-          bookedCount,
-          capacity: slot.capacity,
-          isFull,
-        },
-      };
-    });
-  }, [publicSlots, bookingCounts]);
+    return filteredSlots.map((slot) => ({
+      id: String(slot.id),
+      title: `${slot.title} (${slot.bookedCount || 0}/${slot.capacity || 1})`,
+      start: slot.start,
+      end: slot.end,
+      extendedProps: {
+        capacity: slot.capacity || 1,
+        bookedCount: slot.bookedCount || 0,
+        isAvailable: slot.isAvailable,
+        ownerName: slot.owner?.name || '',
+        ownerEmail: slot.owner?.email || '',
+      },
+    }));
+  }, [filteredSlots]);
 
   const selectedSlot = useMemo(() => {
-    return publicSlots.find((slot) => slot.id === selectedSlotId) || null;
-  }, [publicSlots, selectedSlotId]);
+    return filteredSlots.find(
+      (slot) => String(slot.id) === String(selectedSlotId)
+    ) || null;
+  }, [filteredSlots, selectedSlotId]);
 
-  const handleBookSlot = (slotId) => {
+  const handleOwnerChange = (event) => {
+    const ownerId = event.target.value;
+    setSelectedOwnerId(ownerId);
+    setSelectedSlotId(null);
     setMessage('');
     setError('');
+  };
 
-    const slot = publicSlots.find((item) => item.id === slotId);
-    if (!slot) {
-      setError('Slot not found.');
-      return;
+  const handleReserveSlot = async (slotId) => {
+    try {
+      setMessage('');
+      setError('');
+      setReservingSlotId(slotId);
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to reserve a Type 3 slot.');
+      }
+
+      const response = await fetch(`${API_BASE}/type3/slots/${slotId}/book`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to reserve Type 3 slot.');
+      }
+
+      setMessage('Type 3 slot reserved successfully.');
+
+      setPublicSlots((current) =>
+        current.map((slot) =>
+          String(slot.id) === String(slotId) ? data.slot : slot
+        )
+      );
+
+      if (String(selectedSlotId) === String(slotId)) {
+        setSelectedSlotId(null);
+      }
+    } catch (reserveError) {
+      console.error(reserveError);
+      setError(reserveError.message || 'Unable to reserve Type 3 slot.');
+    } finally {
+      setReservingSlotId(null);
     }
-
-    const currentBookedCount = bookingCounts[slotId] || 0;
-
-    if (currentBookedCount >= slot.capacity) {
-      setError('This slot has reached its maximum capacity.');
-      return;
-    }
-
-    setBookingCounts((current) => ({
-      ...current,
-      [slotId]: currentBookedCount + 1,
-    }));
-
-    setMessage('Reservation added in frontend preview.');
   };
 
   const handleCalendarEventClick = (calendarEvent) => {
@@ -350,9 +189,10 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, type3Draft }) {
 
       <main className="booking-page">
         <header className="booking-header">
-          <h1>Available Office Hours</h1>
+          <h1>Available Type 3 Office Hours</h1>
           <p className="booking-subtitle">
-            Browse available recurring office-hour sessions and select one to reserve.
+            Select a professor first, then browse that professor’s available office-hour
+            sessions and reserve one.
           </p>
         </header>
 
@@ -360,17 +200,57 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, type3Draft }) {
         {error && <p className="notice error">{error}</p>}
 
         <section className="booking-layout">
+          <section className="card booking-form">
+            <h2>Select Professor</h2>
+
+            <label>
+              Professor / Owner
+              <select value={selectedOwnerId} onChange={handleOwnerChange}>
+                <option value="">-- Select a professor --</option>
+                {availableOwners.map((ownerItem) => (
+                  <option key={ownerItem.id} value={ownerItem.id}>
+                    {ownerItem.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {selectedOwner ? (
+              <div className="invitee-preview-box">
+                <p className="summary-title">Selected Professor</p>
+                <p>{selectedOwner.name}</p>
+                <p>{selectedOwner.email}</p>
+              </div>
+            ) : (
+              <p className="helper-text">
+                Choose a professor to see only that professor’s available Type 3 office hours.
+              </p>
+            )}
+
+            <div className="invitee-preview-box">
+              <p className="summary-title">Current Filter</p>
+              <p>
+                {selectedOwner
+                  ? `Showing available office hours for ${selectedOwner.name}.`
+                  : 'No professor selected yet.'}
+              </p>
+            </div>
+          </section>
+
           <section className="card booking-side-panel">
             <h2>Available Sessions</h2>
 
-            {publicSlots.length === 0 ? (
-              <p>No office-hour sessions are available yet.</p>
+            {loading ? (
+              <p>Loading public Type 3 sessions...</p>
+            ) : !selectedOwnerId ? (
+              <p>Please select a professor first.</p>
+            ) : filteredSlots.length === 0 ? (
+              <p>No available office-hour sessions for this professor.</p>
             ) : (
               <div className="summary-list summary-list-scroll">
-                {publicSlots.map((slot) => {
-                  const bookedCount = bookingCounts[slot.id] || 0;
-                  const isFull = bookedCount >= slot.capacity;
-                  const isSelected = selectedSlotId === slot.id;
+                {filteredSlots.map((slot) => {
+                  const isSelected = String(selectedSlotId) === String(slot.id);
+                  const isFull = !slot.isAvailable;
 
                   return (
                     <div
@@ -389,20 +269,24 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, type3Draft }) {
                         }}
                       >
                         <p className="summary-title">{slot.title}</p>
+                        <p>Professor: {slot.owner?.name || 'Unknown'}</p>
                         <p>Start: {formatReadableDateTime(slot.start)}</p>
                         <p>End: {formatReadableDateTime(slot.end)}</p>
-                        <p>Week {slot.weekIndex}</p>
-                        <p>Reserved: {bookedCount} / {slot.capacity}</p>
+                        <p>Reserved: {slot.bookedCount || 0} / {slot.capacity || 1}</p>
                         <p>Status: {isFull ? 'Full' : 'Available'}</p>
                       </div>
 
                       <button
                         type="button"
                         className="button secondary"
-                        onClick={() => handleBookSlot(slot.id)}
-                        disabled={isFull}
+                        onClick={() => handleReserveSlot(slot.id)}
+                        disabled={isFull || reservingSlotId === slot.id}
                       >
-                        {isFull ? 'Full' : 'Reserve'}
+                        {isFull
+                          ? 'Full'
+                          : reservingSlotId === slot.id
+                            ? 'Reserving...'
+                            : 'Reserve'}
                       </button>
                     </div>
                   );
@@ -410,53 +294,49 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, type3Draft }) {
               </div>
             )}
           </section>
+        </section>
 
-          <section className="card booking-side-panel">
-            <h2>Selected Session</h2>
+        <section className="card booking-side-panel" style={{ marginBottom: '24px' }}>
+          <h2>Selected Session</h2>
 
-            {!selectedSlot ? (
-              <p>Select a session from the list or calendar.</p>
-            ) : (
-              <div className="summary-list">
-                <div className="summary-item">
-                  <div className="summary-main">
-                    <p className="summary-title">{selectedSlot.title}</p>
-                    <p>Start: {formatReadableDateTime(selectedSlot.start)}</p>
-                    <p>End: {formatReadableDateTime(selectedSlot.end)}</p>
-                    <p>Week {selectedSlot.weekIndex}</p>
-                    <p>
-                      Reserved: {(bookingCounts[selectedSlot.id] || 0)} / {selectedSlot.capacity}
-                    </p>
-                    <p>
-                      Status:{' '}
-                      {(bookingCounts[selectedSlot.id] || 0) >= selectedSlot.capacity
-                        ? 'Full'
-                        : 'Available'}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="button secondary"
-                    onClick={() => handleBookSlot(selectedSlot.id)}
-                    disabled={(bookingCounts[selectedSlot.id] || 0) >= selectedSlot.capacity}
-                  >
-                    {(bookingCounts[selectedSlot.id] || 0) >= selectedSlot.capacity
-                      ? 'Full'
-                      : 'Reserve'}
-                  </button>
+          {!selectedSlot ? (
+            <p>Select a session from the list or calendar.</p>
+          ) : (
+            <div className="summary-list">
+              <div className="summary-item">
+                <div className="summary-main">
+                  <p className="summary-title">{selectedSlot.title}</p>
+                  <p>Professor: {selectedSlot.owner?.name || 'Unknown'}</p>
+                  <p>Professor Email: {selectedSlot.owner?.email || 'N/A'}</p>
+                  <p>Start: {formatReadableDateTime(selectedSlot.start)}</p>
+                  <p>End: {formatReadableDateTime(selectedSlot.end)}</p>
+                  <p>Reserved: {selectedSlot.bookedCount || 0} / {selectedSlot.capacity || 1}</p>
+                  <p>Status: {selectedSlot.isAvailable ? 'Available' : 'Full'}</p>
                 </div>
+
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => handleReserveSlot(selectedSlot.id)}
+                  disabled={!selectedSlot.isAvailable || reservingSlotId === selectedSlot.id}
+                >
+                  {!selectedSlot.isAvailable
+                    ? 'Full'
+                    : reservingSlotId === selectedSlot.id
+                      ? 'Reserving...'
+                      : 'Reserve'}
+                </button>
               </div>
-            )}
-          </section>
+            </div>
+          )}
         </section>
 
         <section className="card calendar-section">
           <div className="calendar-section-header">
             <h2>Calendar View</h2>
             <p>
-              Click a session on the calendar to select it. The title shows current
-              reservations versus capacity.
+              After selecting a professor, only that professor’s available office hours
+              are shown on the calendar.
             </p>
           </div>
 
