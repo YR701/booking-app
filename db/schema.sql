@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('student', 'owner') NOT NULL
 );
 
+
 CREATE TABLE IF NOT EXISTS slots (
     id INT AUTO_INCREMENT PRIMARY KEY,
     owner_id INT NOT NULL,
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS slots (
     CONSTRAINT fk_slots_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_slots_booked_by FOREIGN KEY (booked_by_user_id) REFERENCES users (id) ON DELETE SET NULL
 );
+
 
 -- Type1 Request a Meeting
 CREATE TABLE IF NOT EXISTS request (
@@ -54,3 +56,35 @@ CREATE TABLE IF NOT EXISTS request (
 --     status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
 --     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 --     CONSTRAINT fk_group_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
+
+
+# Type 3
+CREATE TABLE IF NOT EXISTS type3_slots (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  owner_id INT NOT NULL,
+  title VARCHAR(500) NOT NULL,
+  start_time DATETIME NOT NULL,
+  end_time DATETIME NOT NULL,
+  location VARCHAR(500) NOT NULL DEFAULT '',
+  notes TEXT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  capacity INT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_type3_slots_owner
+    FOREIGN KEY (owner_id) REFERENCES users (id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS type3_slot_bookings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  slot_id INT NOT NULL,
+  user_id INT NOT NULL,
+  booked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_type3_slot_bookings_slot
+    FOREIGN KEY (slot_id) REFERENCES type3_slots (id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_type3_slot_bookings_user
+    FOREIGN KEY (user_id) REFERENCES users (id)
+    ON DELETE CASCADE,
+  CONSTRAINT uq_type3_slot_user UNIQUE (slot_id, user_id)
+);

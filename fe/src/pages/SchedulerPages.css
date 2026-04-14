@@ -296,6 +296,16 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.type3-four-column-row {
+  grid-template-columns: 1.2fr 1.2fr 0.8fr 0.7fr;
+}
+
+@media (max-width: 900px) {
+  .type3-four-column-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Mobile / tablet */
 @media (max-width: 900px) {
   .booking-layout {

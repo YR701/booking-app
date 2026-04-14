@@ -23,6 +23,9 @@ function OwnerDashboard({
   user,
   message,
   error,
+  onOpenType2Create,
+  onOpenType3Create,
+  onOpenType3Owner,
 }) {
   return (
     <div>
@@ -31,6 +34,29 @@ function OwnerDashboard({
         userName={user?.name || 'Owner'}
         onLogout={onLogout}
       />
+
+          <div className="testing-nav-buttons" style={{ padding: '16px 24px 0' }}>
+      <h2>Testing Pages</h2>
+      <div className="inline-actions">
+        {onOpenType2Create && (
+          <button type="button" onClick={onOpenType2Create}>
+            Type 2 Create
+          </button>
+        )}
+        {onOpenType3Create && (
+          <button type="button" onClick={onOpenType3Create}>
+            Type 3 Create
+          </button>
+        )}
+        {onOpenType3Owner && (
+          <button type="button" onClick={onOpenType3Owner}>
+            Type 3 Owner
+          </button>
+        )}
+      </div>
+    </div>
+
+
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
       <section className="owner-dashboard grid two">

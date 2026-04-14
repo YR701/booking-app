@@ -1,4 +1,5 @@
 // Author: Jenny Hua
+
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import OwnerDashboard from './pages/OwnerDashboard';
@@ -7,6 +8,7 @@ import BookingPage from './pages/BookingPage';
 import mcgillLogo from './assets/mcgill_logo.png';
 
 import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
+import Type2GroupMeetingVotePage from './pages/Type2GroupMeetingVotePage';
 import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
 import Type3OwnerOfficeHoursPage from './pages/Type3OwnerOfficeHoursPage';
 import Type3OfficeHoursPublicPage from './pages/Type3OfficeHoursPublicPage';
@@ -94,10 +96,10 @@ function App() {
   const [redirectUrl, setRedirectUrl] = useState('');
 
   useEffect(() => {
-    
+
     const invited = new URLSearchParams(window.location.search).get('invite');
     if (invited) {
-      setRedirectUrl(window.location.pathname+window.location.search);
+      setRedirectUrl(window.location.pathname + window.location.search);
     }
 
     async function loadPage() {
@@ -179,7 +181,8 @@ function App() {
     setMessage('Logged out.');
     setError('');
     setShowDashboard(false);
-    setShowBookingPage(false)
+    setShowBookingPage(false);
+    setCurrentPage('home');
   }
 
   function refreshData() {
@@ -383,13 +386,14 @@ function App() {
   if (loading) {
     return <main className="page"><p>Loading...</p></main>;
   }
-  if (user && (user.role === 'student' || showDashboard)) {
-    return (
-      <main className="page">
-        <UserDashboard onLogout={logout} user={user} />
-      </main>
-    );
-  }
+
+  // if (user && (user.role === 'student' || showDashboard)) {
+  //   return (
+  //     <main className="page">
+  //       <UserDashboard onLogout={logout} user={user} />
+  //     </main>
+  //   );
+  // }
 
   if (inviteOwnerId) {
     return (
@@ -428,6 +432,16 @@ function App() {
         user={user}
         type2Draft={type2Draft}
         setType2Draft={setType2Draft}
+      />
+    );
+  }
+  if (currentPage === 'type2-vote') {
+    return (
+      <Type2GroupMeetingVotePage
+        onBack={() => setCurrentPage('home')}
+        onLogout={logout}
+        user={user}
+        type2Draft={type2Draft}
       />
     );
   }
@@ -476,6 +490,36 @@ function App() {
     );
   }
 
+  // if (user && (user.role === 'student' || showDashboard)) {
+  //   return (
+  //     <main className="page">
+  //       <UserDashboard
+  //         onLogout={logout}
+  //         user={user}
+  //         onOpenType2Create={() => setCurrentPage('type2-create')}
+  //         onOpenType2Vote={() => setCurrentPage('type2-vote')}
+  //         onOpenType3Create={() => setCurrentPage('type3-create')}
+  //         onOpenType3Owner={() => setCurrentPage('type3-owner')}
+  //         onOpenType3Public={() => setCurrentPage('type3-public')}
+  //       />
+  //     </main>
+  //   );
+  // }
+  if (user && (user.role === 'student' || showDashboard)) {
+    return (
+      <main className="page">
+        <UserDashboard
+          onLogout={logout}
+          user={user}
+          onOpenType2Vote={() => setCurrentPage('type2-vote')}
+          onOpenType3Public={() => setCurrentPage('type3-public')}
+        />
+      </main>
+    );
+  }
+
+
+
   return (
     <main className="page">
       {!user ? (
@@ -489,6 +533,7 @@ function App() {
               <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
               <button onClick={() => setShowBookingPage(true)}>Booking Page</button>
               <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
+              <button onClick={() => setCurrentPage('type2-vote')}>Type 2 Vote</button>
               <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
               <button onClick={() => setCurrentPage('type3-owner')}>Type 3 Owner</button>
               <button onClick={() => setCurrentPage('type3-public')}>Type 3 Public</button>
@@ -543,7 +588,8 @@ function App() {
               <h2>Login</h2>
               <input
                 type="email"
-                placeholder="student@mail.mcgill.ca"
+                // placeholder="student@mail.mcgill.ca"
+                placeholder="name@mcgill.ca or name@mail.mcgill.ca"
                 value={loginForm.email}
                 onChange={(event) =>
                   setLoginForm({ ...loginForm, email: event.target.value })
@@ -579,6 +625,9 @@ function App() {
           user={user}
           message={message}
           error={error}
+          onOpenType2Create={() => setCurrentPage('type2-create')}
+          onOpenType3Create={() => setCurrentPage('type3-create')}
+          onOpenType3Owner={() => setCurrentPage('type3-owner')}
         />
       )}
     </main>

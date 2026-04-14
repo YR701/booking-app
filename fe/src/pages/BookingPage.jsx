@@ -1,5 +1,5 @@
 /* Author: Yongrong Yang */
-import './BookingPages.css';
+import './BookingPage.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect, use } from 'react';
 

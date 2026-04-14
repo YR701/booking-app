@@ -1,11 +1,18 @@
 /* Author: Yongrong Yang */
+
 import './UserDashboard.css'
 import DashboardTopnav from '../components/DashboardTopnav';
 //import UserCalendar from '../components/UserCalendar';
 import { useState, useEffect } from 'react';
 import { buildMailto } from '../utils/mailto';
 
-function UserDashboard({ onLogout, user }) {
+// function UserDashboard({ onLogout, user }) {
+function UserDashboard({
+  onLogout,
+  user,
+  onOpenType2Vote,
+  onOpenType3Public,
+}) {
   //UserCalendar back to dashboard function
   const [showCalendar, setShowCalendar] = useState(false);
   const [appointments, setAppointments] = useState([]);
@@ -141,6 +148,37 @@ function UserDashboard({ onLogout, user }) {
     }
   }
 
+  const handleBook = async (slot) => {
+    try {
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch(`http://localhost:4000/api/slots/${slot.id}/book`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to book office hour');
+      }
+
+      setMessage('Office hour booked successfully');
+      setError('');
+      await fetchAppointments();
+
+      if (selectedOwnerId) {
+        await fetchSlots(selectedOwnerId);
+      }
+    } catch (error) {
+      console.error(error);
+      setError(error.message || 'Error booking office hour. Please try again later.');
+      setMessage('');
+    }
+  };
+
+
+
   //request a meeting functions
 
   //handle request a meeting, send a message to the owner
@@ -148,7 +186,8 @@ function UserDashboard({ onLogout, user }) {
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
     const reason = document.getElementById('reason').value;
-    const ownerId = currentOwner.id;
+    // const ownerId = currentOwner.id;
+    const ownerId = selectedRequestOwnerId;
 
     //verify the input info
     if (!startTime || !endTime || !reason || !ownerId) {
@@ -160,7 +199,8 @@ function UserDashboard({ onLogout, user }) {
       return;
     }
 
-    const selectedOwner = owners.find(owner => owner.id === ownerId);
+    // const selectedOwner = owners.find(owner => owner.id === ownerId);
+    const selectedOwner = owners.find(owner => String(owner.id) === String(ownerId));
     if (!selectedOwner) {
       alert('Invalid owner selected.');
       return;
@@ -185,7 +225,8 @@ function UserDashboard({ onLogout, user }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error('Failed to request a meeting');
+        // throw new Error('Failed to request a meeting');
+        throw new Error(errorData.error || 'Failed to request a meeting');
       }
 
       setMessage('Meeting request sent successfully');
@@ -203,7 +244,8 @@ function UserDashboard({ onLogout, user }) {
       //send email notification to the owner
       const subject = 'New Meeting Request';
       const body = `You have a new meeting request from ${user.name} (${user.email}).\n\nReason: ${reason}\n\nRequested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
-      const mailtoLink = buildMailto(currentOwner.email, subject, body);
+      // const mailtoLink = buildMailto(currentOwner.email, subject, body);
+      const mailtoLink = buildMailto(selectedOwner.email, subject, body);
       console.log('Generated mailto link:', mailtoLink);
       //window.location.href = mailtoLink;
 
@@ -268,11 +310,32 @@ function UserDashboard({ onLogout, user }) {
         userName={user?.name || 'Student'}
         onLogout={onLogout}
       />
+
+      <div className="testing-nav-buttons" style={{ padding: '16px 24px 0' }}>
+        <h2>Testing Pages</h2>
+        <div className="inline-actions">
+          {onOpenType2Vote && (
+            <button type="button" onClick={onOpenType2Vote}>
+              Type 2 Vote
+            </button>
+          )}
+          {onOpenType3Public && (
+            <button type="button" onClick={onOpenType3Public}>
+              Type 3 Public
+            </button>
+          )}
+        </div>
+      </div>
+
+
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
       <div className="appointment">
         <h1>My Appointments</h1>
-        {appointments.length === 0 ? (
+        {/* {appointments.length === 0 ? ( */}
+         {loading ? (
+          <p>Loading appointments...</p>
+        ) : appointments.length === 0 ? (
           <p>No appointments booked.</p>
         ) : (
           appointments.map(appointment => (
@@ -280,14 +343,16 @@ function UserDashboard({ onLogout, user }) {
               <h2>{appointment.owner?.name}</h2>
               <p>{appointment.title}</p>
               <p>
-                {new Date(appointment.start).toLocaleDateString()}
+                {/* {new Date(appointment.start).toLocaleDateString()} */}
+                {new Date(appointment.start).toLocaleDateString()}{' '}
                 {new Date(appointment.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                {new Date(appointment.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                {new Date(appointment.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
               <div className="appointment-buttons">
                 <button onClick={() => window.location.href = `mailto:${appointment.owner?.email}`}>
                   Email
                 </button>
-                <button onClick={() => onCancel(appointment.id)}> Cancel</button>
+                <button onClick={() => onCancel(appointment.id)}>Cancel</button>
               </div>
             </div>
           ))
@@ -301,7 +366,8 @@ function UserDashboard({ onLogout, user }) {
               <h2>{request.owner?.name}</h2>
               <p>{request.title}</p>
               <p>
-                {new Date(request.start).toLocaleDateString()}
+                {/* {new Date(request.start).toLocaleDateString()} */}
+                {new Date(request.start).toLocaleDateString()}{' '}
                 {new Date(request.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
                 {new Date(request.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
@@ -348,7 +414,8 @@ function UserDashboard({ onLogout, user }) {
                   <div className='slots-item' key={slot.id}>
                     <p className="slot-time">
                       {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                      {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                      {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
                     <button onClick={() => handleBook(slot)}>Book Office Hour</button>
                   </div>
                 ))}
@@ -364,7 +431,8 @@ function UserDashboard({ onLogout, user }) {
         <div className='request-form'>
           <div className='request-form-item'>
             <label>Select a Professor</label>
-            <select id="ownersID" onChange={(e) => setSelectedRequestOwnerId(e.target.value)}>
+            {/* <select id="ownersID" onChange={(e) => setSelectedRequestOwnerId(e.target.value)}> */}
+            <select id="ownersID" value={selectedRequestOwnerId} onChange={(e) => setSelectedRequestOwnerId(e.target.value)}>
               <option value="">-- Select an owner --</option>
               {owners.map(owner => (
                 <option key={owner.id} value={owner.id}>
