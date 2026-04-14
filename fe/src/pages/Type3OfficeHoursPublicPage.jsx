@@ -1,7 +1,7 @@
 /* Author: Hanjing Zheng */
 
 import { useMemo, useState } from 'react';
-import './BookingPages.css';
+import './SchedulerPages.css';
 import UserCalendarTopnav from '../components/CalendarTopnav';
 import CalendarGrid from '../components/CalendarGrid';
 
@@ -123,7 +123,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, type3Draft }) {
             {publicSlots.length === 0 ? (
               <p>No office-hour sessions are available yet.</p>
             ) : (
-              <div className="summary-list">
+              <div className="summary-list summary-list-scroll">
                 {publicSlots.map((slot) => {
                   const isBooked = bookedSlotIds.includes(slot.id);
                   const isSelected = selectedSlotId === slot.id;
