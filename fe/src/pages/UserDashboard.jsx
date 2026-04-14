@@ -1,6 +1,7 @@
 /* Author: Yongrong Yang */
 
-import './UserDashboard.css'
+import './UserDashboard.css';
+import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 //import UserCalendar from '../components/UserCalendar';
 import { useState, useEffect } from 'react';
@@ -234,13 +235,12 @@ function UserDashboard({
         onLogout={onLogout}
       />
 
-      {/* testing pages */}
-      <div className="testing-nav-buttons" style={{ padding: '16px 24px 0' }}>
-        <h2>Testing Pages</h2>
+      {/* switch to other pages */}
+      <div className="switch-buttons">
         <div className="inline-actions">
           {user?.role === 'owner' && onSwitchToOwnerDashboard && (
             <button type="button" onClick={onSwitchToOwnerDashboard}>
-              Return to Owner Dashboard
+              Return to User Dashboard
             </button>
           )}
           {onOpenType2Vote && (

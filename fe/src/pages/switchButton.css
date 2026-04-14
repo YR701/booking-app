@@ -1,0 +1,30 @@
+.switch-buttons {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.switch-buttons .inline-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap : 0;
+}
+
+.switch-buttons button {
+    flex: 1;
+    border: none;
+    border-radius: 0%;
+    background: var(--accent);
+    color: #ffffff;
+    cursor: pointer;
+    font-size: clamp(12px, 3.5vw, 14px);
+}
+
+.switch-buttons button:hover {
+    background-color: #757575;
+    color: #ffffff;
+}
+

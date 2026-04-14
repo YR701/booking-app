@@ -464,6 +464,8 @@ function App() {
         user={user}
         type3Draft={type3Draft}
         setType3Draft={setType3Draft}
+        onOpenType2Vote={() => setCurrentPage('type2-vote')}
+        onOpenUserDashboard={() => setCurrentPage('home')}
       />
     );
   }
@@ -486,6 +488,11 @@ function App() {
         onLogout={logout}
         user={user}
         type3Draft={type3Draft}
+        onOpenType2Vote={() => setCurrentPage('type2-vote')}
+        onOpenUserDashboard={() => {
+          setCurrentPage('home');
+          setShowDashboard(true);
+        }}
       />
     );
   }

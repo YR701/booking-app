@@ -1,6 +1,7 @@
 // Author: Jenny Hua
 
 import './OwnerDashboard.css';
+import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 
 /**
@@ -37,8 +38,7 @@ function OwnerDashboard({
         onLogout={onLogout}
       />
 
-      <div className="testing-nav-buttons" style={{ padding: '16px 24px 0' }}>
-        <h2>Testing Pages</h2>
+      <div className="switch-buttons">
         <div className="inline-actions">
           {onOpenType2Create && (
             <button type="button" onClick={onOpenType2Create}>

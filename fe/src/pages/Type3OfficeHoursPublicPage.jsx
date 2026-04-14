@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
-import UserCalendarTopnav from '../components/CalendarTopnav';
+import './switchButton.css';
+import DashboardTopnav from '../components/DashboardTopnav';
 import CalendarGrid from '../components/CalendarGrid';
 
 const API_BASE = 'http://localhost:4000/api';
@@ -16,7 +17,7 @@ function formatReadableDateTime(dateInput) {
   });
 }
 
-function Type3OfficeHoursPublicPage({ onBack, onLogout, user }) {
+function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, onOpenUserDashboard }) {
   const [publicSlots, setPublicSlots] = useState([]);
   const [selectedOwnerId, setSelectedOwnerId] = useState('');
   const [selectedSlotId, setSelectedSlotId] = useState(null);
@@ -181,11 +182,27 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user }) {
 
   return (
     <>
-      <UserCalendarTopnav
-        userEmail={user?.email}
+      <DashboardTopnav
+        userEmail={user?.email || 'user@mail.mcgill.ca'}
+        userName={user?.name || 'Student'}
         onLogout={onLogout}
-        onBackHome={onBack}
       />
+
+      {/* switch to other pages */}
+      <div className="switch-buttons">
+        <div className="inline-actions">
+          {onOpenUserDashboard && (
+            <button type="button" onClick={onOpenUserDashboard}>
+              Back to User Dashboard
+            </button>
+          )}
+          {onOpenType2Vote && (
+            <button type="button" onClick={onOpenType2Vote}>
+              Type 2 Vote
+            </button>
+          )}
+        </div>
+      </div>
 
       <main className="booking-page">
         <header className="booking-header">
