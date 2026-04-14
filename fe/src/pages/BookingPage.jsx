@@ -4,7 +4,7 @@ import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect, use } from 'react';
 
 
-function BookingPage({ onLogout, user, inviteOwnerId}) {
+function BookingPage({ onLogout, user, inviteOwnerId }) {
 
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -15,13 +15,13 @@ function BookingPage({ onLogout, user, inviteOwnerId}) {
 
     useEffect(() => {
         if (inviteOwnerId)
-        fetchSlots();
-    } , [ownerID]);
+            fetchSlots();
+    }, [inviteOwnerId, user]);
 
     const fetchSlots = async () => {
         try {
             const token = localStorage.getItem('comp307-booking-token');
-            const response = await fetch('http://localhost:4000/api/users/${inviteOwnerId}/slots', {
+            const response = await fetch(`http://localhost:4000/api/owners/${inviteOwnerId}/slots`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -33,12 +33,16 @@ function BookingPage({ onLogout, user, inviteOwnerId}) {
             setOwner(data.owner);
             setSlots(data.slots);
             setShowLogin(false);
+            setError('');
         } catch (error) {
             console.error(error);
             setError('Error loading appointments. Please try again later.');
             setSlots([]);
+        } finally {
+            setLoading(false);
         }
     };
+
 
     return (
         <div>
@@ -58,16 +62,17 @@ function BookingPage({ onLogout, user, inviteOwnerId}) {
                     slots.map(slots => (
                         <div className="slots-info" key={slots.id}>
                             <h2>{slots.owner?.name}</h2>
-                            <p>{appointment.title}</p>
+                            <p>{slots.title}</p>
                             <p>
-                                {new Date(appointment.start).toLocaleDateString()}
-                                {new Date(appointment.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                                {new Date(appointment.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                            <div className="appointment-buttons">
-                                <button onClick={() => window.location.href = `mailto:${appointment.owner?.email}`}>
+                                {new Date(slots.start).toLocaleDateString()}
+                                {new Date(slots.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                                {new Date(slots.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            <div className="slots-buttons">
+                                <button onClick={() => window.location.href = `mailto:${slots.owner?.email}`}>
                                     Email
                                 </button>
-                                <button onClick={() => onCancel(appointment.id)}> Cancel</button>
+
                             </div>
                         </div>
                     ))

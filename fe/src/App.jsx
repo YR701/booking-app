@@ -91,9 +91,15 @@ function App() {
 
   const [showDashboard, setShowDashboard] = useState(false);
   const [showBookingPage, setShowBookingPage] = useState(false);
-
+  const [redirectUrl, setRedirectUrl] = useState('');
 
   useEffect(() => {
+    
+    const invited = new URLSearchParams(window.location.search).get('invite');
+    if (invited) {
+      setRedirectUrl(window.location.pathname+window.location.search);
+    }
+
     async function loadPage() {
       if (!token) {
         setUser(null);
@@ -211,6 +217,10 @@ function App() {
       saveSession(result.token, result.user);
       setLoginForm({ email: '', password: '' });
       setMessage('Logged in.');
+
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -394,13 +404,13 @@ function App() {
   }
 
 
-  if (showBookingPage) {
-    return (
-      <main className="page">
-        <BookingPage onLogout={logout} user={user} />
-      </main>
-    );
-  }
+  // if (showBookingPage) {
+  //   return (
+  //     <main className="page">
+  //       <BookingPage onLogout={logout} user={user} />
+  //     </main>
+  //   );
+  // }
   // if (currentPage === 'type2-create') {
   //   return (
   //     <Type2CreateGroupMeetingPage
