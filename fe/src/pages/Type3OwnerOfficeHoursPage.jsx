@@ -1,12 +1,10 @@
 /* Author: Hanjing Zheng */
 
+import { API_BASE, TOKEN_KEY } from '../config';
 import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
 import UserCalendarTopnav from '../components/CalendarTopnav';
 import CalendarGrid from '../components/CalendarGrid';
-
-const API_BASE = 'http://localhost:4000/api';
-const TOKEN_KEY = 'comp307-booking-token';
 
 function formatReadableDateTime(dateInput) {
   const date = new Date(dateInput);
