@@ -1,27 +1,33 @@
 /* Author: Yongrong Yang */
 
+import { API_BASE, TOKEN_KEY } from '../config';
 import './BookingPage.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
+import { buildMailto } from '../utils/mailto';
+import { formatDateTimeRange } from '../utils/formatTime';
+import { fetchOfficeHourSlots } from '../utils/fetchOfficeHourSlots';
 
 function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
+    const [localMessage, setLocalMessage] = useState('');
+    const [localError, setLocalError] = useState('');
     const [slots, setSlots] = useState([]);
     const [owner, setOwner] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [officeHourSlots, setOfficeHourSlots] = useState([]);
 
     useEffect(() => {
         if (inviteOwnerId) {
             fetchSlots();
+            loadOfficeHourSlots(inviteOwnerId);
         }
     }, [inviteOwnerId, user]);
 
     const fetchSlots = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('comp307-booking-token');
-            const response = await fetch(`http://localhost:4000/api/owners/${inviteOwnerId}/slots`, {
+            const token = localStorage.getItem(TOKEN_KEY);
+            const response = await fetch(`${API_BASE}/owners/${inviteOwnerId}/slots`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -32,10 +38,10 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
             const data = await response.json();
             setOwner(data.owner);
             setSlots(data.slots);
-            setError('');
+            setLocalError('');
         } catch (error) {
             console.error(error);
-            setError('Error loading appointments. Please try again later.');
+            setLocalError('Error loading appointments. Please try again later.');
             setSlots([]);
         } finally {
             setLoading(false);
@@ -44,8 +50,8 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
 
     const handleBook = async (slot) => {
         try {
-            const token = localStorage.getItem('comp307-booking-token');
-            const response = await fetch(`http://localhost:4000/api/slots/${slot.id}/book`, {
+            const token = localStorage.getItem(TOKEN_KEY);
+            const response = await fetch(`${API_BASE}/slots/${slot.id}/book`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -53,20 +59,35 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
                 },
             });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to book office hour');
-      }
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to book office hour');
+            }
 
-            setMessage('Office hour booked successfully');
-            setError('');
+            setLocalMessage('Office hour booked successfully');
+            setLocalError('');
             await fetchSlots();
         } catch (error) {
             console.error(error);
-            setError(error.message || 'Error booking office hour. Please try again later.');
-            setMessage('');
+            setLocalError(error.message || 'Error booking office hour. Please try again later.');
+            setLocalMessage('');
         }
     };
+
+    //load owner's office hour slots
+    const loadOfficeHourSlots = async (ownerId) => {
+        const { slots, owner, error } = await fetchOfficeHourSlots(ownerId);
+
+        if (error) {
+            setLocalError(error);
+        } else {
+            setOfficeHourSlots(slots);
+            setLocalError('');
+            if (owner) {
+                setOwner(owner);
+            }
+        }
+    }
 
     return (
         <div>
@@ -90,25 +111,48 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
                     </button>
                 )}
             </section>
-            {message && <div className="notice success">{message}</div>}
-            {error && <div className="notice error">{error}</div>}
+            {localMessage && <div className="notice success">{localMessage}</div>}
+            {localError && <div className="notice error">{localError}</div>}
 
+            {/* One-time slots */}
             <div className="slots">
-                <h2>Available Slots</h2>
+                <h2>Available One-Time Slots</h2>
                 {loading ? (
                     <p>Loading slots...</p>
                 ) : slots.length === 0 ? (
-                    <p>No available slots.</p>
+                    <p>No available one-time slots.</p>
                 ) : (
                     slots.map((slot) => (
                         <div className="slots-info" key={slot.id}>
                             <h3>{slot.owner?.name || owner?.name || 'Owner'}</h3>
                             <p>{slot.title}</p>
-                            <p>
-                                {new Date(slot.start).toLocaleDateString()}{' '}
-                                {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
-                                {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
+                            <p>{formatDateTimeRange(slot.start, slot.end)}</p>
+                            <div className="slot-actions">
+                                <button type="button" onClick={() => handleBook(slot)}>
+                                    Book
+                                </button>
+                                <button type="button" onClick={() => window.location.href = `mailto:${slot.owner?.email}`}>
+                                    Email
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* Office hour slots */}
+            <div className="slots">
+                <h2>Available Office Hour Slots</h2>
+                {loading ? (
+                    <p>Loading slots...</p>
+                ) : officeHourSlots.length === 0 ? (
+                    <p>No available office hour slots.</p>
+                ) : (
+                    officeHourSlots.map((slot) => (
+                        <div className="slots-info" key={slot.id}>
+                            <h3>{slot.owner?.name || owner?.name || 'Owner'}</h3>
+                            <p>{slot.title}</p>
+                            <p>{formatDateTimeRange(slot.start, slot.end)}</p>
                             <div className="slot-actions">
                                 <button type="button" onClick={() => handleBook(slot)}>
                                     Book
