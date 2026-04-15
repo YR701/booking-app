@@ -15,17 +15,18 @@ function UserDashboard({
   onOpenType3Public,
   owners = [],
   myBookings = [],
+  selectedOwnerId = '',
+  selectedOwner = null,
+  slots = [],
   loading = false,
   message = '',
   error = '',
   onBookSlot,
   onCancelBooking,
+  onSelectOwner,
   onSwitchToOwnerDashboard,
 }) {
   //UserCalendar back to dashboard function
-  const [selectedOwnerId, setSelectedOwnerId] = useState(null);
-  const [slots, setSlots] = useState([]);
-  const [currentOwner, setCurrentOwner] = useState(null);
   const [requests, setRequests] = useState([]);
   const [selectedRequestOwnerId, setSelectedRequestOwnerId] = useState('');
   const [localMessage, setLocalMessage] = useState('');
@@ -185,47 +186,24 @@ function UserDashboard({
   const handleOwnerChange = async (event) => {
     const value = event.target.value;
 
-    if (value === '') {
-      setSelectedOwnerId(null);
-      setCurrentOwner(null);
-      setSlots([]);
-    } else {
-      setSelectedOwnerId(value);
-      await fetchSlots(value);
+    if (!onSelectOwner) {
+      return;
     }
-  }
 
-  //fetch the available slots of the selected owner
-  const fetchSlots = async (ownerId) => {
     try {
-      const token = localStorage.getItem('comp307-booking-token');
-      const response = await fetch(`http://localhost:4000/api/owners/${ownerId}/slots`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch slots');
-      }
-      const data = await response.json();
-      setCurrentOwner(data.owner);
-      setSlots(data.slots);
+      await onSelectOwner(value);
       setLocalError('');
     } catch (error) {
       console.error(error);
       setLocalError('Error loading slots. Please try again later.');
-      setSlots([]);
     }
-  }
+  };
 
   const handleBookOfficeHour = async (slotId) => {
     try {
       await onBookSlot(slotId);
       setLocalMessage('Office hour booked successfully');
       setLocalError('');
-      if (selectedOwnerId) {
-        await fetchSlots(selectedOwnerId);
-      }
     } catch (error) {
       console.error(error);
       setLocalError(error.message || 'Error booking office hour. Please try again later.');
@@ -363,36 +341,40 @@ function UserDashboard({
           </select>
         </div>
 
-        {currentOwner !== null ? (
+        {selectedOwner !== null ? (
           <div>
             <h2>Available Slots</h2>
             <div className="owner-info">
               <div className="owner-header">
                 <div>
-                  <h2>{currentOwner.name}</h2>
-                  <h3>{currentOwner.email}</h3>
+                  <h2>{selectedOwner.name}</h2>
+                  <h3>{selectedOwner.email}</h3>
                 </div>
                 <div className="owner-contact">
-                  <button className="email-button" onClick={() => window.location.href = `mailto:${currentOwner.email}`}>Send Message</button>
+                  <button className="email-button" onClick={() => window.location.href = `mailto:${selectedOwner.email}`}>Send Message</button>
                 </div>
               </div>
 
               <div className='slots-list'>
-                {slots.map((slot) => (
-                  <div className='slots-item' key={slot.id}>
-                    <p className="slot-time">
-                      {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                      {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                    {slot.bookedBy ? (
-                      <p>Reserved</p>
-                    ) : (
-                      <button type="button" onClick={() => handleBookOfficeHour(slot.id)}>
-                        Book Office Hour
-                      </button>
-                    )}
-                  </div>
-                ))}
+                {slots.length === 0 ? (
+                  <p>No active slots available for this owner.</p>
+                ) : (
+                  slots.map((slot) => (
+                    <div className='slots-item' key={slot.id}>
+                      <p className="slot-time">
+                        {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                        {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {slot.bookedBy ? (
+                        <p>Reserved</p>
+                      ) : (
+                        <button type="button" onClick={() => handleBookOfficeHour(slot.id)}>
+                          Book Office Hour
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
