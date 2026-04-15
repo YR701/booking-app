@@ -379,4 +379,42 @@ router.delete('/type3/slots/:slotId', authMiddleware, ownerOnly, async (req, res
   }
 });
 
+router.get('/type3/users/by-email', authMiddleware, async (req, res) => {
+  try {
+    const email = String(req.query.email || '').trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email query parameter is required.' });
+    }
+
+    const [rows] = await pool.execute(
+      `
+      SELECT id, name, email, role
+      FROM users
+      WHERE LOWER(email) = ?
+      LIMIT 1
+      `,
+      [email]
+    );
+
+    const user = rows[0];
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Get user by email for Type 3 error:', error);
+    return res.status(500).json({ error: 'Unable to fetch user by email.' });
+  }
+});
+
 module.exports = router;
