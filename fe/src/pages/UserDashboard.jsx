@@ -15,18 +15,16 @@ function UserDashboard({
   onOpenType3Public,
   owners = [],
   myBookings = [],
-  selectedOwnerId = '',
-  selectedOwner = null,
-  slots = [],
   loading = false,
   message = '',
   error = '',
-  onBookSlot,
-  onCancelBooking,
-  onSelectOwner,
   onSwitchToOwnerDashboard,
 }) {
   //UserCalendar back to dashboard function
+  const [selectedOwnerId, setSelectedOwnerId] = useState(null);
+  const [oneTimeSlots, setOneTimeSlots] = useState([]);
+  const [officeHourSlots, setOfficeHourSlots] = useState([]);
+  const [currentOwner, setCurrentOwner] = useState(null);
   const [requests, setRequests] = useState([]);
   const [selectedRequestOwnerId, setSelectedRequestOwnerId] = useState('');
   const [localMessage, setLocalMessage] = useState('');
@@ -39,12 +37,23 @@ function UserDashboard({
   //cancel appointment
   const onCancel = async (id) => {
     try {
-      await onCancelBooking(id);
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch(`http://localhost:4000/api/slots/${id}/booking`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error('Failed to cancel appointment');
+      }
       setLocalMessage('Appointment canceled successfully');
       setLocalError('');
+      // Refresh will be handled by parent, or user can re-trigger
     } catch (error) {
       console.error(error);
-      setLocalError(error.message || 'Error canceling appointment. Please try again later.');
+      setLocalError('Error canceling appointment. Please try again later.');
       setLocalMessage('');
     }
   };
@@ -186,30 +195,75 @@ function UserDashboard({
   const handleOwnerChange = async (event) => {
     const value = event.target.value;
 
-    if (!onSelectOwner) {
-      return;
+    if (value === '') {
+      setSelectedOwnerId(null);
+      setCurrentOwner(null);
+      setOneTimeSlots([]);
+      setOfficeHourSlots([]);
+    } else {
+      setSelectedOwnerId(value);
+      await fetchOneTimeSlots(value);
+      await fetchOfficeHourSlots(value);
     }
+  }
 
+  //fetch the one-time slots of the selected owner
+  const fetchOneTimeSlots = async (ownerId) => {
     try {
-      await onSelectOwner(value);
+      const token = localStorage.getItem('comp307-booking-token');
+      const response = await fetch(`http://localhost:4000/api/owners/${ownerId}/slots`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        console.warn('Failed to fetch one-time slots:', response.status);
+        setOneTimeSlots([]);
+        return;
+      }
+
+      const data = await response.json();
+      const slots = data.slots || [];
+      slots.sort((a, b) => new Date(a.start) - new Date(b.start));
+      setOneTimeSlots(slots);
+      setCurrentOwner(data.owner);
       setLocalError('');
     } catch (error) {
-      console.error(error);
-      setLocalError('Error loading slots. Please try again later.');
+      console.error('Error fetching one-time slots:', error);
+      setOneTimeSlots([]);
     }
-  };
+  }
 
-  const handleBookOfficeHour = async (slotId) => {
+  //fetch the office hours (type3 slots) of the selected owner
+  const fetchOfficeHourSlots = async (ownerId) => {
     try {
-      await onBookSlot(slotId);
-      setLocalMessage('Office hour booked successfully');
+      const token = localStorage.getItem('comp307-booking-token');
+      const ohresponse = await fetch(`http://localhost:4000/api/type3/owners/${ownerId}/slots`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!ohresponse.ok) {
+        console.warn('Failed to fetch office hour slots:', ohresponse.status);
+        setOfficeHourSlots([]);
+        return;
+      }
+
+      const ohdata = await ohresponse.json();
+      const slots = ohdata.slots || [];
+      slots.sort((a, b) => new Date(a.start) - new Date(b.start));
+      setOfficeHourSlots(slots);
+      if (ohdata.owner) {
+        setCurrentOwner(ohdata.owner);
+      }
       setLocalError('');
     } catch (error) {
-      console.error(error);
-      setLocalError(error.message || 'Error booking office hour. Please try again later.');
-      setLocalMessage('');
+      console.error('Error fetching office hour slots:', error);
+      setOfficeHourSlots([]);
     }
-  };
+  }
 
   
 
@@ -341,39 +395,58 @@ function UserDashboard({
           </select>
         </div>
 
-        {selectedOwner !== null ? (
+        {currentOwner !== null ? (
           <div>
             <h2>Available Slots</h2>
             <div className="owner-info">
               <div className="owner-header">
                 <div>
-                  <h2>{selectedOwner.name}</h2>
-                  <h3>{selectedOwner.email}</h3>
+                  <h2>{currentOwner.name}</h2>
+                  <h3>{currentOwner.email}</h3>
                 </div>
                 <div className="owner-contact">
-                  <button className="email-button" onClick={() => window.location.href = `mailto:${selectedOwner.email}`}>Send Message</button>
+                  <button className="email-button" onClick={() => window.location.href = `mailto:${currentOwner.email}`}>Send Message</button>
                 </div>
               </div>
 
-              <div className='slots-list'>
-                {slots.length === 0 ? (
-                  <p>No active slots available for this owner.</p>
+              {/* One-time slots section */}
+              <div>
+                <h3>One-time Slots</h3>
+                {oneTimeSlots.length === 0 ? (
+                  <p>No one-time slots available.</p>
                 ) : (
-                  slots.map((slot) => (
-                    <div className='slots-item' key={slot.id}>
-                      <p className="slot-time">
-                        {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                        {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      {slot.bookedBy ? (
-                        <p>Reserved</p>
-                      ) : (
-                        <button type="button" onClick={() => handleBookOfficeHour(slot.id)}>
-                          Book Office Hour
-                        </button>
-                      )}
-                    </div>
-                  ))
+                  <div className='slots-list'>
+                    {oneTimeSlots.map((slot) => (
+                      <div className='slots-item' key={slot.id}>
+                        <p className="slot-time">
+                          {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                          {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <button>Book Appointment</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Office hours section */}
+              <div>
+                <h3>Office Hours</h3>
+                {officeHourSlots.length === 0 ? (
+                  <p>No office hours available.</p>
+                ) : (
+                  <div className='slots-list'>
+                    {officeHourSlots.map((slot) => (
+                      <div className='slots-item' key={slot.id}>
+                        <p className="slot-time">
+                          {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                          {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <p className="slot-type">Office Hours</p>
+                        <button>Book Appointment</button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

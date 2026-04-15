@@ -529,15 +529,9 @@ function App() {
           onOpenType3Public={() => setCurrentPage('type3-public')}
           owners={owners}
           myBookings={myBookings}
-          selectedOwnerId={selectedOwnerId}
-          selectedOwner={selectedOwner}
-          slots={slots}
           loading={loading}
           message={message}
           error={error}
-          onBookSlot={bookSlot}
-          onCancelBooking={cancelBooking}
-          onSelectOwner={selectOwner}
           onSwitchToOwnerDashboard={() => setShowDashboard(false)}
         />
       </main>

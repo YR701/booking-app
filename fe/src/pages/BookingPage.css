@@ -13,18 +13,6 @@
     margin: 5px;
 }
 
-.booking-page {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.booking-page-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-}
-
 .slots-info {
     background-color: #ffffff;
     padding: 10px;

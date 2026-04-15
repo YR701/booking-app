@@ -69,7 +69,7 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
     };
 
     return (
-        <div className="booking-page">
+        <div>
             <DashboardTopnav
                 userEmail={user?.email || 'user@mail.mcgill.ca'}
                 userName={user?.name || 'User'}
