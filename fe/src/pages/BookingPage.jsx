@@ -4,11 +4,11 @@ import './BookingPage.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
 
-function BookingPage({ onLogout, user, inviteOwnerId }) {
+function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [slots, setSlots] = useState([]);
-    const [owner, setOwner] = useState({});
+    const [owner, setOwner] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -69,17 +69,32 @@ function BookingPage({ onLogout, user, inviteOwnerId }) {
     };
 
     return (
-        <div>
+        <div className="booking-page">
             <DashboardTopnav
                 userEmail={user?.email || 'user@mail.mcgill.ca'}
                 userName={user?.name || 'User'}
                 onLogout={onLogout}
             />
+            <section className="slots booking-page-header">
+                <div>
+                    <h1>{owner?.name ? `${owner.name}'s Booking Page` : 'Booking Page'}</h1>
+                    <p>
+                        {owner?.email
+                            ? `Showing only active slots for ${owner.email}.`
+                            : 'Showing available active slots for this owner.'}
+                    </p>
+                </div>
+                {onBack && (
+                    <button type="button" onClick={onBack}>
+                        Back
+                    </button>
+                )}
+            </section>
             {message && <div className="notice success">{message}</div>}
             {error && <div className="notice error">{error}</div>}
 
             <div className="slots">
-                <h1>Available Slots</h1>
+                <h2>Available Slots</h2>
                 {loading ? (
                     <p>Loading slots...</p>
                 ) : slots.length === 0 ? (
@@ -87,14 +102,14 @@ function BookingPage({ onLogout, user, inviteOwnerId }) {
                 ) : (
                     slots.map((slot) => (
                         <div className="slots-info" key={slot.id}>
-                            <h2>{slot.owner?.name}</h2>
+                            <h3>{slot.owner?.name || owner?.name || 'Owner'}</h3>
                             <p>{slot.title}</p>
                             <p>
                                 {new Date(slot.start).toLocaleDateString()}{' '}
                                 {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
                                 {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
-                            <div>
+                            <div className="slot-actions">
                                 <button type="button" onClick={() => handleBook(slot)}>
                                     Book
                                 </button>

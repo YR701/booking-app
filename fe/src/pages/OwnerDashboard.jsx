@@ -29,6 +29,7 @@ function OwnerDashboard({
   onOpenType3Create,
   onOpenType3Owner,
   onSwitchToUserDashboard,
+  onOpenBookingPage,
 }) {
   return (
     <div>
@@ -58,6 +59,11 @@ function OwnerDashboard({
           {onSwitchToUserDashboard && (
             <button type="button" onClick={onSwitchToUserDashboard}>
                Switch to User Dashboard
+            </button>
+          )}
+          {onOpenBookingPage && (
+            <button type="button" onClick={onOpenBookingPage}>
+              Preview Booking Page
             </button>
           )}
         </div>

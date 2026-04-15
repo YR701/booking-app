@@ -395,13 +395,20 @@ function App() {
   //   );
   // }
 
-  if (inviteOwnerId && user) {
+  if (user && (inviteOwnerId || showBookingPage)) {
     return (
       <main className="page">
         <BookingPage
           onLogout={logout}
           user={user}
-          inviteOwnerId={inviteOwnerId}
+          inviteOwnerId={inviteOwnerId || user?.id}
+          onBack={
+            inviteOwnerId
+              ? null
+              : () => {
+                  setShowBookingPage(false);
+                }
+          }
         />
       </main>
     );
@@ -546,7 +553,6 @@ function App() {
             <h1>McGill SOCS Booking</h1>
             <div className="nav-actions">
               <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
-              <button onClick={() => setShowBookingPage(true)}>Booking Page</button>
               <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
               <button onClick={() => setCurrentPage('type2-vote')}>Type 2 Vote</button>
               <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
@@ -648,6 +654,7 @@ function App() {
           onOpenType3Create={() => setCurrentPage('type3-create')}
           onOpenType3Owner={() => setCurrentPage('type3-owner')}
           onSwitchToUserDashboard={() => setShowDashboard(true)}
+          onOpenBookingPage={() => setShowBookingPage(true)}
         />
       )}
     </main>
