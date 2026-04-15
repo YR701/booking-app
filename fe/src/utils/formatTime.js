@@ -1,3 +1,5 @@
+ // Author: Yongrong Yang
+
  //format time for display
   export const formatDateTimeRange = (start, end) => {
     const date = new Date(start).toLocaleDateString();
