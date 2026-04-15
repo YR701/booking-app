@@ -3,6 +3,7 @@
 import './OwnerDashboard.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
+import { useState } from 'react';
 
 /**
  * Owner-only UI: create private slots, invitation URL, manage slots.
@@ -31,6 +32,25 @@ function OwnerDashboard({
   onSwitchToUserDashboard,
   onOpenBookingPage,
 }) {
+  const [inviteStatus, setInviteStatus] = useState('');
+  const totalSlots = myOwnerSlots.length;
+  const publicSlots = myOwnerSlots.filter((slot) => slot.isActive).length;
+  const bookedSlots = myOwnerSlots.filter((slot) => slot.bookedBy).length;
+  const pendingRequests = ownerRequests.filter((request) => request.status === 'Pending').length;
+
+  async function handleCopyInvitationUrl() {
+    if (!invitationUrl) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(invitationUrl);
+      setInviteStatus('Invitation link copied.');
+    } catch {
+      setInviteStatus('Could not copy link automatically.');
+    }
+  }
+
   return (
     <div>
       <DashboardTopnav
@@ -72,6 +92,34 @@ function OwnerDashboard({
 
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
+      {inviteStatus && <div className="notice success">{inviteStatus}</div>}
+
+      <section className="card owner-summary">
+        <div>
+          <h2>Owner overview</h2>
+          <p>{user?.name || 'Owner'}</p>
+          <p>{user?.email || 'owner@mcgill.ca'}</p>
+        </div>
+        <div className="owner-summary-stats">
+          <div className="owner-stat">
+            <strong>{totalSlots}</strong>
+            <span>Total slots</span>
+          </div>
+          <div className="owner-stat">
+            <strong>{publicSlots}</strong>
+            <span>Public slots</span>
+          </div>
+          <div className="owner-stat">
+            <strong>{bookedSlots}</strong>
+            <span>Booked slots</span>
+          </div>
+          <div className="owner-stat">
+            <strong>{pendingRequests}</strong>
+            <span>Pending requests</span>
+          </div>
+        </div>
+      </section>
+
       <section className="owner-dashboard grid two">
         <form className="card form" onSubmit={onCreateSlot}>
           <h2>Create slot</h2>
@@ -108,7 +156,19 @@ function OwnerDashboard({
 
         <section className="card">
           <h2>Owner slots</h2>
-          <p className="invite-link">Invitation URL: {invitationUrl || 'Loading...'}</p>
+          <div className="owner-invite-bar">
+            <p className="invite-link">Invitation URL: {invitationUrl || 'Loading...'}</p>
+            <div className="actions">
+              <button type="button" onClick={handleCopyInvitationUrl} disabled={!invitationUrl}>
+                Copy link
+              </button>
+              {invitationUrl && (
+                <a className="button secondary" href={invitationUrl}>
+                  Open invite link
+                </a>
+              )}
+            </div>
+          </div>
           {myOwnerSlots.length === 0 ? (
             <p>No slots created yet.</p>
           ) : (
@@ -123,6 +183,7 @@ function OwnerDashboard({
                       ? `Booked by ${slot.bookedBy.name}`
                       : 'Not booked'}
                   </p>
+                  {slot.bookedBy?.email && <p>{slot.bookedBy.email}</p>}
                   <div className="actions">
                     <button type="button" onClick={() => onToggleSlot(slot)}>
                       {slot.isActive ? 'Make private' : 'Activate'}

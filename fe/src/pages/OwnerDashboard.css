@@ -1,5 +1,37 @@
 /* Author: Jenny Hua — layout hooks for owner section; shared styles in App.css */
 
+.owner-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.owner-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.owner-stat {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fffafa;
+  padding: 12px;
+  text-align: center;
+}
+
+.owner-stat strong {
+  display: block;
+  font-size: 1.25rem;
+}
+
+.owner-stat span {
+  font-size: 0.95rem;
+}
+
 .owner-dashboard.grid.two {
   margin-bottom: 20px;
 }
@@ -8,4 +40,24 @@
   display: flex;
   justify-content: flex-end;
   margin-bottom: 12px;
+}
+
+.owner-invite-bar {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 800px) {
+  .owner-summary {
+    flex-direction: column;
+  }
+
+  .owner-summary-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .owner-summary-stats {
+    grid-template-columns: 1fr;
+  }
 }
