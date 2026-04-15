@@ -129,6 +129,12 @@
   margin-bottom: 6px;
 }
 
+.summary-list-scroll {
+  max-height: 280px;   /* you can adjust: 200–400px */
+  overflow-y: auto;
+  padding-right: 6px;  /* prevents scrollbar overlap */
+}
+
 .selected-summary-item {
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);

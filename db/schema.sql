@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('student', 'owner') NOT NULL
 );
 
-
+# One time appointment
 CREATE TABLE IF NOT EXISTS slots (
     id INT AUTO_INCREMENT PRIMARY KEY,
     owner_id INT NOT NULL,
@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS type3_slots (
   notes TEXT NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   capacity INT NOT NULL DEFAULT 1,
+  is_full TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_type3_slots_owner
     FOREIGN KEY (owner_id) REFERENCES users (id)

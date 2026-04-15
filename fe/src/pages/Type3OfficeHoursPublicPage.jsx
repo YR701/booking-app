@@ -17,6 +17,10 @@
 //   });
 // }
 
+// function createMailto(email) {
+//   return `mailto:${email}`;
+// }
+
 // function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, onOpenUserDashboard }) {
 //   const [publicSlots, setPublicSlots] = useState([]);
 //   const [selectedOwnerId, setSelectedOwnerId] = useState('');
@@ -237,6 +241,14 @@
 //                 <p className="summary-title">Selected Professor</p>
 //                 <p>{selectedOwner.name}</p>
 //                 <p>{selectedOwner.email}</p>
+//                 <div className="inline-actions" style={{ marginTop: '12px' }}>
+//                   <a
+//                     className="button secondary"
+//                     href={createMailto(selectedOwner.email)}
+//                   >
+//                     Email Professor
+//                   </a>
+//                 </div>
 //               </div>
 //             ) : (
 //               <p className="helper-text">
@@ -370,6 +382,9 @@
 
 // export default Type3OfficeHoursPublicPage;
 
+
+
+
 /* Author: Hanjing Zheng */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -456,47 +471,55 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
     return [...ownerMap.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [publicSlots]);
 
-  const filteredSlots = useMemo(() => {
-    const onlyAvailable = publicSlots.filter((slot) => slot.isAvailable);
-
-    if (!selectedOwnerId) {
-      return onlyAvailable.sort(
-        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
-      );
-    }
-
-    return onlyAvailable
-      .filter((slot) => String(slot.owner?.id) === String(selectedOwnerId))
-      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-  }, [publicSlots, selectedOwnerId]);
-
   const selectedOwner = useMemo(() => {
     return availableOwners.find(
       (ownerItem) => String(ownerItem.id) === String(selectedOwnerId)
     ) || null;
   }, [availableOwners, selectedOwnerId]);
 
+  const ownerSlots = useMemo(() => {
+    if (!selectedOwnerId) return [];
+
+    return publicSlots
+      .filter((slot) => String(slot.owner?.id) === String(selectedOwnerId))
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  }, [publicSlots, selectedOwnerId]);
+
+  const availableSlots = useMemo(() => {
+    return ownerSlots.filter((slot) => slot.isAvailable && !slot.reservedByMe);
+  }, [ownerSlots]);
+
+  const myReservedSlots = useMemo(() => {
+    return ownerSlots.filter((slot) => slot.reservedByMe);
+  }, [ownerSlots]);
+
   const calendarEvents = useMemo(() => {
-    return filteredSlots.map((slot) => ({
+    if (!selectedOwnerId) return [];
+
+    return ownerSlots.map((slot) => ({
       id: String(slot.id),
-      title: `${slot.title} (${slot.bookedCount || 0}/${slot.capacity || 1})`,
+      title: slot.reservedByMe
+        ? `${slot.title} (Reserved by me)`
+        : `${slot.title} (${slot.bookedCount || 0}/${slot.capacity || 1})`,
       start: slot.start,
       end: slot.end,
       extendedProps: {
         capacity: slot.capacity || 1,
         bookedCount: slot.bookedCount || 0,
         isAvailable: slot.isAvailable,
+        isFull: slot.isFull,
+        reservedByMe: slot.reservedByMe,
         ownerName: slot.owner?.name || '',
         ownerEmail: slot.owner?.email || '',
       },
     }));
-  }, [filteredSlots]);
+  }, [ownerSlots, selectedOwnerId]);
 
   const selectedSlot = useMemo(() => {
-    return filteredSlots.find(
+    return ownerSlots.find(
       (slot) => String(slot.id) === String(selectedSlotId)
     ) || null;
-  }, [filteredSlots, selectedSlotId]);
+  }, [ownerSlots, selectedSlotId]);
 
   const handleOwnerChange = (event) => {
     const ownerId = event.target.value;
@@ -539,9 +562,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
         )
       );
 
-      if (String(selectedSlotId) === String(slotId)) {
-        setSelectedSlotId(null);
-      }
+      setSelectedSlotId(slotId);
     } catch (reserveError) {
       console.error(reserveError);
       setError(reserveError.message || 'Unable to reserve Type 3 slot.');
@@ -564,7 +585,6 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
         onLogout={onLogout}
       />
 
-      {/* switch to other pages */}
       <div className="switch-buttons">
         <div className="inline-actions">
           {onOpenUserDashboard && (
@@ -584,8 +604,8 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
         <header className="booking-header">
           <h1>Available Type 3 Office Hours</h1>
           <p className="booking-subtitle">
-            Select a professor first, then browse that professor’s available office-hour
-            sessions and reserve one.
+            Select a professor first, then browse that professor’s office-hour sessions.
+            Reserved sessions stay visible below and on the calendar.
           </p>
         </header>
 
@@ -624,7 +644,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
               </div>
             ) : (
               <p className="helper-text">
-                Choose a professor to see only that professor’s available Type 3 office hours.
+                Choose a professor to see only that professor’s Type 3 office hours.
               </p>
             )}
 
@@ -632,7 +652,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
               <p className="summary-title">Current Filter</p>
               <p>
                 {selectedOwner
-                  ? `Showing available office hours for ${selectedOwner.name}.`
+                  ? `Showing office hours for ${selectedOwner.name}.`
                   : 'No professor selected yet.'}
               </p>
             </div>
@@ -645,13 +665,12 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
               <p>Loading public Type 3 sessions...</p>
             ) : !selectedOwnerId ? (
               <p>Please select a professor first.</p>
-            ) : filteredSlots.length === 0 ? (
+            ) : availableSlots.length === 0 ? (
               <p>No available office-hour sessions for this professor.</p>
             ) : (
               <div className="summary-list summary-list-scroll">
-                {filteredSlots.map((slot) => {
+                {availableSlots.map((slot) => {
                   const isSelected = String(selectedSlotId) === String(slot.id);
-                  const isFull = !slot.isAvailable;
 
                   return (
                     <div
@@ -674,20 +693,16 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
                         <p>Start: {formatReadableDateTime(slot.start)}</p>
                         <p>End: {formatReadableDateTime(slot.end)}</p>
                         <p>Reserved: {slot.bookedCount || 0} / {slot.capacity || 1}</p>
-                        <p>Status: {isFull ? 'Full' : 'Available'}</p>
+                        <p>Status: {slot.isFull ? 'Full' : 'Available'}</p>
                       </div>
 
                       <button
                         type="button"
                         className="button secondary"
                         onClick={() => handleReserveSlot(slot.id)}
-                        disabled={isFull || reservingSlotId === slot.id}
+                        disabled={reservingSlotId === slot.id}
                       >
-                        {isFull
-                          ? 'Full'
-                          : reservingSlotId === slot.id
-                            ? 'Reserving...'
-                            : 'Reserve'}
+                        {reservingSlotId === slot.id ? 'Reserving...' : 'Reserve'}
                       </button>
                     </div>
                   );
@@ -698,12 +713,55 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
         </section>
 
         <section className="card booking-side-panel" style={{ marginBottom: '24px' }}>
+          <h2>My Reserved Sessions</h2>
+
+          {!selectedOwnerId ? (
+            <p>Please select a professor first.</p>
+          ) : myReservedSlots.length === 0 ? (
+            <p>You have not reserved any Type 3 session for this professor.</p>
+          ) : (
+            <div className="summary-list summary-list-scroll">
+              {myReservedSlots.map((slot) => {
+                const isSelected = String(selectedSlotId) === String(slot.id);
+
+                return (
+                  <div
+                    key={slot.id}
+                    className={`summary-item ${isSelected ? 'selected-summary-item' : ''}`}
+                  >
+                    <div
+                      className="summary-main"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedSlotId(slot.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          setSelectedSlotId(slot.id);
+                        }
+                      }}
+                    >
+                      <p className="summary-title">{slot.title}</p>
+                      <p>Professor: {slot.owner?.name || 'Unknown'}</p>
+                      <p>Start: {formatReadableDateTime(slot.start)}</p>
+                      <p>End: {formatReadableDateTime(slot.end)}</p>
+                      <p>Reserved: Reserved by you</p>
+                      <p>Status: {slot.isFull ? 'Full' : 'Reserved by you'}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="card booking-side-panel" style={{ marginBottom: '24px' }}>
           <h2>Selected Session</h2>
 
           {!selectedSlot ? (
             <p>Select a session from the list or calendar.</p>
           ) : (
-            <div className="summary-list">
+            // <div className="summary-list">
+            <div className="summary-list summary-list-scroll">
               <div className="summary-item">
                 <div className="summary-main">
                   <p className="summary-title">{selectedSlot.title}</p>
@@ -712,21 +770,26 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
                   <p>Start: {formatReadableDateTime(selectedSlot.start)}</p>
                   <p>End: {formatReadableDateTime(selectedSlot.end)}</p>
                   <p>Reserved: {selectedSlot.bookedCount || 0} / {selectedSlot.capacity || 1}</p>
-                  <p>Status: {selectedSlot.isAvailable ? 'Available' : 'Full'}</p>
+                  <p>
+                    Status:{' '}
+                    {selectedSlot.reservedByMe
+                      ? 'Reserved by you'
+                      : selectedSlot.isFull
+                        ? 'Full'
+                        : 'Available'}
+                  </p>
                 </div>
 
-                <button
-                  type="button"
-                  className="button secondary"
-                  onClick={() => handleReserveSlot(selectedSlot.id)}
-                  disabled={!selectedSlot.isAvailable || reservingSlotId === selectedSlot.id}
-                >
-                  {!selectedSlot.isAvailable
-                    ? 'Full'
-                    : reservingSlotId === selectedSlot.id
-                      ? 'Reserving...'
-                      : 'Reserve'}
-                </button>
+                {!selectedSlot.reservedByMe && selectedSlot.isAvailable && (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() => handleReserveSlot(selectedSlot.id)}
+                    disabled={reservingSlotId === selectedSlot.id}
+                  >
+                    {reservingSlotId === selectedSlot.id ? 'Reserving...' : 'Reserve'}
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -736,8 +799,8 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
           <div className="calendar-section-header">
             <h2>Calendar View</h2>
             <p>
-              After selecting a professor, only that professor’s available office hours
-              are shown on the calendar.
+              After selecting a professor, that professor’s sessions are shown on the calendar.
+              Your reserved sessions stay visible and are labeled separately.
             </p>
           </div>
 

@@ -19,6 +19,7 @@ const TYPE3_SLOT_SELECT = `
     s.notes,
     s.is_active AS isActive,
     s.capacity,
+    s.is_full AS isFull,
     owner.id AS ownerUserId,
     owner.name AS ownerName,
     owner.email AS ownerEmail,
@@ -29,9 +30,10 @@ const TYPE3_SLOT_SELECT = `
   LEFT JOIN type3_slot_bookings b ON b.slot_id = s.id
 `;
 
-function formatType3Slot(row) {
+function formatType3Slot(row, currentUserId = null) {
   const bookedCount = Number(row.bookedCount || 0);
   const capacity = Number(row.capacity || 1);
+  const isFull = Boolean(row.isFull);
 
   return {
     id: row.id,
@@ -43,7 +45,11 @@ function formatType3Slot(row) {
     isActive: Boolean(row.isActive),
     capacity,
     bookedCount,
-    isAvailable: Boolean(row.isActive) && bookedCount < capacity,
+    isFull,
+    isAvailable: Boolean(row.isActive) && !isFull,
+    reservedByMe: row.reservedByMe !== undefined
+      ? Boolean(row.reservedByMe)
+      : false,
     owner: row.ownerUserId
       ? {
           id: row.ownerUserId,
