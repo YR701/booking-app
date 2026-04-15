@@ -57,6 +57,64 @@ CREATE TABLE IF NOT EXISTS request (
 --     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 --     CONSTRAINT fk_group_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
 
+# Type 2
+CREATE TABLE IF NOT EXISTS type2_meetings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  owner_id INT NOT NULL,
+  title VARCHAR(500) NOT NULL,
+  description TEXT NULL,
+  status ENUM('open', 'closed') NOT NULL DEFAULT 'open',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_type2_meetings_owner
+    FOREIGN KEY (owner_id) REFERENCES users(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS type2_meeting_slots (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  meeting_id INT NOT NULL,
+  start_time DATETIME NOT NULL,
+  end_time DATETIME NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_type2_meeting_slots_meeting
+    FOREIGN KEY (meeting_id) REFERENCES type2_meetings(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS type2_meeting_votes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  meeting_id INT NOT NULL,
+  slot_id INT NOT NULL,
+  user_id INT NOT NULL,
+  is_available TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_type2_votes_meeting
+    FOREIGN KEY (meeting_id) REFERENCES type2_meetings(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_type2_votes_slot
+    FOREIGN KEY (slot_id) REFERENCES type2_meeting_slots(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_type2_votes_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+  CONSTRAINT uq_type2_vote UNIQUE (slot_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS type2_meeting_invitees (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  meeting_id INT NOT NULL,
+  user_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_type2_invitees_meeting
+    FOREIGN KEY (meeting_id) REFERENCES type2_meetings(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_type2_invitees_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+  CONSTRAINT uq_type2_invitee UNIQUE (meeting_id, user_id)
+);
+
+
 
 # Type 3
 CREATE TABLE IF NOT EXISTS type3_slots (

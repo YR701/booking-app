@@ -1,9 +1,972 @@
+// /* Author: Hanjing Zheng */
+
+// import { useEffect, useMemo, useState } from 'react';
+// import './SchedulerPages.css';
+// import UserCalendarTopnav from '../components/CalendarTopnav';
+// import CalendarGrid from '../components/CalendarGrid';
+
+// const API_BASE = 'http://localhost:4000/api';
+// const TOKEN_KEY = 'comp307-booking-token';
+
+// function toDateTimeLocalValue(dateInput) {
+//   const date = new Date(dateInput);
+//   if (Number.isNaN(date.getTime())) return '';
+
+//   const offset = date.getTimezoneOffset();
+//   const localDate = new Date(date.getTime() - offset * 60 * 1000);
+//   return localDate.toISOString().slice(0, 16);
+// }
+
+// function formatReadableDateTime(dateInput) {
+//   const date = new Date(dateInput);
+//   return date.toLocaleString([], {
+//     dateStyle: 'medium',
+//     timeStyle: 'short',
+//   });
+// }
+
+// function parseInvitees(inviteesText) {
+//   return inviteesText
+//     .split(',')
+//     .map((email) => email.trim())
+//     .filter(Boolean);
+// }
+
+// function isValidMcGillEmail(email) {
+//   const safeEmail = String(email || '').trim().toLowerCase();
+//   return safeEmail.endsWith('@mail.mcgill.ca') || safeEmail.endsWith('@mcgill.ca');
+// }
+
+// function Type2CreateGroupMeetingPage({
+//   onBack,
+//   onLogout,
+//   user,
+//   type2Draft,
+//   setType2Draft,
+// }) {
+//   const [message, setMessage] = useState('');
+//   const [error, setError] = useState('');
+//   const [selectedCandidateId, setSelectedCandidateId] = useState(null);
+
+//   const [saving, setSaving] = useState(false);
+//   const [loadingSavedMeetings, setLoadingSavedMeetings] = useState(true);
+//   const [savedMeetings, setSavedMeetings] = useState([]);
+//   const [savedMeetingDetails, setSavedMeetingDetails] = useState({});
+//   const [expandedMeetingId, setExpandedMeetingId] = useState(null);
+//   const [deletingMeetingId, setDeletingMeetingId] = useState(null);
+//   const [editingSavedMeetingId, setEditingSavedMeetingId] = useState(null);
+
+//   const [savedMeetingInviteeInputs, setSavedMeetingInviteeInputs] = useState({});
+//   const [savedMeetingSlotInputs, setSavedMeetingSlotInputs] = useState({});
+
+//   const inviteeList = useMemo(() => {
+//     return parseInvitees(type2Draft.invitees);
+//   }, [type2Draft.invitees]);
+
+//   const sortedCandidateSlots = useMemo(() => {
+//     return [...type2Draft.candidateSlots].sort((a, b) => {
+//       const aTime = a.start ? new Date(a.start).getTime() : 0;
+//       const bTime = b.start ? new Date(b.start).getTime() : 0;
+//       return aTime - bTime;
+//     });
+//   }, [type2Draft.candidateSlots]);
+
+//   const calendarEvents = useMemo(() => {
+//     return type2Draft.candidateSlots
+//       .filter((slot) => slot.start && slot.end)
+//       .map((slot, index) => ({
+//         id: String(slot.id),
+//         title: `${type2Draft.title?.trim() || 'Group Meeting'} - Option ${index + 1}`,
+//         start: new Date(slot.start),
+//         end: new Date(slot.end),
+//         extendedProps: {
+//           candidateSlotId: slot.id,
+//         },
+//       }));
+//   }, [type2Draft.candidateSlots, type2Draft.title]);
+
+//   const resetDraft = () => {
+//     setType2Draft({
+//       title: 'COMP 307 Group Meeting',
+//       description: '',
+//       invitees: '',
+//       candidateSlots: [
+//         {
+//           id: `candidate-${Date.now()}`,
+//           start: '',
+//           end: '',
+//         },
+//       ],
+//     });
+//     setSelectedCandidateId(null);
+//   };
+
+//   const fetchOwnerMeetings = async () => {
+//     try {
+//       setLoadingSavedMeetings(true);
+
+//       const token = localStorage.getItem(TOKEN_KEY);
+//       if (!token) {
+//         setSavedMeetings([]);
+//         return;
+//       }
+
+//       const response = await fetch(`${API_BASE}/type2/owner/meetings`, {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       });
+
+//       const data = await response.json().catch(() => ({}));
+
+//       if (!response.ok) {
+//         throw new Error(data.error || 'Failed to fetch saved Type 2 meetings.');
+//       }
+
+//       setSavedMeetings(data.meetings || []);
+//     } catch (fetchError) {
+//       console.error(fetchError);
+//       setError(fetchError.message || 'Unable to load saved Type 2 meetings.');
+//       setSavedMeetings([]);
+//     } finally {
+//       setLoadingSavedMeetings(false);
+//     }
+//   };
+
+//   const fetchMeetingDetail = async (meetingId) => {
+//     try {
+//       const token = localStorage.getItem(TOKEN_KEY);
+//       if (!token) return;
+
+//       const response = await fetch(`${API_BASE}/type2/meetings/${meetingId}`, {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       });
+
+//       const data = await response.json().catch(() => ({}));
+
+//       if (!response.ok) {
+//         throw new Error(data.error || 'Failed to fetch Type 2 meeting detail.');
+//       }
+
+//       setSavedMeetingDetails((current) => ({
+//         ...current,
+//         [meetingId]: data,
+//       }));
+//     } catch (fetchError) {
+//       console.error(fetchError);
+//       setError(fetchError.message || 'Unable to load Type 2 meeting detail.');
+//     }
+//   };
+
+//   useEffect(() => {
+//     void fetchOwnerMeetings();
+//   }, [user]);
+
+//   const handleDraftChange = (event) => {
+//     const { name, value } = event.target;
+//     setType2Draft((current) => ({
+//       ...current,
+//       [name]: value,
+//     }));
+//     setMessage('');
+//     setError('');
+//   };
+
+//   const handleCandidateSlotChange = (slotId, field, value) => {
+//     setType2Draft((current) => ({
+//       ...current,
+//       candidateSlots: current.candidateSlots.map((slot) =>
+//         slot.id === slotId ? { ...slot, [field]: value } : slot
+//       ),
+//     }));
+//     setMessage('');
+//     setError('');
+//   };
+
+//   const handleAddCandidateSlot = () => {
+//     setType2Draft((current) => ({
+//       ...current,
+//       candidateSlots: [
+//         ...current.candidateSlots,
+//         {
+//           id: `candidate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+//           start: '',
+//           end: '',
+//         },
+//       ],
+//     }));
+//     setMessage('');
+//     setError('');
+//   };
+
+//   const handleRemoveCandidateSlot = (slotId) => {
+//     setType2Draft((current) => {
+//       const updated = current.candidateSlots.filter((slot) => slot.id !== slotId);
+//       return {
+//         ...current,
+//         candidateSlots:
+//           updated.length > 0
+//             ? updated
+//             : [
+//                 {
+//                   id: `candidate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+//                   start: '',
+//                   end: '',
+//                 },
+//               ],
+//       };
+//     });
+
+//     if (selectedCandidateId === slotId) {
+//       setSelectedCandidateId(null);
+//     }
+
+//     setMessage('');
+//     setError('');
+//   };
+
+//   const handleCalendarSelect = ({ start, end }) => {
+//     if (!selectedCandidateId) {
+//       setError('Please click one candidate slot row on the left first, then select the time on the calendar.');
+//       return;
+//     }
+
+//     setType2Draft((current) => ({
+//       ...current,
+//       candidateSlots: current.candidateSlots.map((slot) =>
+//         slot.id === selectedCandidateId
+//           ? {
+//               ...slot,
+//               start: toDateTimeLocalValue(start),
+//               end: toDateTimeLocalValue(end),
+//             }
+//           : slot
+//       ),
+//     }));
+
+//     setMessage('');
+//     setError('');
+//   };
+
+//   const handleCalendarEventClick = (calendarEvent) => {
+//     const candidateSlotId = calendarEvent.extendedProps?.candidateSlotId;
+//     if (!candidateSlotId) return;
+//     setSelectedCandidateId(candidateSlotId);
+//     setMessage('');
+//     setError('');
+//   };
+
+//   const validateInvitees = (invitees) => {
+//     if (!invitees || invitees.length === 0) {
+//       return 'Please add at least one invited user email.';
+//     }
+
+//     const invalidInvitee = invitees.find((email) => !isValidMcGillEmail(email));
+//     if (invalidInvitee) {
+//       return `Invalid McGill email: ${invalidInvitee}`;
+//     }
+
+//     return '';
+//   };
+
+//   const validateCandidateSlots = (candidateSlots) => {
+//     if (!candidateSlots.length) {
+//       return 'Please add at least one candidate slot.';
+//     }
+
+//     for (const slot of candidateSlots) {
+//       if (!slot.start || !slot.end) {
+//         return 'Each candidate slot must have both start and end date/time.';
+//       }
+
+//       const start = new Date(slot.start);
+//       const end = new Date(slot.end);
+
+//       if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+//         return 'Each candidate slot must have valid date/time values.';
+//       }
+
+//       if (end <= start) {
+//         return 'Each candidate slot must end after it starts.';
+//       }
+//     }
+
+//     const seen = new Set();
+//     for (const slot of candidateSlots) {
+//       const key = `${new Date(slot.start).getTime()}-${new Date(slot.end).getTime()}`;
+//       if (seen.has(key)) {
+//         return 'Duplicate candidate slots are not allowed.';
+//       }
+//       seen.add(key);
+//     }
+
+//     return '';
+//   };
+
+//   const handleSaveGroupMeeting = async (event) => {
+//     event.preventDefault();
+//     setMessage('');
+//     setError('');
+
+//     const inviteesValidationMessage = validateInvitees(inviteeList);
+//     if (inviteesValidationMessage) {
+//       setError(inviteesValidationMessage);
+//       return;
+//     }
+
+//     const candidateValidationMessage = validateCandidateSlots(type2Draft.candidateSlots);
+//     if (candidateValidationMessage) {
+//       setError(candidateValidationMessage);
+//       return;
+//     }
+
+//     try {
+//       setSaving(true);
+
+//       const token = localStorage.getItem(TOKEN_KEY);
+//       if (!token) {
+//         throw new Error('You must be logged in to save a Type 2 meeting.');
+//       }
+
+//       const response = await fetch(`${API_BASE}/type2/meetings`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({
+//           title: type2Draft.title,
+//           description: type2Draft.description,
+//           slots: type2Draft.candidateSlots.map((slot) => ({
+//             start: new Date(slot.start).toISOString(),
+//             end: new Date(slot.end).toISOString(),
+//           })),
+//           inviteeEmails: [...inviteeList],
+//         }),
+//       });
+
+//       const data = await response.json().catch(() => ({}));
+
+//       if (!response.ok) {
+//         throw new Error(data.error || 'Failed to save Type 2 meeting.');
+//       }
+
+//       setMessage('Group meeting saved successfully.');
+//       resetDraft();
+//       await fetchOwnerMeetings();
+//     } catch (saveError) {
+//       console.error(saveError);
+//       setError(saveError.message || 'Unable to save Type 2 meeting.');
+//     } finally {
+//       setSaving(false);
+//     }
+//   };
+
+//   const handleToggleSavedMeeting = async (meetingId) => {
+//     const nextExpanded = expandedMeetingId === meetingId ? null : meetingId;
+//     setExpandedMeetingId(nextExpanded);
+
+//     if (nextExpanded && !savedMeetingDetails[meetingId]) {
+//       await fetchMeetingDetail(meetingId);
+//     }
+//   };
+
+//   const handleDeleteMeeting = async (meetingId) => {
+//     try {
+//       setDeletingMeetingId(meetingId);
+//       setMessage('');
+//       setError('');
+
+//       const token = localStorage.getItem(TOKEN_KEY);
+//       if (!token) {
+//         throw new Error('You must be logged in to delete a Type 2 meeting.');
+//       }
+
+//       const response = await fetch(`${API_BASE}/type2/meetings/${meetingId}`, {
+//         method: 'DELETE',
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       });
+
+//       const data = await response.json().catch(() => ({}));
+
+//       if (!response.ok) {
+//         throw new Error(data.error || 'Failed to delete Type 2 meeting.');
+//       }
+
+//       setSavedMeetings((current) =>
+//         current.filter((meeting) => String(meeting.id) !== String(meetingId))
+//       );
+//       setSavedMeetingDetails((current) => {
+//         const copy = { ...current };
+//         delete copy[meetingId];
+//         return copy;
+//       });
+
+//       if (expandedMeetingId === meetingId) {
+//         setExpandedMeetingId(null);
+//       }
+
+//       setMessage('Group meeting deleted successfully.');
+//     } catch (deleteError) {
+//       console.error(deleteError);
+//       setError(deleteError.message || 'Unable to delete Type 2 meeting.');
+//     } finally {
+//       setDeletingMeetingId(null);
+//     }
+//   };
+
+//   const handleSavedMeetingInviteeInputChange = (meetingId, value) => {
+//     setSavedMeetingInviteeInputs((current) => ({
+//       ...current,
+//       [meetingId]: value,
+//     }));
+//   };
+
+//   const handleSavedMeetingSlotInputChange = (meetingId, field, value) => {
+//     setSavedMeetingSlotInputs((current) => ({
+//       ...current,
+//       [meetingId]: {
+//         ...(current[meetingId] || { start: '', end: '' }),
+//         [field]: value,
+//       },
+//     }));
+//   };
+
+//   const handleAddInviteeToSavedMeeting = async (meetingId) => {
+//     try {
+//       const email = String(savedMeetingInviteeInputs[meetingId] || '').trim().toLowerCase();
+
+//       if (!email) {
+//         setError('Please type an email before adding.');
+//         return;
+//       }
+
+//       const token = localStorage.getItem(TOKEN_KEY);
+//       if (!token) {
+//         throw new Error('You must be logged in to edit invitees.');
+//       }
+
+//       const response = await fetch(`${API_BASE}/type2/meetings/${meetingId}/invitees`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({ email }),
+//       });
+
+//       const data = await response.json().catch(() => ({}));
+
+//       if (!response.ok) {
+//         throw new Error(data.error || 'Failed to add invitee.');
+//       }
+
+//       setSavedMeetingInviteeInputs((current) => ({
+//         ...current,
+//         [meetingId]: '',
+//       }));
+
+//       await fetchMeetingDetail(meetingId);
+//       setMessage('Invitee added successfully.');
+//       setError('');
+//     } catch (addError) {
+//       console.error(addError);
+//       setError(addError.message || 'Unable to add invitee.');
+//       setMessage('');
+//     }
+//   };
+
+//   const handleRemoveInviteeFromSavedMeeting = async (meetingId, userId) => {
+//     try {
+//       const token = localStorage.getItem(TOKEN_KEY);
+//       if (!token) {
+//         throw new Error('You must be logged in to remove invitees.');
+//       }
+
+//       const response = await fetch(
+//         `${API_BASE}/type2/meetings/${meetingId}/invitees/${userId}`,
+//         {
+//           method: 'DELETE',
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         }
+//       );
+
+//       const data = await response.json().catch(() => ({}));
+
+//       if (!response.ok) {
+//         throw new Error(data.error || 'Failed to remove invitee.');
+//       }
+
+//       await fetchMeetingDetail(meetingId);
+//       setMessage('Invitee removed successfully.');
+//       setError('');
+//     } catch (removeError) {
+//       console.error(removeError);
+//       setError(removeError.message || 'Unable to remove invitee.');
+//       setMessage('');
+//     }
+//   };
+
+//   const handleAddSlotToSavedMeeting = async (meetingId) => {
+//     try {
+//       const start = savedMeetingSlotInputs[meetingId]?.start || '';
+//       const end = savedMeetingSlotInputs[meetingId]?.end || '';
+
+//       if (!start || !end) {
+//         setError('Please fill in both start and end time before adding a slot.');
+//         return;
+//       }
+
+//       const token = localStorage.getItem(TOKEN_KEY);
+//       if (!token) {
+//         throw new Error('You must be logged in to add slots.');
+//       }
+
+//       const response = await fetch(`${API_BASE}/type2/meetings/${meetingId}/slots`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({
+//           start: new Date(start).toISOString(),
+//           end: new Date(end).toISOString(),
+//         }),
+//       });
+
+//       const data = await response.json().catch(() => ({}));
+
+//       if (!response.ok) {
+//         throw new Error(data.error || 'Failed to add candidate slot.');
+//       }
+
+//       setSavedMeetingSlotInputs((current) => ({
+//         ...current,
+//         [meetingId]: { start: '', end: '' },
+//       }));
+
+//       await fetchMeetingDetail(meetingId);
+//       setMessage('Candidate slot added successfully.');
+//       setError('');
+//     } catch (addError) {
+//       console.error(addError);
+//       setError(addError.message || 'Unable to add candidate slot.');
+//       setMessage('');
+//     }
+//   };
+
+//   const handleRemoveSlotFromSavedMeeting = async (meetingId, slotId) => {
+//     try {
+//       const token = localStorage.getItem(TOKEN_KEY);
+//       if (!token) {
+//         throw new Error('You must be logged in to remove slots.');
+//       }
+
+//       const response = await fetch(
+//         `${API_BASE}/type2/meetings/${meetingId}/slots/${slotId}`,
+//         {
+//           method: 'DELETE',
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         }
+//       );
+
+//       const data = await response.json().catch(() => ({}));
+
+//       if (!response.ok) {
+//         throw new Error(data.error || 'Failed to remove candidate slot.');
+//       }
+
+//       await fetchMeetingDetail(meetingId);
+//       setMessage('Candidate slot removed successfully.');
+//       setError('');
+//     } catch (removeError) {
+//       console.error(removeError);
+//       setError(removeError.message || 'Unable to remove candidate slot.');
+//       setMessage('');
+//     }
+//   };
+
+//   return (
+//     <>
+//       <UserCalendarTopnav
+//         userEmail={user?.email}
+//         onLogout={onLogout}
+//         onBackHome={onBack}
+//       />
+
+//       <main className="booking-page">
+//         <header className="booking-header">
+//           <h1>Create Group Meeting</h1>
+//           <p className="booking-subtitle">
+//             Build one whole group meeting with several candidate time slots, then save it so invited users can see it on their vote page.
+//           </p>
+//         </header>
+
+//         {message && <p className="notice success">{message}</p>}
+//         {error && <p className="notice error">{error}</p>}
+
+//         <section className="booking-layout">
+//           <section className="card booking-form">
+//             <h2>Current Group Meeting Draft</h2>
+
+//             <label>
+//               Meeting Title
+//               <input
+//                 type="text"
+//                 name="title"
+//                 value={type2Draft.title}
+//                 onChange={handleDraftChange}
+//                 placeholder="Enter group meeting title"
+//               />
+//             </label>
+
+//             <label>
+//               Description
+//               <textarea
+//                 name="description"
+//                 value={type2Draft.description}
+//                 onChange={handleDraftChange}
+//                 placeholder="Optional short description"
+//               />
+//             </label>
+
+//             <label>
+//               Invited Users
+//               <textarea
+//                 name="invitees"
+//                 value={type2Draft.invitees}
+//                 onChange={handleDraftChange}
+//                 placeholder="Enter McGill emails separated by commas"
+//               />
+//             </label>
+
+//             <div className="invitee-preview-box">
+//               <p className="summary-title">Invited Users For This Meeting</p>
+//               {inviteeList.length === 0 ? (
+//                 <p>No invited users added yet.</p>
+//               ) : (
+//                 <ul className="invitee-list">
+//                   {[...inviteeList].sort((a, b) => a.localeCompare(b)).map((email) => (
+//                     <li key={email}>{email}</li>
+//                   ))}
+//                 </ul>
+//               )}
+//             </div>
+
+//             <h2>Candidate Time Slots</h2>
+//             <p className="helper-text">
+//               Add several different time slots. All of them belong to this one group meeting.
+//             </p>
+
+//             <div className="summary-list">
+//               {type2Draft.candidateSlots.map((slot, index) => {
+//                 const isSelected = slot.id === selectedCandidateId;
+
+//                 return (
+//                   <div
+//                     key={slot.id}
+//                     className={`summary-item ${isSelected ? 'selected-summary-item' : ''}`}
+//                   >
+//                     <div className="summary-main">
+//                       <p
+//                         className="summary-title"
+//                         role="button"
+//                         tabIndex={0}
+//                         onClick={() => setSelectedCandidateId(slot.id)}
+//                         onKeyDown={(event) => {
+//                           if (event.key === 'Enter' || event.key === ' ') {
+//                             setSelectedCandidateId(slot.id);
+//                           }
+//                         }}
+//                       >
+//                         Candidate Slot {index + 1}
+//                       </p>
+
+//                       <label>
+//                         Start Date & Time
+//                         <input
+//                           type="datetime-local"
+//                           value={slot.start}
+//                           onChange={(event) =>
+//                             handleCandidateSlotChange(slot.id, 'start', event.target.value)
+//                           }
+//                         />
+//                       </label>
+
+//                       <label>
+//                         End Date & Time
+//                         <input
+//                           type="datetime-local"
+//                           value={slot.end}
+//                           onChange={(event) =>
+//                             handleCandidateSlotChange(slot.id, 'end', event.target.value)
+//                           }
+//                         />
+//                       </label>
+//                     </div>
+
+//                     <div className="inline-actions">
+//                       <button
+//                         type="button"
+//                         className="button secondary"
+//                         onClick={() => setSelectedCandidateId(slot.id)}
+//                       >
+//                         Select
+//                       </button>
+
+//                       <button
+//                         type="button"
+//                         className="button secondary"
+//                         onClick={() => handleRemoveCandidateSlot(slot.id)}
+//                       >
+//                         Delete
+//                       </button>
+//                     </div>
+//                   </div>
+//                 );
+//               })}
+//             </div>
+
+//             <div className="inline-actions">
+//               <button
+//                 type="button"
+//                 className="button secondary"
+//                 onClick={handleAddCandidateSlot}
+//               >
+//                 Add Another Time Slot
+//               </button>
+
+//               <button
+//                 type="button"
+//                 onClick={handleSaveGroupMeeting}
+//                 disabled={saving}
+//               >
+//                 {saving ? 'Saving...' : 'Save Group Meeting'}
+//               </button>
+//             </div>
+//           </section>
+
+//           <section className="card booking-side-panel">
+//             <h2>Saved Group Meetings</h2>
+
+//             {loadingSavedMeetings ? (
+//               <p>Loading saved meetings...</p>
+//             ) : savedMeetings.length === 0 ? (
+//               <p>No saved Type 2 group meetings yet.</p>
+//             ) : (
+//               <div className="summary-list summary-list-scroll">
+//                 {savedMeetings.map((meeting) => {
+//                   const isExpanded = expandedMeetingId === meeting.id;
+//                   const detail = savedMeetingDetails[meeting.id];
+
+//                   return (
+//                     <div key={meeting.id} className="summary-item">
+//                       <div className="summary-main">
+//                         <p className="summary-title">{meeting.title}</p>
+//                         <p>{meeting.description || 'No description.'}</p>
+//                         <p>Status: {meeting.status}</p>
+
+//                         <div className="inline-actions" style={{ marginTop: '10px' }}>
+//                           <button
+//                             type="button"
+//                             className="button secondary"
+//                             onClick={() => handleToggleSavedMeeting(meeting.id)}
+//                           >
+//                             {isExpanded ? 'Hide Meeting Detail' : 'Show Meeting Detail'}
+//                           </button>
+
+//                           <button
+//                             type="button"
+//                             className="button secondary"
+//                             onClick={() =>
+//                               setEditingSavedMeetingId((current) =>
+//                                 current === meeting.id ? null : meeting.id
+//                               )
+//                             }
+//                           >
+//                             {editingSavedMeetingId === meeting.id
+//                               ? 'Hide Edit Controls'
+//                               : 'Edit Invitees / Time Slots'}
+//                           </button>
+
+//                           <button
+//                             type="button"
+//                             className="button secondary"
+//                             onClick={() => handleDeleteMeeting(meeting.id)}
+//                             disabled={deletingMeetingId === meeting.id}
+//                           >
+//                             {deletingMeetingId === meeting.id ? 'Deleting...' : 'Delete Meeting'}
+//                           </button>
+//                         </div>
+
+//                         {isExpanded && detail && (
+//                           <div className="saved-invitees-box collapsible-section">
+//                             <p className="summary-title">Invited Users</p>
+
+//                             {!detail.invitees?.length ? (
+//                               <p>No invitees found.</p>
+//                             ) : (
+//                               <ul className="invitee-list">
+//                                 {detail.invitees.map((invitee) => (
+//                                   <li key={invitee.id} className="invitee-row">
+//                                     <span>
+//                                       {invitee.name} ({invitee.email})
+//                                     </span>
+
+//                                     {editingSavedMeetingId === meeting.id && (
+//                                       <button
+//                                         type="button"
+//                                         className="button secondary small-button"
+//                                         onClick={() =>
+//                                           handleRemoveInviteeFromSavedMeeting(meeting.id, invitee.id)
+//                                         }
+//                                       >
+//                                         Remove
+//                                       </button>
+//                                     )}
+//                                   </li>
+//                                 ))}
+//                               </ul>
+//                             )}
+
+//                             {editingSavedMeetingId === meeting.id && (
+//                               <div className="inline-actions" style={{ marginTop: '10px' }}>
+//                                 <input
+//                                   type="email"
+//                                   className="invitee-inline-input"
+//                                   placeholder="Add invitee email"
+//                                   value={savedMeetingInviteeInputs[meeting.id] || ''}
+//                                   onChange={(event) =>
+//                                     handleSavedMeetingInviteeInputChange(meeting.id, event.target.value)
+//                                   }
+//                                 />
+//                                 <button
+//                                   type="button"
+//                                   className="button secondary"
+//                                   onClick={() => handleAddInviteeToSavedMeeting(meeting.id)}
+//                                 >
+//                                   Add Invitee
+//                                 </button>
+//                               </div>
+//                             )}
+
+//                             <p className="summary-title" style={{ marginTop: '12px' }}>
+//                               Candidate Time Slots
+//                             </p>
+
+//                             {!detail.slots?.length ? (
+//                               <p>No candidate slots found.</p>
+//                             ) : (
+//                               <ul className="invitee-list">
+//                                 {detail.slots.map((slot, index) => (
+//                                   <li key={slot.id} className="invitee-row">
+//                                     <span>
+//                                       Slot {index + 1}: {formatReadableDateTime(slot.start)} — {formatReadableDateTime(slot.end)}
+//                                     </span>
+
+//                                     {editingSavedMeetingId === meeting.id && (
+//                                       <button
+//                                         type="button"
+//                                         className="button secondary small-button"
+//                                         onClick={() => handleRemoveSlotFromSavedMeeting(meeting.id, slot.id)}
+//                                       >
+//                                         Remove
+//                                       </button>
+//                                     )}
+//                                   </li>
+//                                 ))}
+//                               </ul>
+//                             )}
+
+//                             {editingSavedMeetingId === meeting.id && (
+//                               <div style={{ marginTop: '10px' }}>
+//                                 <div className="same-line-row">
+//                                   <label>
+//                                     Start
+//                                     <input
+//                                       type="datetime-local"
+//                                       value={savedMeetingSlotInputs[meeting.id]?.start || ''}
+//                                       onChange={(event) =>
+//                                         handleSavedMeetingSlotInputChange(meeting.id, 'start', event.target.value)
+//                                       }
+//                                     />
+//                                   </label>
+
+//                                   <label>
+//                                     End
+//                                     <input
+//                                       type="datetime-local"
+//                                       value={savedMeetingSlotInputs[meeting.id]?.end || ''}
+//                                       onChange={(event) =>
+//                                         handleSavedMeetingSlotInputChange(meeting.id, 'end', event.target.value)
+//                                       }
+//                                     />
+//                                   </label>
+//                                 </div>
+
+//                                 <div className="inline-actions" style={{ marginTop: '10px' }}>
+//                                   <button
+//                                     type="button"
+//                                     className="button secondary"
+//                                     onClick={() => handleAddSlotToSavedMeeting(meeting.id)}
+//                                   >
+//                                     Add Time Slot
+//                                   </button>
+//                                 </div>
+//                               </div>
+//                             )}
+//                           </div>
+//                         )}
+//                       </div>
+//                     </div>
+//                   );
+//                 })}
+//               </div>
+//             )}
+//           </section>
+//         </section>
+
+//         <section className="card calendar-section">
+//           <div className="calendar-section-header">
+//             <h2>Calendar Preview</h2>
+//             <p>
+//               Click one candidate slot row on the left, then select a time range on the calendar to fill that slot.
+//             </p>
+//           </div>
+
+//           <CalendarGrid
+//             mode="type2-create"
+//             events={calendarEvents}
+//             onSelectSlot={handleCalendarSelect}
+//             onSelectEvent={handleCalendarEventClick}
+//           />
+//         </section>
+//       </main>
+//     </>
+//   );
+// }
+
+// export default Type2CreateGroupMeetingPage;
+
+
+
 /* Author: Hanjing Zheng */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
 import UserCalendarTopnav from '../components/CalendarTopnav';
 import CalendarGrid from '../components/CalendarGrid';
+
+const API_BASE = 'http://localhost:4000/api';
+const TOKEN_KEY = 'comp307-booking-token';
 
 function toDateTimeLocalValue(dateInput) {
   const date = new Date(dateInput);
@@ -22,42 +985,6 @@ function formatReadableDateTime(dateInput) {
   });
 }
 
-function addDays(dateInput, days) {
-  const next = new Date(dateInput);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function generateCandidatePreviewEvents(candidateSlots, previewWeeks, title) {
-  const safeWeeks = Math.max(1, Number(previewWeeks) || 1);
-  const displayTitle = title?.trim() || 'Group Meeting';
-  const allEvents = [];
-
-  candidateSlots.forEach((slot) => {
-    const baseStart = new Date(slot.start);
-    const baseEnd = new Date(slot.end);
-
-    for (let weekIndex = 0; weekIndex < safeWeeks; weekIndex += 1) {
-      const repeatedStart = addDays(baseStart, weekIndex * 7);
-      const repeatedEnd = addDays(baseEnd, weekIndex * 7);
-
-      allEvents.push({
-        id: `${slot.id}-week-${weekIndex + 1}`,
-        title: slot.title || displayTitle,
-        start: repeatedStart,
-        end: repeatedEnd,
-        extendedProps: {
-          candidateSlotId: slot.id,
-          weekIndex: weekIndex + 1,
-          isSavedCandidateSlot: true,
-        },
-      });
-    }
-  });
-
-  return allEvents;
-}
-
 function parseInvitees(inviteesText) {
   return inviteesText
     .split(',')
@@ -66,7 +993,8 @@ function parseInvitees(inviteesText) {
 }
 
 function isValidMcGillEmail(email) {
-  return email.endsWith('@mail.mcgill.ca') || email.endsWith('@mcgill.ca');
+  const safeEmail = String(email || '').trim().toLowerCase();
+  return safeEmail.endsWith('@mail.mcgill.ca') || safeEmail.endsWith('@mcgill.ca');
 }
 
 function Type2CreateGroupMeetingPage({
@@ -76,73 +1004,125 @@ function Type2CreateGroupMeetingPage({
   type2Draft,
   setType2Draft,
 }) {
-  const defaultEditor = {
-    start: '',
-    end: '',
-  };
-
-  const [selectedCandidateId, setSelectedCandidateId] = useState(null);
-  const [slotEditor, setSlotEditor] = useState(defaultEditor);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [expandedInviteeSlotId, setExpandedInviteeSlotId] = useState(null);
-  const [inviteeSearchTerms, setInviteeSearchTerms] = useState({});
-  const [inviteeAddInputs, setInviteeAddInputs] = useState({});
+  const [selectedCandidateId, setSelectedCandidateId] = useState(null);
 
-  const isEditorComplete = useMemo(() => {
-    if (!slotEditor.start || !slotEditor.end) return false;
+  const [saving, setSaving] = useState(false);
+  const [loadingSavedMeetings, setLoadingSavedMeetings] = useState(true);
+  const [savedMeetings, setSavedMeetings] = useState([]);
+  const [savedMeetingDetails, setSavedMeetingDetails] = useState({});
+  const [expandedMeetingId, setExpandedMeetingId] = useState(null);
+  const [deletingMeetingId, setDeletingMeetingId] = useState(null);
+  const [editingSavedMeetingId, setEditingSavedMeetingId] = useState(null);
 
-    const start = new Date(slotEditor.start);
-    const end = new Date(slotEditor.end);
-
-    return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && end > start;
-  }, [slotEditor]);
+  const [savedMeetingInviteeInputs, setSavedMeetingInviteeInputs] = useState({});
+  const [savedMeetingSlotInputs, setSavedMeetingSlotInputs] = useState({});
 
   const inviteeList = useMemo(() => {
     return parseInvitees(type2Draft.invitees);
   }, [type2Draft.invitees]);
 
-  const savedEvents = useMemo(() => {
-    return generateCandidatePreviewEvents(
-      type2Draft.candidateSlots,
-      type2Draft.previewWeeks,
-      type2Draft.title
-    );
-  }, [type2Draft]);
-
-  const unsavedPreviewEvents = useMemo(() => {
-    if (!isEditorComplete) return [];
-
-    const tempSlot = {
-      id: 'unsaved-candidate-preview',
-      title: type2Draft.title?.trim() || 'Group Meeting',
-      start: new Date(slotEditor.start),
-      end: new Date(slotEditor.end),
-    };
-
-    return generateCandidatePreviewEvents(
-      [tempSlot],
-      type2Draft.previewWeeks,
-      type2Draft.title
-    ).map((eventItem) => ({
-      ...eventItem,
-      id: `preview-${eventItem.id}`,
-      extendedProps: {
-        ...eventItem.extendedProps,
-        isUnsavedPreview: true,
-      },
-    }));
-  }, [slotEditor, type2Draft, isEditorComplete]);
+  const sortedCandidateSlots = useMemo(() => {
+    return [...type2Draft.candidateSlots].sort((a, b) => {
+      const aTime = a.start ? new Date(a.start).getTime() : 0;
+      const bTime = b.start ? new Date(b.start).getTime() : 0;
+      return aTime - bTime;
+    });
+  }, [type2Draft.candidateSlots]);
 
   const calendarEvents = useMemo(() => {
-    return [...savedEvents, ...unsavedPreviewEvents];
-  }, [savedEvents, unsavedPreviewEvents]);
+    return type2Draft.candidateSlots
+      .filter((slot) => slot.start && slot.end)
+      .map((slot, index) => ({
+        id: String(slot.id),
+        title: `${type2Draft.title?.trim() || 'Group Meeting'} - Option ${index + 1}`,
+        start: new Date(slot.start),
+        end: new Date(slot.end),
+        extendedProps: {
+          candidateSlotId: slot.id,
+        },
+      }));
+  }, [type2Draft.candidateSlots, type2Draft.title]);
 
-  const sortedCandidateSlots = useMemo(() => {
-    return [...type2Draft.candidateSlots].sort(
-      (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
-    );
-  }, [type2Draft.candidateSlots]);
+  const resetDraft = () => {
+    setType2Draft({
+      title: 'COMP 307 Group Meeting',
+      description: '',
+      invitees: '',
+      candidateSlots: [
+        {
+          id: `candidate-${Date.now()}`,
+          start: '',
+          end: '',
+        },
+      ],
+    });
+    setSelectedCandidateId(null);
+  };
+
+  const fetchOwnerMeetings = async () => {
+    try {
+      setLoadingSavedMeetings(true);
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        setSavedMeetings([]);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/type2/owner/meetings`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch saved Type 2 meetings.');
+      }
+
+      setSavedMeetings(data.meetings || []);
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError(fetchError.message || 'Unable to load saved Type 2 meetings.');
+      setSavedMeetings([]);
+    } finally {
+      setLoadingSavedMeetings(false);
+    }
+  };
+
+  const fetchMeetingDetail = async (meetingId) => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE}/type2/meetings/${meetingId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch Type 2 meeting detail.');
+      }
+
+      setSavedMeetingDetails((current) => ({
+        ...current,
+        [meetingId]: data,
+      }));
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError(fetchError.message || 'Unable to load Type 2 meeting detail.');
+    }
+  };
+
+  useEffect(() => {
+    void fetchOwnerMeetings();
+  }, [user]);
 
   const handleDraftChange = (event) => {
     const { name, value } = event.target;
@@ -154,39 +1134,88 @@ function Type2CreateGroupMeetingPage({
     setError('');
   };
 
-  const resetEditor = () => {
-    setSelectedCandidateId(null);
-    setSlotEditor(defaultEditor);
-  };
-
-  const handleEditorChange = (event) => {
-    const { name, value } = event.target;
-
-    setSlotEditor((current) => ({
+  const handleCandidateSlotChange = (slotId, field, value) => {
+    setType2Draft((current) => ({
       ...current,
-      [name]: value,
+      candidateSlots: current.candidateSlots.map((slot) =>
+        slot.id === slotId ? { ...slot, [field]: value } : slot
+      ),
     }));
     setMessage('');
     setError('');
   };
 
-  const validateEditor = () => {
-    if (!slotEditor.start || !slotEditor.end) {
-      return 'Please choose both start and end date/time.';
+  const handleAddCandidateSlot = () => {
+    setType2Draft((current) => ({
+      ...current,
+      candidateSlots: [
+        ...current.candidateSlots,
+        {
+          id: `candidate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          start: '',
+          end: '',
+        },
+      ],
+    }));
+    setMessage('');
+    setError('');
+  };
+
+  const handleRemoveCandidateSlot = (slotId) => {
+    setType2Draft((current) => {
+      const updated = current.candidateSlots.filter((slot) => slot.id !== slotId);
+      return {
+        ...current,
+        candidateSlots:
+          updated.length > 0
+            ? updated
+            : [
+                {
+                  id: `candidate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                  start: '',
+                  end: '',
+                },
+              ],
+      };
+    });
+
+    if (selectedCandidateId === slotId) {
+      setSelectedCandidateId(null);
     }
 
-    const start = new Date(slotEditor.start);
-    const end = new Date(slotEditor.end);
+    setMessage('');
+    setError('');
+  };
 
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return 'Please enter valid date/time values.';
+  const handleCalendarSelect = ({ start, end }) => {
+    if (!selectedCandidateId) {
+      setError('Please click one candidate slot row on the left first, then select the time on the calendar.');
+      return;
     }
 
-    if (end <= start) {
-      return 'End time must be after start time.';
-    }
+    setType2Draft((current) => ({
+      ...current,
+      candidateSlots: current.candidateSlots.map((slot) =>
+        slot.id === selectedCandidateId
+          ? {
+              ...slot,
+              start: toDateTimeLocalValue(start),
+              end: toDateTimeLocalValue(end),
+            }
+          : slot
+      ),
+    }));
 
-    return '';
+    setMessage('');
+    setError('');
+  };
+
+  const handleCalendarEventClick = (calendarEvent) => {
+    const candidateSlotId = calendarEvent.extendedProps?.candidateSlotId;
+    if (!candidateSlotId) return;
+    setSelectedCandidateId(candidateSlotId);
+    setMessage('');
+    setError('');
   };
 
   const validateInvitees = (invitees) => {
@@ -202,243 +1231,356 @@ function Type2CreateGroupMeetingPage({
     return '';
   };
 
-  const handleCalendarSelect = ({ start, end }) => {
-    setSlotEditor({
-      start: toDateTimeLocalValue(start),
-      end: toDateTimeLocalValue(end),
-    });
-    setSelectedCandidateId(null);
-    setMessage('');
-    setError('');
-  };
-
-  const handleCalendarEventClick = (calendarEvent) => {
-    if (calendarEvent.extendedProps?.isUnsavedPreview) {
-      return;
+  const validateCandidateSlots = (candidateSlots) => {
+    if (!candidateSlots.length) {
+      return 'Please add at least one candidate slot.';
     }
 
-    const candidateSlotId = calendarEvent.extendedProps?.candidateSlotId;
-    if (!candidateSlotId) return;
+    for (const slot of candidateSlots) {
+      if (!slot.start || !slot.end) {
+        return 'Each candidate slot must have both start and end date/time.';
+      }
 
-    const matchedCandidate = type2Draft.candidateSlots.find(
-      (slot) => slot.id === candidateSlotId
-    );
-    if (!matchedCandidate) return;
+      const start = new Date(slot.start);
+      const end = new Date(slot.end);
 
-    setSelectedCandidateId(candidateSlotId);
-    setSlotEditor({
-      start: toDateTimeLocalValue(matchedCandidate.start),
-      end: toDateTimeLocalValue(matchedCandidate.end),
-    });
-    setMessage('');
-    setError('');
-  };
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        return 'Each candidate slot must have valid date/time values.';
+      }
 
-  const handleSaveCandidateSlot = () => {
-    setMessage('');
-    setError('');
-
-    const editorValidationMessage = validateEditor();
-    if (editorValidationMessage) {
-      setError(editorValidationMessage);
-      return;
+      if (end <= start) {
+        return 'Each candidate slot must end after it starts.';
+      }
     }
 
-    const defaultInvitees = parseInvitees(type2Draft.invitees);
-    const inviteesValidationMessage = validateInvitees(defaultInvitees);
+    const seen = new Set();
+    for (const slot of candidateSlots) {
+      const key = `${new Date(slot.start).getTime()}-${new Date(slot.end).getTime()}`;
+      if (seen.has(key)) {
+        return 'Duplicate candidate slots are not allowed.';
+      }
+      seen.add(key);
+    }
+
+    return '';
+  };
+
+  const handleSaveGroupMeeting = async (event) => {
+    event.preventDefault();
+    setMessage('');
+    setError('');
+
+    const inviteesValidationMessage = validateInvitees(inviteeList);
     if (inviteesValidationMessage) {
       setError(inviteesValidationMessage);
       return;
     }
 
-    const start = new Date(slotEditor.start);
-    const end = new Date(slotEditor.end);
+    const candidateValidationMessage = validateCandidateSlots(type2Draft.candidateSlots);
+    if (candidateValidationMessage) {
+      setError(candidateValidationMessage);
+      return;
+    }
 
-    if (selectedCandidateId) {
-      setType2Draft((current) => ({
-        ...current,
-        candidateSlots: current.candidateSlots.map((slot) =>
-          slot.id === selectedCandidateId
-            ? {
-                ...slot,
-                title: current.title.trim() || 'Group Meeting',
-                start,
-                end,
-              }
-            : slot
-        ),
-      }));
-      setMessage('Candidate meeting slot updated.');
-    } else {
-      const duplicateExists = type2Draft.candidateSlots.some(
-        (slot) =>
-          new Date(slot.start).getTime() === start.getTime() &&
-          new Date(slot.end).getTime() === end.getTime()
+    try {
+      setSaving(true);
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to save a Type 2 meeting.');
+      }
+
+      const response = await fetch(`${API_BASE}/type2/meetings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: type2Draft.title,
+          description: type2Draft.description,
+          slots: type2Draft.candidateSlots.map((slot) => ({
+            start: new Date(slot.start).toISOString(),
+            end: new Date(slot.end).toISOString(),
+          })),
+          inviteeEmails: [...inviteeList],
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save Type 2 meeting.');
+      }
+
+      setMessage('Group meeting saved successfully.');
+      resetDraft();
+      await fetchOwnerMeetings();
+    } catch (saveError) {
+      console.error(saveError);
+      setError(saveError.message || 'Unable to save Type 2 meeting.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleSavedMeeting = async (meetingId) => {
+    const isSameMeeting = expandedMeetingId === meetingId;
+
+    if (isSameMeeting) {
+      setExpandedMeetingId(null);
+      setEditingSavedMeetingId(null);
+      return;
+    }
+
+    setExpandedMeetingId(meetingId);
+    setEditingSavedMeetingId(null);
+
+    if (!savedMeetingDetails[meetingId]) {
+      await fetchMeetingDetail(meetingId);
+    }
+  };
+
+  const handleEditSavedMeeting = async (meetingId) => {
+    const isSameMeeting = editingSavedMeetingId === meetingId;
+
+    if (isSameMeeting) {
+      setEditingSavedMeetingId(null);
+      setExpandedMeetingId(null);
+      return;
+    }
+
+    setEditingSavedMeetingId(meetingId);
+    setExpandedMeetingId(meetingId);
+
+    if (!savedMeetingDetails[meetingId]) {
+      await fetchMeetingDetail(meetingId);
+    }
+  };
+
+  const handleDeleteMeeting = async (meetingId) => {
+    try {
+      setDeletingMeetingId(meetingId);
+      setMessage('');
+      setError('');
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to delete a Type 2 meeting.');
+      }
+
+      const response = await fetch(`${API_BASE}/type2/meetings/${meetingId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete Type 2 meeting.');
+      }
+
+      setSavedMeetings((current) =>
+        current.filter((meeting) => String(meeting.id) !== String(meetingId))
       );
+      setSavedMeetingDetails((current) => {
+        const copy = { ...current };
+        delete copy[meetingId];
+        return copy;
+      });
 
-      if (duplicateExists) {
-        setError('This candidate meeting slot already exists.');
+      if (expandedMeetingId === meetingId) {
+        setExpandedMeetingId(null);
+      }
+
+      if (editingSavedMeetingId === meetingId) {
+        setEditingSavedMeetingId(null);
+      }
+
+      setMessage('Group meeting deleted successfully.');
+    } catch (deleteError) {
+      console.error(deleteError);
+      setError(deleteError.message || 'Unable to delete Type 2 meeting.');
+    } finally {
+      setDeletingMeetingId(null);
+    }
+  };
+
+  const handleSavedMeetingInviteeInputChange = (meetingId, value) => {
+    setSavedMeetingInviteeInputs((current) => ({
+      ...current,
+      [meetingId]: value,
+    }));
+  };
+
+  const handleSavedMeetingSlotInputChange = (meetingId, field, value) => {
+    setSavedMeetingSlotInputs((current) => ({
+      ...current,
+      [meetingId]: {
+        ...(current[meetingId] || { start: '', end: '' }),
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleAddInviteeToSavedMeeting = async (meetingId) => {
+    try {
+      const email = String(savedMeetingInviteeInputs[meetingId] || '').trim().toLowerCase();
+
+      if (!email) {
+        setError('Please type an email before adding.');
         return;
       }
 
-      const newSlot = {
-        id: `candidate-slot-${Date.now()}`,
-        title: type2Draft.title.trim() || 'Group Meeting',
-        start,
-        end,
-        invitedUsers: defaultInvitees,
-      };
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to edit invitees.');
+      }
 
-      setType2Draft((current) => ({
+      const response = await fetch(`${API_BASE}/type2/meetings/${meetingId}/invitees`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add invitee.');
+      }
+
+      setSavedMeetingInviteeInputs((current) => ({
         ...current,
-        candidateSlots: [...current.candidateSlots, newSlot],
+        [meetingId]: '',
       }));
-      setMessage('Candidate meeting slot saved.');
+
+      await fetchMeetingDetail(meetingId);
+      setMessage('Invitee added successfully.');
+      setError('');
+    } catch (addError) {
+      console.error(addError);
+      setError(addError.message || 'Unable to add invitee.');
+      setMessage('');
     }
-
-    resetEditor();
   };
 
-  const handleRemoveCandidateSlot = (slotId) => {
-    setType2Draft((current) => ({
-      ...current,
-      candidateSlots: current.candidateSlots.filter((slot) => slot.id !== slotId),
-    }));
+  const handleRemoveInviteeFromSavedMeeting = async (meetingId, userId) => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to remove invitees.');
+      }
 
-    if (selectedCandidateId === slotId) {
-      resetEditor();
+      const response = await fetch(
+        `${API_BASE}/type2/meetings/${meetingId}/invitees/${userId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to remove invitee.');
+      }
+
+      await fetchMeetingDetail(meetingId);
+      setMessage('Invitee removed successfully.');
+      setError('');
+    } catch (removeError) {
+      console.error(removeError);
+      setError(removeError.message || 'Unable to remove invitee.');
+      setMessage('');
     }
+  };
 
-    if (expandedInviteeSlotId === slotId) {
-      setExpandedInviteeSlotId(null);
+  const handleAddSlotToSavedMeeting = async (meetingId) => {
+    try {
+      const start = savedMeetingSlotInputs[meetingId]?.start || '';
+      const end = savedMeetingSlotInputs[meetingId]?.end || '';
+
+      if (!start || !end) {
+        setError('Please fill in both start and end time before adding a slot.');
+        return;
+      }
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to add slots.');
+      }
+
+      const response = await fetch(`${API_BASE}/type2/meetings/${meetingId}/slots`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          start: new Date(start).toISOString(),
+          end: new Date(end).toISOString(),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add candidate slot.');
+      }
+
+      setSavedMeetingSlotInputs((current) => ({
+        ...current,
+        [meetingId]: { start: '', end: '' },
+      }));
+
+      await fetchMeetingDetail(meetingId);
+      setMessage('Candidate slot added successfully.');
+      setError('');
+    } catch (addError) {
+      console.error(addError);
+      setError(addError.message || 'Unable to add candidate slot.');
+      setMessage('');
     }
-
-    setMessage('Candidate meeting slot removed.');
-    setError('');
   };
 
-  const handleStartNewSelection = () => {
-    resetEditor();
-    setMessage('');
-    setError('');
-  };
+  const handleRemoveSlotFromSavedMeeting = async (meetingId, slotId) => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to remove slots.');
+      }
 
-  const handleToggleInviteeSection = (slotId) => {
-    setExpandedInviteeSlotId((current) => (current === slotId ? null : slotId));
-  };
+      const response = await fetch(
+        `${API_BASE}/type2/meetings/${meetingId}/slots/${slotId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  const handleInviteeSearchChange = (slotId, value) => {
-    setInviteeSearchTerms((current) => ({
-      ...current,
-      [slotId]: value,
-    }));
-  };
+      const data = await response.json().catch(() => ({}));
 
-  const handleInviteeAddInputChange = (slotId, value) => {
-    setInviteeAddInputs((current) => ({
-      ...current,
-      [slotId]: value,
-    }));
-  };
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to remove candidate slot.');
+      }
 
-  const handleAddInviteeToSavedSlot = (slotId) => {
-    const email = (inviteeAddInputs[slotId] || '').trim();
-
-    if (!email) {
-      setError('Please type an email before adding.');
-      return;
+      await fetchMeetingDetail(meetingId);
+      setMessage('Candidate slot removed successfully.');
+      setError('');
+    } catch (removeError) {
+      console.error(removeError);
+      setError(removeError.message || 'Unable to remove candidate slot.');
+      setMessage('');
     }
-
-    if (!isValidMcGillEmail(email)) {
-      setError(`Invalid McGill email: ${email}`);
-      return;
-    }
-
-    setType2Draft((current) => ({
-      ...current,
-      candidateSlots: current.candidateSlots.map((slot) => {
-        if (slot.id !== slotId) return slot;
-
-        const existing = slot.invitedUsers || [];
-        if (existing.includes(email)) return slot;
-
-        return {
-          ...slot,
-          invitedUsers: [...existing, email],
-        };
-      }),
-    }));
-
-    setInviteeAddInputs((current) => ({
-      ...current,
-      [slotId]: '',
-    }));
-
-    setMessage('Invited user added to saved candidate slot.');
-    setError('');
-  };
-
-  const handleRemoveInviteeFromSavedSlot = (slotId, emailToRemove) => {
-    setType2Draft((current) => ({
-      ...current,
-      candidateSlots: current.candidateSlots.map((slot) =>
-        slot.id === slotId
-          ? {
-              ...slot,
-              invitedUsers: (slot.invitedUsers || []).filter(
-                (email) => email !== emailToRemove
-              ),
-            }
-          : slot
-      ),
-    }));
-
-    setMessage('Invited user removed from saved candidate slot.');
-    setError('');
-  };
-
-  const handlePrepareDraft = (event) => {
-    event.preventDefault();
-    setMessage('');
-    setError('');
-
-    if (type2Draft.candidateSlots.length === 0) {
-      setError('Please save at least one candidate meeting slot first.');
-      return;
-    }
-
-    const slotWithoutInvitees = type2Draft.candidateSlots.find(
-      (slot) => !slot.invitedUsers || slot.invitedUsers.length === 0
-    );
-
-    if (slotWithoutInvitees) {
-      setError('Each saved candidate slot must have at least one invited user.');
-      return;
-    }
-
-    const payload = {
-      title: type2Draft.title,
-      description: type2Draft.description,
-      previewWeeks: Number(type2Draft.previewWeeks),
-      candidateSlots: type2Draft.candidateSlots.map((slot) => ({
-        title: slot.title,
-        start: new Date(slot.start).toISOString(),
-        end: new Date(slot.end).toISOString(),
-        invitedUsers: [...(slot.invitedUsers || [])].sort((a, b) =>
-          a.localeCompare(b)
-        ),
-      })),
-      previewOccurrences: savedEvents.map((eventItem) => ({
-        title: eventItem.title,
-        start: new Date(eventItem.start).toISOString(),
-        end: new Date(eventItem.end).toISOString(),
-        weekIndex: eventItem.extendedProps.weekIndex,
-        candidateSlotId: eventItem.extendedProps.candidateSlotId,
-      })),
-    };
-
-    console.log('Final Type 2 create payload:', payload);
-    setMessage('Group meeting draft prepared. Check console output.');
   };
 
   return (
@@ -453,8 +1595,7 @@ function Type2CreateGroupMeetingPage({
         <header className="booking-header">
           <h1>Create Group Meeting</h1>
           <p className="booking-subtitle">
-            Create candidate meeting times, add invited users, and preview the
-            options on the calendar before users vote on them.
+            Build one whole group meeting with several candidate time slots, then save it so invited users can see it on their vote page.
           </p>
         </header>
 
@@ -463,7 +1604,7 @@ function Type2CreateGroupMeetingPage({
 
         <section className="booking-layout">
           <section className="card booking-form">
-            <h2>Group Meeting Settings</h2>
+            <h2>Current Group Meeting Draft</h2>
 
             <label>
               Meeting Title
@@ -487,7 +1628,7 @@ function Type2CreateGroupMeetingPage({
             </label>
 
             <label>
-              Default Invited Users
+              Invited Users
               <textarea
                 name="invitees"
                 value={type2Draft.invitees}
@@ -497,7 +1638,7 @@ function Type2CreateGroupMeetingPage({
             </label>
 
             <div className="invitee-preview-box">
-              <p className="summary-title">Default Invited Users</p>
+              <p className="summary-title">Invited Users For This Meeting</p>
               {inviteeList.length === 0 ? (
                 <p>No invited users added yet.</p>
               ) : (
@@ -509,208 +1650,266 @@ function Type2CreateGroupMeetingPage({
               )}
             </div>
 
-            <div className="same-line-row">
-              <label>
-                Start Date & Time
-                <input
-                  type="datetime-local"
-                  name="start"
-                  value={slotEditor.start}
-                  onChange={handleEditorChange}
-                />
-              </label>
-
-              <label>
-                End Date & Time
-                <input
-                  type="datetime-local"
-                  name="end"
-                  value={slotEditor.end}
-                  onChange={handleEditorChange}
-                />
-              </label>
-
-              <label>
-                Preview Weeks
-                <input
-                  type="number"
-                  name="previewWeeks"
-                  min="1"
-                  value={type2Draft.previewWeeks}
-                  onChange={handleDraftChange}
-                />
-              </label>
-            </div>
-
+            <h2>Candidate Time Slots</h2>
             <p className="helper-text">
-              Select a time range on the calendar or type exact values above.
-              Then click <strong>Save Candidate Slot</strong>. New candidate slots
-              will start with the default invited users, and you can edit each slot’s
-              invitee list below.
+              Add several different time slots. All of them belong to this one group meeting.
             </p>
 
-            <div className="inline-actions">
-              <button
-                type="button"
-                className="button secondary"
-                onClick={handleStartNewSelection}
-              >
-                New Selection
-              </button>
+            <div className="summary-list">
+              {type2Draft.candidateSlots.map((slot, index) => {
+                const isSelected = slot.id === selectedCandidateId;
 
-              <button
-                type="button"
-                onClick={handleSaveCandidateSlot}
-              >
-                Save Candidate Slot
-              </button>
-            </div>
-
-            <div className="form-actions">
-              <button
-                type="submit"
-                className="button secondary"
-                onClick={handlePrepareDraft}
-              >
-                Prepare Group Meeting Draft
-              </button>
-            </div>
-          </section>
-
-          <section className="card booking-side-panel">
-            <h2>Saved Candidate Slots</h2>
-
-            {sortedCandidateSlots.length === 0 ? (
-              <p>No candidate meeting slots saved yet.</p>
-            ) : (
-              <div className="summary-list">
-                {sortedCandidateSlots.map((slot) => {
-                  const isSelected = slot.id === selectedCandidateId;
-                  const isExpanded = expandedInviteeSlotId === slot.id;
-                  const sortedInvitees = [...(slot.invitedUsers || [])].sort((a, b) =>
-                    a.localeCompare(b)
-                  );
-                  const searchTerm = inviteeSearchTerms[slot.id] || '';
-                  const filteredInvitees = sortedInvitees.filter((email) =>
-                    email.toLowerCase().includes(searchTerm.toLowerCase())
-                  );
-
-                  return (
-                    <div
-                      key={slot.id}
-                      className={`summary-item ${isSelected ? 'selected-summary-item' : ''}`}
-                    >
-                      <div className="summary-main">
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => {
+                return (
+                  <div
+                    key={slot.id}
+                    className={`summary-item ${isSelected ? 'selected-summary-item' : ''}`}
+                  >
+                    <div className="summary-main">
+                      <p
+                        className="summary-title"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedCandidateId(slot.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
                             setSelectedCandidateId(slot.id);
-                            setSlotEditor({
-                              start: toDateTimeLocalValue(slot.start),
-                              end: toDateTimeLocalValue(slot.end),
-                            });
-                            setMessage('');
-                            setError('');
-                          }}
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                              setSelectedCandidateId(slot.id);
-                              setSlotEditor({
-                                start: toDateTimeLocalValue(slot.start),
-                                end: toDateTimeLocalValue(slot.end),
-                              });
-                              setMessage('');
-                              setError('');
-                            }
-                          }}
-                        >
-                          <p className="summary-title">{slot.title || 'Group Meeting'}</p>
-                          <p>Start: {formatReadableDateTime(slot.start)}</p>
-                          <p>End: {formatReadableDateTime(slot.end)}</p>
-                          <p>
-                            Preview repeated for{' '}
-                            {Math.max(1, Number(type2Draft.previewWeeks) || 1)} week(s)
-                          </p>
-                          <p>Invited users: {sortedInvitees.length}</p>
-                        </div>
+                          }
+                        }}
+                      >
+                        Candidate Slot {index + 1}
+                      </p>
 
-                        <div className="inline-actions slot-top-actions">
-                          <button
-                            type="button"
-                            className="button secondary"
-                            onClick={() => handleToggleInviteeSection(slot.id)}
-                          >
-                            {isExpanded ? 'Hide Invited Users' : 'Show Invited Users'}
-                          </button>
-                        </div>
+                      <label>
+                        Start Date & Time
+                        <input
+                          type="datetime-local"
+                          value={slot.start}
+                          onChange={(event) =>
+                            handleCandidateSlotChange(slot.id, 'start', event.target.value)
+                          }
+                        />
+                      </label>
 
-                        {isExpanded && (
-                          <div className="saved-invitees-box collapsible-section">
-                            <p className="summary-title">Invited Users For This Slot</p>
+                      <label>
+                        End Date & Time
+                        <input
+                          type="datetime-local"
+                          value={slot.end}
+                          onChange={(event) =>
+                            handleCandidateSlotChange(slot.id, 'end', event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
 
-                            <input
-                              type="text"
-                              className="invitee-search-input"
-                              placeholder="Search invited users"
-                              value={searchTerm}
-                              onChange={(event) =>
-                                handleInviteeSearchChange(slot.id, event.target.value)
-                              }
-                            />
-
-                            <div className="invitee-list-scroll">
-                              {filteredInvitees.length === 0 ? (
-                                <p>No matching invited users.</p>
-                              ) : (
-                                <ul className="invitee-list">
-                                  {filteredInvitees.map((email) => (
-                                    <li key={email} className="invitee-row">
-                                      <span>{email}</span>
-                                      <button
-                                        type="button"
-                                        className="button secondary small-button"
-                                        onClick={() =>
-                                          handleRemoveInviteeFromSavedSlot(slot.id, email)
-                                        }
-                                      >
-                                        Remove
-                                      </button>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-
-                            <div className="inline-actions">
-                              <input
-                                type="email"
-                                className="invitee-inline-input"
-                                placeholder="Add one email"
-                                value={inviteeAddInputs[slot.id] || ''}
-                                onChange={(event) =>
-                                  handleInviteeAddInputChange(slot.id, event.target.value)
-                                }
-                              />
-                              <button
-                                type="button"
-                                className="button secondary"
-                                onClick={() => handleAddInviteeToSavedSlot(slot.id)}
-                              >
-                                Add Invitee
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                    <div className="inline-actions">
+                      <button
+                        type="button"
+                        className="button secondary"
+                        onClick={() => setSelectedCandidateId(slot.id)}
+                      >
+                        Select
+                      </button>
 
                       <button
                         type="button"
                         className="button secondary"
                         onClick={() => handleRemoveCandidateSlot(slot.id)}
                       >
-                        Remove Slot
+                        Delete
                       </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="inline-actions">
+              <button
+                type="button"
+                className="button secondary"
+                onClick={handleAddCandidateSlot}
+              >
+                Add Another Time Slot
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveGroupMeeting}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save Group Meeting'}
+              </button>
+            </div>
+          </section>
+
+          <section className="card booking-side-panel">
+            <h2>Saved Group Meetings</h2>
+
+            {loadingSavedMeetings ? (
+              <p>Loading saved meetings...</p>
+            ) : savedMeetings.length === 0 ? (
+              <p>No saved Type 2 group meetings yet.</p>
+            ) : (
+              <div className="summary-list summary-list-scroll">
+                {savedMeetings.map((meeting) => {
+                  const isExpanded = expandedMeetingId === meeting.id;
+                  const detail = savedMeetingDetails[meeting.id];
+                  const isEditing = editingSavedMeetingId === meeting.id;
+
+                  return (
+                    <div key={meeting.id} className="summary-item">
+                      <div className="summary-main">
+                        <p className="summary-title">{meeting.title}</p>
+                        <p>{meeting.description || 'No description.'}</p>
+                        <p>Status: {meeting.status}</p>
+
+                        <div className="inline-actions" style={{ marginTop: '10px' }}>
+                          <button
+                            type="button"
+                            className="button secondary"
+                            onClick={() => handleToggleSavedMeeting(meeting.id)}
+                          >
+                            {isExpanded ? 'Hide Meeting Detail' : 'Show Meeting Detail'}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="button secondary"
+                            onClick={() => handleEditSavedMeeting(meeting.id)}
+                          >
+                            {isEditing ? 'Close Edit' : 'Edit Invitees / Time Slots'}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="button secondary"
+                            onClick={() => handleDeleteMeeting(meeting.id)}
+                            disabled={deletingMeetingId === meeting.id}
+                          >
+                            {deletingMeetingId === meeting.id ? 'Deleting...' : 'Delete Meeting'}
+                          </button>
+                        </div>
+
+                        {isExpanded && detail && (
+                          <div className="saved-invitees-box collapsible-section">
+                            <p className="summary-title">Invited Users</p>
+
+                            {!detail.invitees?.length ? (
+                              <p>No invitees found.</p>
+                            ) : (
+                              <ul className="invitee-list">
+                                {detail.invitees.map((invitee) => (
+                                  <li key={invitee.id} className="invitee-row">
+                                    <span>
+                                      {invitee.name} ({invitee.email})
+                                    </span>
+
+                                    {isEditing && (
+                                      <button
+                                        type="button"
+                                        className="button secondary small-button"
+                                        onClick={() =>
+                                          handleRemoveInviteeFromSavedMeeting(meeting.id, invitee.id)
+                                        }
+                                      >
+                                        Remove
+                                      </button>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+
+                            {isEditing && (
+                              <div className="inline-actions" style={{ marginTop: '10px' }}>
+                                <input
+                                  type="email"
+                                  className="invitee-inline-input"
+                                  placeholder="Add invitee email"
+                                  value={savedMeetingInviteeInputs[meeting.id] || ''}
+                                  onChange={(event) =>
+                                    handleSavedMeetingInviteeInputChange(meeting.id, event.target.value)
+                                  }
+                                />
+                                <button
+                                  type="button"
+                                  className="button secondary"
+                                  onClick={() => handleAddInviteeToSavedMeeting(meeting.id)}
+                                >
+                                  Add Invitee
+                                </button>
+                              </div>
+                            )}
+
+                            <p className="summary-title" style={{ marginTop: '12px' }}>
+                              Candidate Time Slots
+                            </p>
+
+                            {!detail.slots?.length ? (
+                              <p>No candidate slots found.</p>
+                            ) : (
+                              <ul className="invitee-list">
+                                {detail.slots.map((slot, index) => (
+                                  <li key={slot.id} className="invitee-row">
+                                    <span>
+                                      Slot {index + 1}: {formatReadableDateTime(slot.start)} — {formatReadableDateTime(slot.end)}
+                                    </span>
+
+                                    {isEditing && (
+                                      <button
+                                        type="button"
+                                        className="button secondary small-button"
+                                        onClick={() => handleRemoveSlotFromSavedMeeting(meeting.id, slot.id)}
+                                      >
+                                        Remove
+                                      </button>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+
+                            {isEditing && (
+                              <div style={{ marginTop: '10px' }}>
+                                <div className="same-line-row">
+                                  <label>
+                                    Start
+                                    <input
+                                      type="datetime-local"
+                                      value={savedMeetingSlotInputs[meeting.id]?.start || ''}
+                                      onChange={(event) =>
+                                        handleSavedMeetingSlotInputChange(meeting.id, 'start', event.target.value)
+                                      }
+                                    />
+                                  </label>
+
+                                  <label>
+                                    End
+                                    <input
+                                      type="datetime-local"
+                                      value={savedMeetingSlotInputs[meeting.id]?.end || ''}
+                                      onChange={(event) =>
+                                        handleSavedMeetingSlotInputChange(meeting.id, 'end', event.target.value)
+                                      }
+                                    />
+                                  </label>
+                                </div>
+
+                                <div className="inline-actions" style={{ marginTop: '10px' }}>
+                                  <button
+                                    type="button"
+                                    className="button secondary"
+                                    onClick={() => handleAddSlotToSavedMeeting(meeting.id)}
+                                  >
+                                    Add Time Slot
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -723,8 +1922,7 @@ function Type2CreateGroupMeetingPage({
           <div className="calendar-section-header">
             <h2>Calendar Preview</h2>
             <p>
-              Candidate meeting slots are shown here. Invited users will later vote
-              on these saved options.
+              Click one candidate slot row on the left, then select a time range on the calendar to fill that slot.
             </p>
           </div>
 
