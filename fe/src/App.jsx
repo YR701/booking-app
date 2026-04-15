@@ -8,7 +8,7 @@ import BookingPage from './pages/BookingPage';
 import mcgillLogo from './assets/mcgill_logo.png';
 
 import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
-import Type2GroupMeetingVotePage from './pages/Type2GroupMeetingVotePage';
+// import Type2GroupMeetingVotePage from './pages/Type2GroupMeetingVotePage';
 import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
 import Type3OwnerOfficeHoursPage from './pages/Type3OwnerOfficeHoursPage';
 import Type3OfficeHoursPublicPage from './pages/Type3OfficeHoursPublicPage';
@@ -525,6 +525,8 @@ function App() {
           loading={loading}
           message={message}
           error={error}
+          onBookSlot={bookSlot}
+          onCancelBooking={cancelBooking}
           onSwitchToOwnerDashboard={() => setShowDashboard(false)}
         />
       </main>

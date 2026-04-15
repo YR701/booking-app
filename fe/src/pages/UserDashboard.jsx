@@ -18,6 +18,8 @@ function UserDashboard({
   loading = false,
   message = '',
   error = '',
+  onBookSlot,
+  onCancelBooking,
   onSwitchToOwnerDashboard,
 }) {
   //UserCalendar back to dashboard function
@@ -36,23 +38,12 @@ function UserDashboard({
   //cancel appointment
   const onCancel = async (id) => {
     try {
-      const token = localStorage.getItem('comp307-booking-token');
-      const response = await fetch(`http://localhost:4000/api/slots/${id}/booking`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error('Failed to cancel appointment');
-      }
+      await onCancelBooking(id);
       setLocalMessage('Appointment canceled successfully');
       setLocalError('');
-      // Refresh will be handled by parent, or user can re-trigger
     } catch (error) {
       console.error(error);
-      setLocalError('Error canceling appointment. Please try again later.');
+      setLocalError(error.message || 'Error canceling appointment. Please try again later.');
       setLocalMessage('');
     }
   };
@@ -227,6 +218,21 @@ function UserDashboard({
     }
   }
 
+  const handleBookOfficeHour = async (slotId) => {
+    try {
+      await onBookSlot(slotId);
+      setLocalMessage('Office hour booked successfully');
+      setLocalError('');
+      if (selectedOwnerId) {
+        await fetchSlots(selectedOwnerId);
+      }
+    } catch (error) {
+      console.error(error);
+      setLocalError(error.message || 'Error booking office hour. Please try again later.');
+      setLocalMessage('');
+    }
+  };
+
   
 
 
@@ -378,7 +384,13 @@ function UserDashboard({
                       {new Date(slot.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
                       {new Date(slot.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    <button>Book Office Hour</button>
+                    {slot.bookedBy ? (
+                      <p>Reserved</p>
+                    ) : (
+                      <button type="button" onClick={() => handleBookOfficeHour(slot.id)}>
+                        Book Office Hour
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
