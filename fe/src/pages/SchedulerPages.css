@@ -301,10 +301,20 @@
   flex: 1;
 }
 
-/* Optional disabled button look */
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.final-selected-slot {
+  border: 2px solid #16a34a;
+  background: #f0fdf4;
+}
+
+.final-choice-badge {
+  display: inline-block;
+  margin: 6px 0 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .type3-four-column-row {

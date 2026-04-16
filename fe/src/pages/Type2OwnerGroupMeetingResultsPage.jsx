@@ -92,6 +92,8 @@ function Type2OwnerGroupMeetingResultsPage({
     const meetingId = event.target.value;
     setSelectedMeetingId(meetingId);
     setResultsData(null);
+    setMessage('');
+    setError('');
 
     if (meetingId) {
       await fetchMeetingResults(meetingId);
@@ -103,16 +105,26 @@ function Type2OwnerGroupMeetingResultsPage({
     return Math.max(...resultsData.results.map((item) => Number(item.availableCount || 0)));
   }, [resultsData]);
 
+  const selectedFinalSlotId = useMemo(() => {
+    return resultsData?.finalSlot?.id || resultsData?.meeting?.finalSlotId || null;
+  }, [resultsData]);
+
   const calendarEvents = useMemo(() => {
     if (!resultsData?.results) return [];
 
-    return resultsData.results.map((item, index) => ({
-      id: String(item.slot.id),
-      title: `Option ${index + 1} (${item.availableCount} available)`,
-      start: item.slot.start,
-      end: item.slot.end,
-    }));
-  }, [resultsData]);
+    return resultsData.results.map((item, index) => {
+      const isFinal = Number(selectedFinalSlotId) === Number(item.slot.id);
+
+      return {
+        id: String(item.slot.id),
+        title: isFinal
+          ? `Final Choice - Option ${index + 1}`
+          : `Option ${index + 1} (${item.availableCount} available)`,
+        start: item.slot.start,
+        end: item.slot.end,
+      };
+    });
+  }, [resultsData, selectedFinalSlotId]);
 
   const handleChooseFinalTime = async (slotId) => {
     try {
@@ -144,6 +156,41 @@ function Type2OwnerGroupMeetingResultsPage({
     } catch (saveError) {
       console.error(saveError);
       setError(saveError.message || 'Unable to choose final meeting time.');
+    } finally {
+      setSavingFinalSlotId(null);
+    }
+  };
+
+  const handleClearFinalTime = async () => {
+    try {
+      setSavingFinalSlotId('clear');
+      setError('');
+      setMessage('');
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      const response = await fetch(
+        `${API_BASE}/type2/meetings/${selectedMeetingId}/final-slot`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ slotId: null }),
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to clear final time.');
+      }
+
+      setMessage('Final meeting time cleared successfully.');
+      await fetchOwnerMeetings();
+      await fetchMeetingResults(selectedMeetingId);
+    } catch (clearError) {
+      console.error(clearError);
+      setError(clearError.message || 'Unable to clear final meeting time.');
     } finally {
       setSavingFinalSlotId(null);
     }
@@ -197,6 +244,20 @@ function Type2OwnerGroupMeetingResultsPage({
                 </select>
               </label>
             )}
+
+            {resultsData?.meeting && (
+              <div className="invitee-preview-box" style={{ marginTop: '16px' }}>
+                <p className="summary-title">Meeting Information</p>
+                <p><strong>Title:</strong> {resultsData.meeting.title}</p>
+                <p><strong>Status:</strong> {resultsData.meeting.status}</p>
+                <p><strong>Description:</strong> {resultsData.meeting.description || 'No description.'}</p>
+                {selectedFinalSlotId ? (
+                  <p><strong>Final time selected:</strong> Yes</p>
+                ) : (
+                  <p><strong>Final time selected:</strong> No</p>
+                )}
+              </div>
+            )}
           </section>
 
           <section className="card booking-side-panel">
@@ -210,29 +271,51 @@ function Type2OwnerGroupMeetingResultsPage({
               <div className="summary-list summary-list-scroll">
                 {resultsData.results.map((item, index) => {
                   const isBest = Number(item.availableCount || 0) === bestAvailableCount;
+                  const isSelectedFinal = Number(selectedFinalSlotId) === Number(item.slot.id);
+                  const hasAnyFinal = selectedFinalSlotId !== null;
 
                   return (
                     <div
                       key={item.slot.id}
-                      className={`summary-item ${isBest ? 'selected-summary-item' : ''}`}
+                      className={`summary-item ${isBest ? 'selected-summary-item' : ''} ${isSelectedFinal ? 'final-selected-slot' : ''}`}
                     >
                       <div className="summary-main">
                         <p className="summary-title">
                           Option {index + 1} {isBest ? '(Best)' : ''}
                         </p>
+
+                        {isSelectedFinal && (
+                          <p className="final-choice-badge">Final Choice</p>
+                        )}
+
                         <p>Start: {formatReadableDateTime(item.slot.start)}</p>
                         <p>End: {formatReadableDateTime(item.slot.end)}</p>
                         <p>Available votes: {item.availableCount}</p>
                       </div>
 
-                      <button
-                        type="button"
-                        className="button secondary"
-                        disabled={savingFinalSlotId === item.slot.id}
-                        onClick={() => handleChooseFinalTime(item.slot.id)}
-                      >
-                        {savingFinalSlotId === item.slot.id ? 'Saving...' : 'Choose Final Time'}
-                      </button>
+                      {isSelectedFinal ? (
+                        <button
+                          type="button"
+                          className="button secondary"
+                          disabled={savingFinalSlotId === 'clear'}
+                          onClick={handleClearFinalTime}
+                        >
+                          {savingFinalSlotId === 'clear' ? 'Clearing...' : 'Unselect'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="button secondary"
+                          disabled={savingFinalSlotId === item.slot.id}
+                          onClick={() => handleChooseFinalTime(item.slot.id)}
+                        >
+                          {savingFinalSlotId === item.slot.id
+                            ? 'Saving...'
+                            : hasAnyFinal
+                              ? 'Change To This Time'
+                              : 'Choose Final Time'}
+                        </button>
+                      )}
                     </div>
                   );
                 })}
