@@ -571,7 +571,7 @@ function App() {
               />
               <input
                 type="email"
-                placeholder="name@mcgill.ca"
+                placeholder="name@mcgill.ca or name@mail.mcgill.ca"
                 value={registerForm.email}
                 onChange={(event) =>
                   setRegisterForm({ ...registerForm, email: event.target.value })
