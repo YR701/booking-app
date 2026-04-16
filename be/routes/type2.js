@@ -1277,6 +1277,32 @@ router.get('/type2/me', authMiddleware, async (req, res) => {
       [req.user.id]
     );
 
+    const [finalizedRows] = await pool.execute(
+      `
+      SELECT
+        m.id AS meetingId,
+        m.title,
+        m.description,
+        m.status,
+        m.final_slot_id AS finalSlotId,
+        s.id AS slotId,
+        s.start_time AS slotStart,
+        s.end_time AS slotEnd,
+        owner.id AS ownerId,
+        owner.name AS ownerName,
+        owner.email AS ownerEmail,
+        owner.role AS ownerRole
+      FROM type2_meeting_invitees i
+      JOIN type2_meetings m ON m.id = i.meeting_id
+      JOIN type2_meeting_slots s ON s.id = m.final_slot_id
+      JOIN users owner ON owner.id = m.owner_id
+      WHERE i.user_id = ?
+        AND m.final_slot_id IS NOT NULL
+      ORDER BY s.start_time ASC
+      `,
+      [req.user.id]
+    );
+
     return res.json({
       user: {
         id: user.id,
@@ -1312,6 +1338,24 @@ router.get('/type2/me', authMiddleware, async (req, res) => {
               end: toIsoString(row.slotEnd),
             }
           : null,
+      })),
+      finalizedMeetings: finalizedRows.map((row) => ({
+        meetingId: row.meetingId,
+        title: row.title,
+        description: row.description || '',
+        status: row.status,
+        finalSlotId: row.finalSlotId,
+        finalSlot: {
+          id: row.slotId,
+          start: toIsoString(row.slotStart),
+          end: toIsoString(row.slotEnd),
+        },
+        owner: {
+          id: row.ownerId,
+          name: row.ownerName,
+          email: row.ownerEmail,
+          role: row.ownerRole,
+        },
       })),
     });
   } catch (error) {
@@ -1380,6 +1424,32 @@ router.get('/type2/users/:userId', authMiddleware, async (req, res) => {
       [userId]
     );
 
+    const [finalizedRows] = await pool.execute(
+      `
+      SELECT
+        m.id AS meetingId,
+        m.title,
+        m.description,
+        m.status,
+        m.final_slot_id AS finalSlotId,
+        s.id AS slotId,
+        s.start_time AS slotStart,
+        s.end_time AS slotEnd,
+        owner.id AS ownerId,
+        owner.name AS ownerName,
+        owner.email AS ownerEmail,
+        owner.role AS ownerRole
+      FROM type2_meeting_invitees i
+      JOIN type2_meetings m ON m.id = i.meeting_id
+      JOIN type2_meeting_slots s ON s.id = m.final_slot_id
+      JOIN users owner ON owner.id = m.owner_id
+      WHERE i.user_id = ?
+        AND m.final_slot_id IS NOT NULL
+      ORDER BY s.start_time ASC
+      `,
+      [userId]
+    );
+
     return res.json({
       user: {
         id: user.id,
@@ -1402,6 +1472,24 @@ router.get('/type2/users/:userId', authMiddleware, async (req, res) => {
           : null,
       })),
       submittedVotes: voteRows.map(formatVote),
+      finalizedMeetings: finalizedRows.map((row) => ({
+        meetingId: row.meetingId,
+        title: row.title,
+        description: row.description || '',
+        status: row.status,
+        finalSlotId: row.finalSlotId,
+        finalSlot: {
+          id: row.slotId,
+          start: toIsoString(row.slotStart),
+          end: toIsoString(row.slotEnd),
+        },
+        owner: {
+          id: row.ownerId,
+          name: row.ownerName,
+          email: row.ownerEmail,
+          role: row.ownerRole,
+        },
+      })),
     });
   } catch (error) {
     console.error('Get Type 2 user helper error:', error);
