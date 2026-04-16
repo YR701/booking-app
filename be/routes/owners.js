@@ -10,16 +10,15 @@ const router = express.Router();
 
 router.get('/owners', authMiddleware, async (_req, res) => {
   const [rows] = await pool.execute(`
-    SELECT
+    SELECT DISTINCT
       u.id,
       u.name,
       u.email,
-      u.role,
-      COUNT(s.id) AS activeSlotCount
+      u.role
     FROM users u
-    JOIN slots s ON s.owner_id = u.id AND s.is_active = 1 AND s.booked_by_user_id IS NULL
-    WHERE u.role = 'owner'
-    GROUP BY u.id, u.name, u.email, u.role
+    LEFT JOIN slots s ON s.owner_id = u.id AND s.is_active = 1 AND s.booked_by_user_id IS NULL
+    LEFT JOIN type3_slots t ON t.owner_id = u.id AND t.is_active = 1 AND t.is_full = 0
+    WHERE u.role = 'owner' AND (s.id IS NOT NULL OR t.id IS NOT NULL)
     ORDER BY u.name ASC
   `);
   const owners = rows.map((row) => ({
@@ -27,7 +26,6 @@ router.get('/owners', authMiddleware, async (_req, res) => {
     name: row.name,
     email: row.email,
     role: row.role,
-    activeSlotCount: Number(row.activeSlotCount),
   }));
 
   res.json({ owners });
