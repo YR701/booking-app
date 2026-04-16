@@ -379,22 +379,22 @@ router.delete('/type3/slots/:slotId', authMiddleware, ownerOnly, async (req, res
   }
 });
 
-router.get('/type3/users/by-email', authMiddleware, async (req, res) => {
+router.get('/type3/users/:userId', authMiddleware, async (req, res) => {
   try {
-    const email = String(req.query.email || '').trim().toLowerCase();
+    const userId = Number(req.params.userId);
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email query parameter is required.' });
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'Valid user ID is required.' });
     }
 
     const [rows] = await pool.execute(
       `
       SELECT id, name, email, role
       FROM users
-      WHERE LOWER(email) = ?
+      WHERE id = ?
       LIMIT 1
       `,
-      [email]
+      [userId]
     );
 
     const user = rows[0];
@@ -412,8 +412,8 @@ router.get('/type3/users/by-email', authMiddleware, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get user by email for Type 3 error:', error);
-    return res.status(500).json({ error: 'Unable to fetch user by email.' });
+    console.error('Get user by id for Type 3 error:', error);
+    return res.status(500).json({ error: 'Unable to fetch user by id.' });
   }
 });
 
