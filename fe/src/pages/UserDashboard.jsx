@@ -4,17 +4,16 @@ import { API_BASE, TOKEN_KEY } from '../config';
 import './UserDashboard.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
-//import UserCalendar from '../components/UserCalendar';
 import { useState, useEffect } from 'react';
 import { createMailto } from '../utils/mailto';
 import { formatDateTimeRange } from '../utils/formatTime';
 import { fetchOfficeHourSlots } from '../utils/OfficeHour';
 
-// function UserDashboard({ onLogout, user }) {
 function UserDashboard({
   onLogout,
   user,
   onOpenType2Vote,
+  onOpenType2Results,
   onOpenType3Public,
   owners = [],
   myBookings = [],
@@ -43,13 +42,12 @@ function UserDashboard({
     fetchRequests();
   }, []);
 
-
-  const fetchMyOfficeHour = async (id) => {
+  const fetchMyOfficeHour = async () => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
       const response = await fetch(`${API_BASE}/type3/`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         }
       });
       if (!response.ok) {
@@ -65,17 +63,12 @@ function UserDashboard({
     }
   };
 
-
-  //request a meeting functions
-  //handle request a meeting, send a message to the owner
   const handleRequest = async () => {
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
     const reason = document.getElementById('reason').value;
-    // const ownerId = currentOwner.id;
     const ownerId = selectedRequestOwnerId;
 
-    //verify the input info
     if (!startTime || !endTime || !reason || !ownerId) {
       setLocalError('Please fill in all fields to request a meeting.');
       setLocalMessage('');
@@ -87,7 +80,6 @@ function UserDashboard({
       return;
     }
 
-    //verify the selected owner
     const selectedOwner = owners.find(owner => String(owner.id) === String(ownerId));
     if (!selectedOwner) {
       setLocalError('Invalid owner selected.');
@@ -101,7 +93,7 @@ function UserDashboard({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           ownerId: ownerId,
@@ -114,29 +106,24 @@ function UserDashboard({
 
       if (!response.ok) {
         const errorData = await response.json();
-        // throw new Error('Failed to request a meeting');
         throw new Error(errorData.error || 'Failed to request a meeting');
       }
 
       setLocalMessage('Meeting request sent successfully');
       setLocalError('');
 
-      //clear the form
       document.getElementById('startTime').value = '';
       document.getElementById('endTime').value = '';
       document.getElementById('reason').value = '';
       setSelectedRequestOwnerId('');
 
-      //update the request list
       await fetchRequests();
 
-      //send email notification to the owner
       const subject = 'New Meeting Request';
       const body = `You have a new meeting request from ${user.name} (${user.email}).\n\n
       Reason: ${reason}\n\n
       Requested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
       const mailtoLink = createMailto(selectedOwner.email, subject, body);
-      //console.log('Generated mailto link:', mailtoLink);
       window.location.href = mailtoLink;
 
     } catch (error) {
@@ -144,16 +131,15 @@ function UserDashboard({
       setLocalError(error.message);
       setLocalMessage('');
     }
-  }
+  };
 
-  //cancel a request
   const handleCancelRequest = async (requestId) => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
       const response = await fetch(`${API_BASE}/meetings/requests/${requestId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -172,20 +158,18 @@ function UserDashboard({
     }
   };
 
-  //get all user's sent requests
   const fetchRequests = async () => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
       const response = await fetch(`${API_BASE}/meetings/requests`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         }
       });
       if (!response.ok) {
         throw new Error('Failed to fetch requests');
       }
       const data = await response.json();
-      console.log('Requests data:', data.requests);
       setRequests(data.requests);
       setLocalError('');
     } catch (error) {
@@ -195,9 +179,6 @@ function UserDashboard({
     }
   };
 
-  //All available slots sections: including owner create one-time slots and office hours
-
-  //select different owner to see their available slots
   const handleOwnerChange = async (event) => {
     const value = event.target.value;
 
@@ -211,15 +192,14 @@ function UserDashboard({
       await fetchOneTimeSlots(value);
       await loadOfficeHourSlots(value);
     }
-  }
+  };
 
-  //fetch the one-time slots of the selected owner
   const fetchOneTimeSlots = async (ownerId) => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
       const response = await fetch(`${API_BASE}/owners/${ownerId}/slots`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         }
       });
 
@@ -239,9 +219,8 @@ function UserDashboard({
       console.error('Error fetching one-time slots:', error);
       setOneTimeSlots([]);
     }
-  }
+  };
 
-  //fetch the office hours (type3 slots) of the selected owner
   const loadOfficeHourSlots = async (ownerId) => {
     const { slots, owner, error } = await fetchOfficeHourSlots(ownerId);
 
@@ -254,7 +233,7 @@ function UserDashboard({
         setCurrentOwner(owner);
       }
     }
-  }
+  };
 
   return (
     <div>
@@ -264,7 +243,6 @@ function UserDashboard({
         onLogout={onLogout}
       />
 
-      {/* switch to other pages */}
       <div className="switch-buttons">
         <div className="inline-actions">
           {user?.role === 'owner' && onSwitchToOwnerDashboard && (
@@ -275,6 +253,11 @@ function UserDashboard({
           {onOpenType2Vote && (
             <button type="button" onClick={onOpenType2Vote}>
               Type 2 Vote
+            </button>
+          )}
+          {onOpenType2Results && (
+            <button type="button" onClick={onOpenType2Results}>
+              Type 2 Results
             </button>
           )}
           {onOpenType3Public && (
@@ -290,10 +273,7 @@ function UserDashboard({
       {localMessage && <div className="notice success">{localMessage}</div>}
       {localError && <div className="notice error">{localError}</div>}
 
-      {/* Show all my bookings */}
       <div className="appointment">
-
-        {/* One-time Appointments */}
         <h1>My One-time Appointments</h1>
         {loading ? (
           <p>Loading appointments...</p>
@@ -315,7 +295,6 @@ function UserDashboard({
           ))
         )}
 
-        {/* Type1 Meeting Requests */}
         <h1> My Meeting Requests Status</h1>
         {requests.length === 0 ? (
           <p>No meeting requests.</p>
@@ -334,7 +313,7 @@ function UserDashboard({
             </div>
           ))
         )}
-        {/* Type2 Group Meeting */}
+
         <h1>My Group Meeting</h1>
         {myGroupmeeting.length === 0 ? (
           <p>No office hours booked.</p>
@@ -353,7 +332,6 @@ function UserDashboard({
           ))
         )}
 
-        {/* Type3 Office Hours */}
         <h1>My Office Hours</h1>
         {myOfficehours.length === 0 ? (
           <p>No office hours booked.</p>
@@ -373,7 +351,6 @@ function UserDashboard({
         )}
       </div>
 
-      {/* Type1 Send Meeting Request Section*/}
       <div className="request-meeting">
         <h3>Request a Meeting </h3>
         <div className='request-form'>
@@ -406,7 +383,6 @@ function UserDashboard({
         </div>
       </div>
 
-      {/* Show all available office hours and one-time slots from all owners */}
       <div className="OwnerInfo">
         <h1>All available slots</h1>
         <div className='owner-list'>
@@ -424,7 +400,6 @@ function UserDashboard({
           <div>
             <h2>Available Slots</h2>
             <div className="owner-info">
-              {/* Owner basic info and email function */}
               <div className="owner-header">
                 <div>
                   <h2>{currentOwner.name}</h2>
@@ -438,7 +413,6 @@ function UserDashboard({
                 </div>
               </div>
 
-              {/* One-time slots section */}
               <div>
                 <h3>One-time Slots</h3>
                 {oneTimeSlots.length === 0 ? (
@@ -455,7 +429,6 @@ function UserDashboard({
                 )}
               </div>
 
-              {/* Type3 Office hours section */}
               <div>
                 <h3>Office Hours</h3>
                 {officeHourSlots.length === 0 ? (
@@ -465,7 +438,7 @@ function UserDashboard({
                     {officeHourSlots.map((slot) => (
                       <div className='slots-item' key={slot.id}>
                         <p className="slot-time">{formatDateTimeRange(slot.start, slot.end)}</p>
-                        <button onClick={() => handleBookSlot(slot.id)}>Book Appointment</button>
+                        <button onClick={() => onBookSlot(slot.id)}>Book Appointment</button>
                       </div>
                     ))}
                   </div>
@@ -478,7 +451,7 @@ function UserDashboard({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 export default UserDashboard;

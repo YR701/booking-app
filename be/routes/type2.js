@@ -65,6 +65,118 @@
 //   return /@(mail\.)?mcgill\.ca$/i.test(String(email).trim());
 // }
 
+// /* Type 2 helper user routes */
+
+// router.get('/type2/me', authMiddleware, async (req, res) => {
+//   try {
+//     const [rows] = await pool.execute(
+//       `
+//       SELECT id, name, email, role
+//       FROM users
+//       WHERE id = ?
+//       LIMIT 1
+//       `,
+//       [req.user.id]
+//     );
+
+//     const user = rows[0];
+
+//     if (!user) {
+//       return res.status(404).json({ error: 'Current user not found.' });
+//     }
+
+//     return res.json({
+//       user: {
+//         id: user.id,
+//         name: user.name,
+//         email: user.email,
+//         role: user.role,
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Get Type 2 current user error:', error);
+//     return res.status(500).json({ error: 'Unable to fetch current user.' });
+//   }
+// });
+
+// router.get('/type2/users/:userId', authMiddleware, async (req, res) => {
+//   try {
+//     const userId = Number(req.params.userId);
+
+//     if (!Number.isInteger(userId) || userId <= 0) {
+//       return res.status(400).json({ error: 'Valid user ID is required.' });
+//     }
+
+//     const [rows] = await pool.execute(
+//       `
+//       SELECT id, name, email, role
+//       FROM users
+//       WHERE id = ?
+//       LIMIT 1
+//       `,
+//       [userId]
+//     );
+
+//     const user = rows[0];
+
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found.' });
+//     }
+
+//     return res.json({
+//       user: {
+//         id: user.id,
+//         name: user.name,
+//         email: user.email,
+//         role: user.role,
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Get Type 2 user by id error:', error);
+//     return res.status(500).json({ error: 'Unable to fetch user.' });
+//   }
+// });
+
+// router.get('/type2/owners/:ownerId', authMiddleware, async (req, res) => {
+//   try {
+//     const ownerId = Number(req.params.ownerId);
+
+//     if (!Number.isInteger(ownerId) || ownerId <= 0) {
+//       return res.status(400).json({ error: 'Valid owner ID is required.' });
+//     }
+
+//     const [rows] = await pool.execute(
+//       `
+//       SELECT id, name, email, role
+//       FROM users
+//       WHERE id = ? AND role = 'owner'
+//       LIMIT 1
+//       `,
+//       [ownerId]
+//     );
+
+//     const owner = rows[0];
+
+//     if (!owner) {
+//       return res.status(404).json({ error: 'Owner not found.' });
+//     }
+
+//     return res.json({
+//       owner: {
+//         id: owner.id,
+//         name: owner.name,
+//         email: owner.email,
+//         role: owner.role,
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Get Type 2 owner by id error:', error);
+//     return res.status(500).json({ error: 'Unable to fetch owner.' });
+//   }
+// });
+
+// /* Type 2 meeting routes */
+
 // router.post('/type2/meetings', authMiddleware, ownerOnly, async (req, res) => {
 //   const title = String(req.body.title || '').trim();
 //   const description = String(req.body.description || '').trim();
@@ -958,6 +1070,7 @@
 
 
 
+
 /* Author: Hanjing Zheng */
 
 const express = require('express');
@@ -981,6 +1094,7 @@ function formatMeeting(row) {
     description: row.description || '',
     status: row.status,
     createdAt: toIsoString(row.createdAt),
+    finalSlotId: row.finalSlotId ?? row.final_slot_id ?? null,
     owner: row.ownerUserId
       ? {
           id: row.ownerUserId,
@@ -1196,7 +1310,7 @@ router.post('/type2/meetings', authMiddleware, ownerOnly, async (req, res) => {
         FROM users
         WHERE id IN (${cleanedInviteeIds.map(() => '?').join(', ')})
         `,
-        cleanedInviteeIds,
+        cleanedInviteeIds
       );
 
       if (inviteeRowsById.length !== cleanedInviteeIds.length) {
@@ -1214,7 +1328,7 @@ router.post('/type2/meetings', authMiddleware, ownerOnly, async (req, res) => {
         FROM users
         WHERE LOWER(email) IN (${cleanedInviteeEmails.map(() => '?').join(', ')})
         `,
-        cleanedInviteeEmails,
+        cleanedInviteeEmails
       );
 
       if (inviteeRowsByEmail.length !== cleanedInviteeEmails.length) {
@@ -1255,10 +1369,10 @@ router.post('/type2/meetings', authMiddleware, ownerOnly, async (req, res) => {
 
     const [meetingResult] = await connection.execute(
       `
-      INSERT INTO type2_meetings (owner_id, title, description, status)
-      VALUES (?, ?, ?, 'open')
+      INSERT INTO type2_meetings (owner_id, title, description, status, final_slot_id)
+      VALUES (?, ?, ?, 'open', NULL)
       `,
-      [req.user.id, title, description || null],
+      [req.user.id, title, description || null]
     );
 
     const meetingId = meetingResult.insertId;
@@ -1269,7 +1383,7 @@ router.post('/type2/meetings', authMiddleware, ownerOnly, async (req, res) => {
         INSERT INTO type2_meeting_slots (meeting_id, start_time, end_time)
         VALUES (?, ?, ?)
         `,
-        [meetingId, new Date(slot.start), new Date(slot.end)],
+        [meetingId, new Date(slot.start), new Date(slot.end)]
       );
     }
 
@@ -1279,7 +1393,7 @@ router.post('/type2/meetings', authMiddleware, ownerOnly, async (req, res) => {
         INSERT INTO type2_meeting_invitees (meeting_id, user_id)
         VALUES (?, ?)
         `,
-        [meetingId, invitee.id],
+        [meetingId, invitee.id]
       );
     }
 
@@ -1313,6 +1427,7 @@ router.get('/type2/owner/meetings', authMiddleware, ownerOnly, async (req, res) 
         m.title,
         m.description,
         m.status,
+        m.final_slot_id AS finalSlotId,
         m.created_at AS createdAt,
         owner.id AS ownerUserId,
         owner.name AS ownerName,
@@ -1323,13 +1438,68 @@ router.get('/type2/owner/meetings', authMiddleware, ownerOnly, async (req, res) 
       WHERE m.owner_id = ?
       ORDER BY m.created_at DESC
       `,
-      [req.user.id],
+      [req.user.id]
     );
 
     return res.json({ meetings: rows.map(formatMeeting) });
   } catch (error) {
     console.error('Get owner Type 2 meetings error:', error);
     return res.status(500).json({ error: 'Unable to fetch owner Type 2 meetings.' });
+  }
+});
+
+router.get('/type2/owner/finalized-meetings', authMiddleware, ownerOnly, async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `
+      SELECT
+        m.id,
+        m.title,
+        m.description,
+        m.status,
+        m.created_at AS createdAt,
+        m.final_slot_id AS finalSlotId,
+        owner.id AS ownerUserId,
+        owner.name AS ownerName,
+        owner.email AS ownerEmail,
+        owner.role AS ownerRole,
+        s.id AS slotId,
+        s.start_time AS slotStart,
+        s.end_time AS slotEnd
+      FROM type2_meetings m
+      JOIN users owner ON owner.id = m.owner_id
+      JOIN type2_meeting_slots s ON s.id = m.final_slot_id
+      WHERE m.owner_id = ?
+        AND m.final_slot_id IS NOT NULL
+      ORDER BY s.start_time ASC
+      `,
+      [req.user.id]
+    );
+
+    return res.json({
+      meetings: rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description || '',
+        status: row.status,
+        createdAt: toIsoString(row.createdAt),
+        finalSlotId: row.finalSlotId,
+        owner: {
+          id: row.ownerUserId,
+          name: row.ownerName,
+          email: row.ownerEmail,
+          role: row.ownerRole,
+        },
+        finalSlot: {
+          id: row.slotId,
+          start: toIsoString(row.slotStart),
+          end: toIsoString(row.slotEnd),
+        },
+      })),
+    });
+  } catch (error) {
+    console.error('Get Type 2 finalized meetings for owner error:', error);
+    return res.status(500).json({ error: 'Unable to fetch finalized meetings.' });
   }
 });
 
@@ -1342,6 +1512,7 @@ router.get('/type2/me/invitations', authMiddleware, async (req, res) => {
         m.title,
         m.description,
         m.status,
+        m.final_slot_id AS finalSlotId,
         m.created_at AS createdAt,
         owner.id AS ownerUserId,
         owner.name AS ownerName,
@@ -1353,13 +1524,69 @@ router.get('/type2/me/invitations', authMiddleware, async (req, res) => {
       WHERE i.user_id = ?
       ORDER BY m.created_at DESC
       `,
-      [req.user.id],
+      [req.user.id]
     );
 
     return res.json({ meetings: rows.map(formatMeeting) });
   } catch (error) {
     console.error('Get Type 2 invitations error:', error);
     return res.status(500).json({ error: 'Unable to fetch Type 2 invitations.' });
+  }
+});
+
+router.get('/type2/me/finalized-meetings', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `
+      SELECT
+        m.id,
+        m.title,
+        m.description,
+        m.status,
+        m.created_at AS createdAt,
+        m.final_slot_id AS finalSlotId,
+        owner.id AS ownerUserId,
+        owner.name AS ownerName,
+        owner.email AS ownerEmail,
+        owner.role AS ownerRole,
+        s.id AS slotId,
+        s.start_time AS slotStart,
+        s.end_time AS slotEnd
+      FROM type2_meeting_invitees i
+      JOIN type2_meetings m ON m.id = i.meeting_id
+      JOIN users owner ON owner.id = m.owner_id
+      JOIN type2_meeting_slots s ON s.id = m.final_slot_id
+      WHERE i.user_id = ?
+        AND m.final_slot_id IS NOT NULL
+      ORDER BY s.start_time ASC
+      `,
+      [req.user.id]
+    );
+
+    return res.json({
+      meetings: rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description || '',
+        status: row.status,
+        createdAt: toIsoString(row.createdAt),
+        finalSlotId: row.finalSlotId,
+        owner: {
+          id: row.ownerUserId,
+          name: row.ownerName,
+          email: row.ownerEmail,
+          role: row.ownerRole,
+        },
+        finalSlot: {
+          id: row.slotId,
+          start: toIsoString(row.slotStart),
+          end: toIsoString(row.slotEnd),
+        },
+      })),
+    });
+  } catch (error) {
+    console.error('Get Type 2 finalized meetings for user error:', error);
+    return res.status(500).json({ error: 'Unable to fetch finalized meetings.' });
   }
 });
 
@@ -1375,6 +1602,7 @@ router.get('/type2/meetings/:meetingId', authMiddleware, async (req, res) => {
         m.title,
         m.description,
         m.status,
+        m.final_slot_id AS finalSlotId,
         m.created_at AS createdAt,
         owner.id AS ownerUserId,
         owner.name AS ownerName,
@@ -1385,7 +1613,7 @@ router.get('/type2/meetings/:meetingId', authMiddleware, async (req, res) => {
       WHERE m.id = ?
       LIMIT 1
       `,
-      [meetingId],
+      [meetingId]
     );
 
     const meetingRow = meetingRows[0];
@@ -1404,7 +1632,7 @@ router.get('/type2/meetings/:meetingId', authMiddleware, async (req, res) => {
         WHERE meeting_id = ? AND user_id = ?
         LIMIT 1
         `,
-        [meetingId, req.user.id],
+        [meetingId, req.user.id]
       );
 
       if (!inviteeCheckRows[0]) {
@@ -1423,7 +1651,7 @@ router.get('/type2/meetings/:meetingId', authMiddleware, async (req, res) => {
       WHERE s.meeting_id = ?
       ORDER BY s.start_time ASC
       `,
-      [meetingId],
+      [meetingId]
     );
 
     const [inviteeRows] = await pool.execute(
@@ -1438,13 +1666,36 @@ router.get('/type2/meetings/:meetingId', authMiddleware, async (req, res) => {
       WHERE i.meeting_id = ?
       ORDER BY u.name ASC
       `,
-      [meetingId],
+      [meetingId]
     );
+
+    let finalSlot = null;
+
+    if (meetingRow.finalSlotId) {
+      const [finalSlotRows] = await pool.execute(
+        `
+        SELECT
+          s.id,
+          s.meeting_id AS meetingId,
+          s.start_time AS start,
+          s.end_time AS end
+        FROM type2_meeting_slots s
+        WHERE s.id = ? AND s.meeting_id = ?
+        LIMIT 1
+        `,
+        [meetingRow.finalSlotId, meetingId]
+      );
+
+      if (finalSlotRows[0]) {
+        finalSlot = formatMeetingSlot(finalSlotRows[0]);
+      }
+    }
 
     return res.json({
       meeting: formatMeeting(meetingRow),
       slots: slotRows.map(formatMeetingSlot),
       invitees: inviteeRows.map(formatInvitee),
+      finalSlot,
     });
   } catch (error) {
     console.error('Get Type 2 meeting detail error:', error);
@@ -1463,7 +1714,7 @@ router.get('/type2/meetings/:meetingId/my-votes', authMiddleware, async (req, re
       WHERE meeting_id = ? AND user_id = ?
       LIMIT 1
       `,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     if (!inviteeCheckRows[0]) {
@@ -1483,7 +1734,7 @@ router.get('/type2/meetings/:meetingId/my-votes', authMiddleware, async (req, re
       WHERE v.meeting_id = ? AND v.user_id = ?
       ORDER BY v.slot_id ASC
       `,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     return res.json({ votes: rows.map(formatVote) });
@@ -1513,7 +1764,7 @@ router.post('/type2/meetings/:meetingId/votes', authMiddleware, async (req, res)
       WHERE id = ?
       LIMIT 1
       `,
-      [meetingId],
+      [meetingId]
     );
 
     const meeting = meetingRows[0];
@@ -1535,7 +1786,7 @@ router.post('/type2/meetings/:meetingId/votes', authMiddleware, async (req, res)
       WHERE meeting_id = ? AND user_id = ?
       LIMIT 1
       `,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     if (!inviteeCheckRows[0]) {
@@ -1556,7 +1807,7 @@ router.post('/type2/meetings/:meetingId/votes', authMiddleware, async (req, res)
       FROM type2_meeting_slots
       WHERE meeting_id = ? AND id IN (${slotIds.map(() => '?').join(', ')})
       `,
-      [meetingId, ...slotIds],
+      [meetingId, ...slotIds]
     );
 
     if (slotRows.length !== slotIds.length) {
@@ -1578,7 +1829,7 @@ router.post('/type2/meetings/:meetingId/votes', authMiddleware, async (req, res)
           Number(vote.slotId),
           req.user.id,
           vote.isAvailable ? 1 : 0,
-        ],
+        ]
       );
     }
 
@@ -1597,7 +1848,7 @@ router.post('/type2/meetings/:meetingId/votes', authMiddleware, async (req, res)
       WHERE v.meeting_id = ? AND v.user_id = ?
       ORDER BY v.slot_id ASC
       `,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     return res.json({
@@ -1625,6 +1876,7 @@ router.get('/type2/meetings/:meetingId/results', authMiddleware, async (req, res
         m.title,
         m.description,
         m.status,
+        m.final_slot_id AS finalSlotId,
         m.created_at AS createdAt,
         owner.id AS ownerUserId,
         owner.name AS ownerName,
@@ -1635,7 +1887,7 @@ router.get('/type2/meetings/:meetingId/results', authMiddleware, async (req, res
       WHERE m.id = ?
       LIMIT 1
       `,
-      [meetingId],
+      [meetingId]
     );
 
     const meetingRow = meetingRows[0];
@@ -1654,7 +1906,7 @@ router.get('/type2/meetings/:meetingId/results', authMiddleware, async (req, res
         WHERE meeting_id = ? AND user_id = ?
         LIMIT 1
         `,
-        [meetingId, req.user.id],
+        [meetingId, req.user.id]
       );
 
       if (!inviteeCheckRows[0]) {
@@ -1676,7 +1928,7 @@ router.get('/type2/meetings/:meetingId/results', authMiddleware, async (req, res
       GROUP BY s.id, s.meeting_id, s.start_time, s.end_time
       ORDER BY availableCount DESC, s.start_time ASC
       `,
-      [meetingId],
+      [meetingId]
     );
 
     const [voteDetailRows] = await pool.execute(
@@ -1692,11 +1944,34 @@ router.get('/type2/meetings/:meetingId/results', authMiddleware, async (req, res
       WHERE v.meeting_id = ?
       ORDER BY v.slot_id, u.name
       `,
-      [meetingId],
+      [meetingId]
     );
+
+    let finalSlot = null;
+
+    if (meetingRow.finalSlotId) {
+      const [finalSlotRows] = await pool.execute(
+        `
+        SELECT
+          s.id,
+          s.meeting_id AS meetingId,
+          s.start_time AS start,
+          s.end_time AS end
+        FROM type2_meeting_slots s
+        WHERE s.id = ? AND s.meeting_id = ?
+        LIMIT 1
+        `,
+        [meetingRow.finalSlotId, meetingId]
+      );
+
+      if (finalSlotRows[0]) {
+        finalSlot = formatMeetingSlot(finalSlotRows[0]);
+      }
+    }
 
     return res.json({
       meeting: formatMeeting(meetingRow),
+      finalSlot,
       results: slotRows.map((row) => ({
         slot: {
           id: row.id,
@@ -1720,6 +1995,83 @@ router.get('/type2/meetings/:meetingId/results', authMiddleware, async (req, res
   }
 });
 
+router.patch('/type2/meetings/:meetingId/final-slot', authMiddleware, ownerOnly, async (req, res) => {
+  const meetingId = Number(req.params.meetingId);
+  const slotId = Number(req.body.slotId);
+
+  if (!Number.isInteger(slotId) || slotId <= 0) {
+    return res.status(400).json({ error: 'Valid slot ID is required.' });
+  }
+
+  try {
+    const [meetingRows] = await pool.execute(
+      `
+      SELECT id, owner_id
+      FROM type2_meetings
+      WHERE id = ? AND owner_id = ?
+      LIMIT 1
+      `,
+      [meetingId, req.user.id]
+    );
+
+    if (!meetingRows[0]) {
+      return res.status(404).json({ error: 'Type 2 meeting not found.' });
+    }
+
+    const [slotRows] = await pool.execute(
+      `
+      SELECT id
+      FROM type2_meeting_slots
+      WHERE id = ? AND meeting_id = ?
+      LIMIT 1
+      `,
+      [slotId, meetingId]
+    );
+
+    if (!slotRows[0]) {
+      return res.status(400).json({ error: 'Selected slot does not belong to this meeting.' });
+    }
+
+    await pool.execute(
+      `
+      UPDATE type2_meetings
+      SET final_slot_id = ?, status = 'closed'
+      WHERE id = ? AND owner_id = ?
+      `,
+      [slotId, meetingId, req.user.id]
+    );
+
+    const [rows] = await pool.execute(
+      `
+      SELECT
+        m.id,
+        m.title,
+        m.description,
+        m.status,
+        m.final_slot_id AS finalSlotId,
+        m.created_at AS createdAt,
+        owner.id AS ownerUserId,
+        owner.name AS ownerName,
+        owner.email AS ownerEmail,
+        owner.role AS ownerRole
+      FROM type2_meetings m
+      JOIN users owner ON owner.id = m.owner_id
+      WHERE m.id = ?
+      LIMIT 1
+      `,
+      [meetingId]
+    );
+
+    return res.json({
+      meeting: formatMeeting(rows[0]),
+      message: 'Final meeting time selected successfully.',
+    });
+  } catch (error) {
+    console.error('Set Type 2 final slot error:', error);
+    return res.status(500).json({ error: 'Unable to set final meeting time.' });
+  }
+});
+
 router.patch('/type2/meetings/:meetingId/status', authMiddleware, ownerOnly, async (req, res) => {
   const meetingId = Number(req.params.meetingId);
   const status = String(req.body.status || '').trim().toLowerCase();
@@ -1735,7 +2087,7 @@ router.patch('/type2/meetings/:meetingId/status', authMiddleware, ownerOnly, asy
       SET status = ?
       WHERE id = ? AND owner_id = ?
       `,
-      [status, meetingId, req.user.id],
+      [status, meetingId, req.user.id]
     );
 
     if (!updateResult.affectedRows) {
@@ -1749,6 +2101,7 @@ router.patch('/type2/meetings/:meetingId/status', authMiddleware, ownerOnly, asy
         m.title,
         m.description,
         m.status,
+        m.final_slot_id AS finalSlotId,
         m.created_at AS createdAt,
         owner.id AS ownerUserId,
         owner.name AS ownerName,
@@ -1759,7 +2112,7 @@ router.patch('/type2/meetings/:meetingId/status', authMiddleware, ownerOnly, asy
       WHERE m.id = ?
       LIMIT 1
       `,
-      [meetingId],
+      [meetingId]
     );
 
     return res.json({ meeting: formatMeeting(rows[0]) });
@@ -1780,7 +2133,7 @@ router.delete('/type2/meetings/:meetingId', authMiddleware, ownerOnly, async (re
       WHERE id = ? AND owner_id = ?
       LIMIT 1
       `,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     if (!rows[0]) {
@@ -1789,7 +2142,7 @@ router.delete('/type2/meetings/:meetingId', authMiddleware, ownerOnly, async (re
 
     await pool.execute(
       `DELETE FROM type2_meetings WHERE id = ? AND owner_id = ?`,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     return res.json({
@@ -1822,7 +2175,7 @@ router.post('/type2/meetings/:meetingId/invitees', authMiddleware, ownerOnly, as
       WHERE id = ? AND owner_id = ?
       LIMIT 1
       `,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     if (!meetingRows[0]) {
@@ -1836,7 +2189,7 @@ router.post('/type2/meetings/:meetingId/invitees', authMiddleware, ownerOnly, as
       WHERE LOWER(email) = ?
       LIMIT 1
       `,
-      [email],
+      [email]
     );
 
     const invitee = userRows[0];
@@ -1854,7 +2207,7 @@ router.post('/type2/meetings/:meetingId/invitees', authMiddleware, ownerOnly, as
       INSERT INTO type2_meeting_invitees (meeting_id, user_id)
       VALUES (?, ?)
       `,
-      [meetingId, invitee.id],
+      [meetingId, invitee.id]
     );
 
     return res.status(201).json({
@@ -1888,7 +2241,7 @@ router.delete('/type2/meetings/:meetingId/invitees/:userId', authMiddleware, own
       WHERE id = ? AND owner_id = ?
       LIMIT 1
       `,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     if (!meetingRows[0]) {
@@ -1900,7 +2253,7 @@ router.delete('/type2/meetings/:meetingId/invitees/:userId', authMiddleware, own
       DELETE FROM type2_meeting_invitees
       WHERE meeting_id = ? AND user_id = ?
       `,
-      [meetingId, userId],
+      [meetingId, userId]
     );
 
     if (!deleteResult.affectedRows) {
@@ -1912,7 +2265,7 @@ router.delete('/type2/meetings/:meetingId/invitees/:userId', authMiddleware, own
       DELETE FROM type2_meeting_votes
       WHERE meeting_id = ? AND user_id = ?
       `,
-      [meetingId, userId],
+      [meetingId, userId]
     );
 
     return res.json({
@@ -1946,7 +2299,7 @@ router.post('/type2/meetings/:meetingId/slots', authMiddleware, ownerOnly, async
       WHERE id = ? AND owner_id = ?
       LIMIT 1
       `,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     if (!meetingRows[0]) {
@@ -1958,7 +2311,7 @@ router.post('/type2/meetings/:meetingId/slots', authMiddleware, ownerOnly, async
       INSERT INTO type2_meeting_slots (meeting_id, start_time, end_time)
       VALUES (?, ?, ?)
       `,
-      [meetingId, new Date(start), new Date(end)],
+      [meetingId, new Date(start), new Date(end)]
     );
 
     const [rows] = await pool.execute(
@@ -1972,7 +2325,7 @@ router.post('/type2/meetings/:meetingId/slots', authMiddleware, ownerOnly, async
       WHERE s.id = ?
       LIMIT 1
       `,
-      [result.insertId],
+      [result.insertId]
     );
 
     return res.status(201).json({
@@ -1997,7 +2350,7 @@ router.delete('/type2/meetings/:meetingId/slots/:slotId', authMiddleware, ownerO
       WHERE id = ? AND owner_id = ?
       LIMIT 1
       `,
-      [meetingId, req.user.id],
+      [meetingId, req.user.id]
     );
 
     if (!meetingRows[0]) {
@@ -2009,7 +2362,7 @@ router.delete('/type2/meetings/:meetingId/slots/:slotId', authMiddleware, ownerO
       DELETE FROM type2_meeting_slots
       WHERE id = ? AND meeting_id = ?
       `,
-      [slotId, meetingId],
+      [slotId, meetingId]
     );
 
     if (!deleteResult.affectedRows) {
