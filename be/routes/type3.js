@@ -379,6 +379,84 @@ router.delete('/type3/slots/:slotId', authMiddleware, ownerOnly, async (req, res
   }
 });
 
+/* Type 3 helper user routes - moved to bottom */
+
+router.get('/type3/me', authMiddleware, async (req, res) => {
+  try {
+    const [userRows] = await pool.execute(
+      `
+      SELECT id, name, email, role
+      FROM users
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [req.user.id]
+    );
+
+    const user = userRows[0];
+
+    if (!user) {
+      return res.status(404).json({ error: 'Current user not found.' });
+    }
+
+    const [bookedRows] = await pool.execute(
+      `
+      SELECT
+        s.id,
+        s.owner_id AS ownerId,
+        s.title,
+        s.start_time AS start,
+        s.end_time AS end,
+        s.location,
+        s.notes,
+        s.is_active AS isActive,
+        s.capacity,
+        s.is_full AS isFull,
+        owner.id AS ownerUserId,
+        owner.name AS ownerName,
+        owner.email AS ownerEmail,
+        owner.role AS ownerRole,
+        COUNT(b2.id) AS bookedCount,
+        1 AS reservedByMe
+      FROM type3_slot_bookings b
+      JOIN type3_slots s ON s.id = b.slot_id
+      JOIN users owner ON owner.id = s.owner_id
+      LEFT JOIN type3_slot_bookings b2 ON b2.slot_id = s.id
+      WHERE b.user_id = ?
+      GROUP BY
+        s.id, s.owner_id, s.title, s.start_time, s.end_time, s.location, s.notes, s.is_active, s.capacity, s.is_full,
+        owner.id, owner.name, owner.email, owner.role
+      ORDER BY s.start_time ASC
+      `,
+      [req.user.id]
+    );
+
+    const [ownedRows] = await pool.execute(
+      `${TYPE3_SLOT_SELECT}
+       WHERE s.owner_id = ?
+       GROUP BY
+         s.id, s.owner_id, s.title, s.start_time, s.end_time, s.location, s.notes, s.is_active, s.capacity, s.is_full,
+         owner.id, owner.name, owner.email, owner.role
+       ORDER BY s.start_time ASC`,
+      [req.user.id]
+    );
+
+    return res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      bookedSlots: bookedRows.map((row) => formatType3Slot(row, req.user.id)),
+      ownedSlots: ownedRows.map((row) => formatType3Slot(row, req.user.id)),
+    });
+  } catch (error) {
+    console.error('Get Type 3 current user helper error:', error);
+    return res.status(500).json({ error: 'Unable to fetch current user Type 3 info.' });
+  }
+});
+
 router.get('/type3/users/:userId', authMiddleware, async (req, res) => {
   try {
     const userId = Number(req.params.userId);
@@ -387,7 +465,7 @@ router.get('/type3/users/:userId', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Valid user ID is required.' });
     }
 
-    const [rows] = await pool.execute(
+    const [userRows] = await pool.execute(
       `
       SELECT id, name, email, role
       FROM users
@@ -397,11 +475,43 @@ router.get('/type3/users/:userId', authMiddleware, async (req, res) => {
       [userId]
     );
 
-    const user = rows[0];
+    const user = userRows[0];
 
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });
     }
+
+    const [bookedRows] = await pool.execute(
+      `
+      SELECT
+        s.id,
+        s.owner_id AS ownerId,
+        s.title,
+        s.start_time AS start,
+        s.end_time AS end,
+        s.location,
+        s.notes,
+        s.is_active AS isActive,
+        s.capacity,
+        s.is_full AS isFull,
+        owner.id AS ownerUserId,
+        owner.name AS ownerName,
+        owner.email AS ownerEmail,
+        owner.role AS ownerRole,
+        COUNT(b2.id) AS bookedCount,
+        MAX(CASE WHEN b.user_id = ? THEN 1 ELSE 0 END) AS reservedByMe
+      FROM type3_slot_bookings b
+      JOIN type3_slots s ON s.id = b.slot_id
+      JOIN users owner ON owner.id = s.owner_id
+      LEFT JOIN type3_slot_bookings b2 ON b2.slot_id = s.id
+      WHERE b.user_id = ?
+      GROUP BY
+        s.id, s.owner_id, s.title, s.start_time, s.end_time, s.location, s.notes, s.is_active, s.capacity, s.is_full,
+        owner.id, owner.name, owner.email, owner.role
+      ORDER BY s.start_time ASC
+      `,
+      [req.user.id, userId]
+    );
 
     return res.json({
       user: {
@@ -410,10 +520,60 @@ router.get('/type3/users/:userId', authMiddleware, async (req, res) => {
         email: user.email,
         role: user.role,
       },
+      bookedSlots: bookedRows.map((row) => formatType3Slot(row, req.user.id)),
     });
   } catch (error) {
-    console.error('Get user by id for Type 3 error:', error);
-    return res.status(500).json({ error: 'Unable to fetch user by id.' });
+    console.error('Get Type 3 user helper error:', error);
+    return res.status(500).json({ error: 'Unable to fetch user Type 3 info.' });
+  }
+});
+
+router.get('/type3/owners/:ownerId', authMiddleware, async (req, res) => {
+  try {
+    const ownerId = Number(req.params.ownerId);
+
+    if (!Number.isInteger(ownerId) || ownerId <= 0) {
+      return res.status(400).json({ error: 'Valid owner ID is required.' });
+    }
+
+    const [ownerRows] = await pool.execute(
+      `
+      SELECT id, name, email, role
+      FROM users
+      WHERE id = ? AND role = 'owner'
+      LIMIT 1
+      `,
+      [ownerId]
+    );
+
+    const owner = ownerRows[0];
+
+    if (!owner) {
+      return res.status(404).json({ error: 'Owner not found.' });
+    }
+
+    const [ownedRows] = await pool.execute(
+      `${TYPE3_SLOT_SELECT}
+       WHERE s.owner_id = ?
+       GROUP BY
+         s.id, s.owner_id, s.title, s.start_time, s.end_time, s.location, s.notes, s.is_active, s.capacity, s.is_full,
+         owner.id, owner.name, owner.email, owner.role
+       ORDER BY s.start_time ASC`,
+      [ownerId]
+    );
+
+    return res.json({
+      owner: {
+        id: owner.id,
+        name: owner.name,
+        email: owner.email,
+        role: owner.role,
+      },
+      ownedSlots: ownedRows.map((row) => formatType3Slot(row, req.user.id)),
+    });
+  } catch (error) {
+    console.error('Get Type 3 owner helper error:', error);
+    return res.status(500).json({ error: 'Unable to fetch owner Type 3 info.' });
   }
 });
 
