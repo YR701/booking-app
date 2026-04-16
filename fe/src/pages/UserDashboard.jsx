@@ -7,7 +7,7 @@ import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
 import { createMailto } from '../utils/mailto';
 import { formatDateTimeRange } from '../utils/formatTime';
-import { fetchOfficeHourSlots } from '../utils/OfficeHour';
+import { fetchOfficeHourSlots, handleBookOfficeHour } from '../utils/OfficeHour';
 
 function UserDashboard({
   onLogout,
@@ -40,12 +40,14 @@ function UserDashboard({
 
   useEffect(() => {
     fetchRequests();
+    fetchMyGroupmeeting();
+    fetchMyOfficeHour();
   }, []);
 
-  const fetchMyOfficeHour = async () => {
+  const fetchMyGroupmeeting = async () => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
-      const response = await fetch(`${API_BASE}/type3/`, {
+      const response = await fetch(`${API_BASE}/type2/me`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -54,7 +56,7 @@ function UserDashboard({
         throw new Error('Failed to fetch your booked office hour');
       }
       const data = await response.json();
-      setmyGroupmeeting(data.slots);
+      setmyGroupmeeting(data.finalizedMeetings || []);
       setLocalError('');
     } catch (error) {
       console.error(error);
@@ -63,6 +65,30 @@ function UserDashboard({
     }
   };
 
+  const fetchMyOfficeHour = async () => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const response = await fetch(`${API_BASE}/type3/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch your booked office hour');
+      }
+      const data = await response.json();
+      setmyOfficehours(data.bookedSlots || []);
+      setLocalError('');
+    } catch (error) {
+      console.error(error);
+      setLocalError('Error loading your booked office hour. Please try again later.');
+      setmyOfficehours([]);
+    }
+  };
+
+
+
+  //Type 1 request a meeting function
   const handleRequest = async () => {
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
@@ -89,7 +115,7 @@ function UserDashboard({
 
     try {
       const token = localStorage.getItem(TOKEN_KEY);
-      const response = await fetch(`${API_BASE}/api/meetings/request`, {
+      const response = await fetch(`${API_BASE}/meetings/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,29 +129,23 @@ function UserDashboard({
           reason: reason
         })
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to request a meeting');
       }
-
       setLocalMessage('Meeting request sent successfully');
       setLocalError('');
-
       document.getElementById('startTime').value = '';
       document.getElementById('endTime').value = '';
       document.getElementById('reason').value = '';
       setSelectedRequestOwnerId('');
-
       await fetchRequests();
-
       const subject = 'New Meeting Request';
       const body = `You have a new meeting request from ${user.name} (${user.email}).\n\n
       Reason: ${reason}\n\n
       Requested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
       const mailtoLink = createMailto(selectedOwner.email, subject, body);
       window.location.href = mailtoLink;
-
     } catch (error) {
       console.error(error);
       setLocalError(error.message);
@@ -235,6 +255,22 @@ function UserDashboard({
     }
   };
 
+  const bookOfficeHour = async (slotId) => {
+    const result = await handleBookOfficeHour(slotId);
+  if (result.success) {
+    setLocalMessage(result.message);
+    setLocalError('');
+
+    if (selectedOwnerId) {
+      await loadOfficeHourSlots(selectedOwnerId);
+    }
+    await fetchMyOfficeHour();
+  } else {
+    setLocalError(result.message);
+    setLocalMessage('');
+  }
+};
+
   return (
     <div>
       <DashboardTopnav
@@ -319,10 +355,10 @@ function UserDashboard({
           <p>No office hours booked.</p>
         ) : (
           myGroupmeeting.map(meeting => (
-            <div className="appointment-info" key={meeting.id}>
+            <div className="appointment-info" key={meeting.meetingId}>
               <h2>{meeting.owner?.name}</h2>
               <p>{meeting.title}</p>
-              <p>{formatDateTimeRange(meeting.start, meeting.end)}</p>
+              <p>{formatDateTimeRange(meeting.finalSlot?.start, meeting.finalSlot?.end)}</p>
               <div className="appointment-buttons">
                 <button onClick={() => window.location.href = `mailto:${meeting.owner?.email}`}>
                   Email
@@ -345,6 +381,7 @@ function UserDashboard({
                 <button onClick={() => window.location.href = `mailto:${oh.owner?.email}`}>
                   Email
                 </button>
+                <button>Cancel</button>
               </div>
             </div>
           ))
@@ -438,7 +475,7 @@ function UserDashboard({
                     {officeHourSlots.map((slot) => (
                       <div className='slots-item' key={slot.id}>
                         <p className="slot-time">{formatDateTimeRange(slot.start, slot.end)}</p>
-                        <button onClick={() => onBookSlot(slot.id)}>Book Appointment</button>
+                        <button onClick={() => bookOfficeHour(slot.id)}>Book Office Hour</button>
                       </div>
                     ))}
                   </div>

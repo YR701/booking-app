@@ -6,7 +6,7 @@ import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
 import { createMailto } from '../utils/mailto';
 import { formatDateTimeRange } from '../utils/formatTime';
-import { fetchOfficeHourSlots } from '../utils/OfficeHour';
+import { fetchOfficeHourSlots, handleBookOfficeHour } from '../utils/OfficeHour';
 
 function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null }) {
     const [localMessage, setLocalMessage] = useState('');
@@ -47,6 +47,19 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
             setLoading(false);
         }
     };
+
+    const bookOfficeHour = async (slotId) => {
+        const result = await handleBookOfficeHour(slotId);
+        if (result.success) {
+            setLocalMessage(result.message);
+            setLocalError('');
+            await loadOfficeHourSlots(inviteOwnerId);
+        } else {
+            setLocalError(result.message);
+            setLocalMessage('');
+        }
+    };
+
 
     //load owner's office hour slots
     const loadOfficeHourSlots = async (ownerId) => {
@@ -106,9 +119,10 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                                     Book
                                 </button>
                                 <button type="button" onClick={() => {
-                                        const mailtoLink = createMailto(
-                                            slot.owner?.email,`Question about ${slot.title}`,`Hello ${owner?.name},`);
-                                        window.location.href = mailtoLink;}}>
+                                    const mailtoLink = createMailto(
+                                        slot.owner?.email, `Question about ${slot.title}`, `Hello ${owner?.name},`);
+                                    window.location.href = mailtoLink;
+                                }}>
                                     Email
                                 </button>
                             </div>
@@ -131,13 +145,14 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                             <p>{slot.title}</p>
                             <p>{formatDateTimeRange(slot.start, slot.end)}</p>
                             <div className="slot-actions">
-                                <button type="button" onClick={() => onBookSlot(slot)}>
+                                <button type="button" onClick={() => bookOfficeHour(slot.id)}>
                                     Book
                                 </button>
                                 <button type="button" onClick={() => {
-                                        const mailtoLink = createMailto(
-                                            slot.owner?.email,`Question about ${slot.title}`,`Hello ${owner?.name},`);
-                                        window.location.href = mailtoLink;}}>
+                                    const mailtoLink = createMailto(
+                                        slot.owner?.email, `Question about ${slot.title}`, `Hello ${owner?.name},`);
+                                    window.location.href = mailtoLink;
+                                }}>
                                     Email
                                 </button>
                             </div>

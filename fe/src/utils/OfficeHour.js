@@ -26,10 +26,10 @@ export const fetchOfficeHourSlots = async (ownerId) => {
   }
 }
 
-export const handleBookOfficeHour = async (slot) => {
+export const handleBookOfficeHour = async (slotId) => {
   try {
     const token = localStorage.getItem(TOKEN_KEY);
-    const response = await fetch(`${API_BASE}/slots/${slot.id}/book`, {
+    const response = await fetch(`${API_BASE}/type3/slots/${slotId}/book`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,39 +39,36 @@ export const handleBookOfficeHour = async (slot) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to book office hour');
+      return { success: false, message: errorData.error || 'Failed to book office hour' };
     }
 
-    setLocalMessage('Office hour booked successfully');
-    setLocalError('');
-    await fetchSlots();
+   return { success: true, message: 'Office hour booked successfully' };
   } catch (error) {
     console.error(error);
-    setLocalError(error.message || 'Error booking office hour. Please try again later.');
-    setLocalMessage('');
+    return { success: false, message: error.message || 'Error booking office hour. Please try again later.' };
   }
 };
 
 //cancel OfficeHour
-  const onCancelOfficeHour = async (id) => {
-    try {
-      const token = localStorage.getItem(TOKEN_KEY);
-      const response = await fetch(`${API_BASE}/slots/${id}/booking`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error('Failed to cancel appointment');
+const onCancelOfficeHour = async (id) => {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const response = await fetch(`${API_BASE}/type3/slots/${id}/booking`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-      setLocalMessage('Appointment canceled successfully');
-      setLocalError('');
-      // Refresh will be handled by parent, or user can re-trigger
-    } catch (error) {
-      console.error(error);
-      setLocalError('Error canceling appointment. Please try again later.');
-      setLocalMessage('');
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error('Failed to cancel appointment');
     }
-  };
+    setLocalMessage('Appointment canceled successfully');
+    setLocalError('');
+    // Refresh will be handled by parent, or user can re-trigger
+  } catch (error) {
+    console.error(error);
+    setLocalError('Error canceling appointment. Please try again later.');
+    setLocalMessage('');
+  }
+};
