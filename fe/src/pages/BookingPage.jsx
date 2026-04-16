@@ -105,7 +105,10 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                                 <button type="button" onClick={() => onBookSlot(slot.id)}>
                                     Book
                                 </button>
-                                <button type="button" onClick={() => window.location.href = `mailto:${slot.owner?.email}`}>
+                                <button type="button" onClick={() => {
+                                        const mailtoLink = createMailto(
+                                            slot.owner?.email,`Question about ${slot.title}`,`Hello ${owner?.name},`);
+                                        window.location.href = mailtoLink;}}>
                                     Email
                                 </button>
                             </div>
@@ -131,7 +134,10 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                                 <button type="button" onClick={() => onBookSlot(slot)}>
                                     Book
                                 </button>
-                                <button type="button" onClick={() => window.location.href = `mailto:${slot.owner?.email}`}>
+                                <button type="button" onClick={() => {
+                                        const mailtoLink = createMailto(
+                                            slot.owner?.email,`Question about ${slot.title}`,`Hello ${owner?.name},`);
+                                        window.location.href = mailtoLink;}}>
                                     Email
                                 </button>
                             </div>
