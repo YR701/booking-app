@@ -6,6 +6,7 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import UserDashboard from './pages/UserDashboard';
 import BookingPage from './pages/BookingPage';
 import mcgillLogo from './assets/mcgill_logo.png';
+import { createMailto } from './utils/mailto';
 
 import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
 // import Type2GroupMeetingVotePage from './pages/Type2GroupMeetingVotePage';

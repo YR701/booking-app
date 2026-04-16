@@ -4,7 +4,7 @@ import { API_BASE, TOKEN_KEY } from '../config';
 import './BookingPage.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
-import { buildMailto } from '../utils/mailto';
+import { createMailto } from '../utils/mailto';
 import { formatDateTimeRange } from '../utils/formatTime';
 import { fetchOfficeHourSlots } from '../utils/OfficeHour';
 

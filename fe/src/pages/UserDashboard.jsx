@@ -6,7 +6,7 @@ import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 //import UserCalendar from '../components/UserCalendar';
 import { useState, useEffect } from 'react';
-import { buildMailto } from '../utils/mailto';
+import { createMailto } from '../utils/mailto';
 import { formatDateTimeRange } from '../utils/formatTime';
 import { fetchOfficeHourSlots } from '../utils/OfficeHour';
 
@@ -135,7 +135,7 @@ function UserDashboard({
       const body = `You have a new meeting request from ${user.name} (${user.email}).\n\n
       Reason: ${reason}\n\n
       Requested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
-      const mailtoLink = buildMailto(selectedOwner.email, subject, body);
+      const mailtoLink = createMailto(selectedOwner.email, subject, body);
       //console.log('Generated mailto link:', mailtoLink);
       window.location.href = mailtoLink;
 
