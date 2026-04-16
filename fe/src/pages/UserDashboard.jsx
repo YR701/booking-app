@@ -8,7 +8,7 @@ import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
 import { buildMailto } from '../utils/mailto';
 import { formatDateTimeRange } from '../utils/formatTime';
-import { fetchOfficeHourSlots } from '../utils/fetchOfficeHourSlots';
+import { fetchOfficeHourSlots } from '../utils/OfficeHour';
 
 // function UserDashboard({ onLogout, user }) {
 function UserDashboard({
@@ -18,6 +18,8 @@ function UserDashboard({
   onOpenType3Public,
   owners = [],
   myBookings = [],
+  onBookSlot,
+  onCancelBooking,
   loading = false,
   message = '',
   error = '',
@@ -42,34 +44,10 @@ function UserDashboard({
   }, []);
 
 
-  //cancel appointment
-  const onCancel = async (id) => {
-    try {
-      const token = localStorage.getItem(TOKEN_KEY);
-      const response = await fetch(`${API_BASE}/slots/${id}/booking`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error('Failed to cancel appointment');
-      }
-      setLocalMessage('Appointment canceled successfully');
-      setLocalError('');
-      // Refresh will be handled by parent, or user can re-trigger
-    } catch (error) {
-      console.error(error);
-      setLocalError('Error canceling appointment. Please try again later.');
-      setLocalMessage('');
-    }
-  };
-
   const fetchMyOfficeHour = async (id) => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
-      const response = await fetch(`${API_BASE}/slots/myOfficeHour`, {
+      const response = await fetch(`${API_BASE}/type3/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -331,7 +309,7 @@ function UserDashboard({
                 <button onClick={() => window.location.href = `mailto:${appointment.owner?.email}`}>
                   Email
                 </button>
-                <button onClick={() => onCancel(appointment.id)}>Cancel</button>
+                <button onClick={() => onCancelBooking(appointment.id)}>Cancel</button>
               </div>
             </div>
           ))
@@ -395,7 +373,7 @@ function UserDashboard({
         )}
       </div>
 
-      {/* Type1 SendMeeting Request Section*/}
+      {/* Type1 Send Meeting Request Section*/}
       <div className="request-meeting">
         <h3>Request a Meeting </h3>
         <div className='request-form'>
@@ -470,7 +448,7 @@ function UserDashboard({
                     {oneTimeSlots.map((slot) => (
                       <div className='slots-item' key={slot.id}>
                         <p className="slot-time">{formatDateTimeRange(slot.start, slot.end)}</p>
-                        <button onClick={() => handleBookSlot(slot.id)}>Book Appointment</button>
+                        <button onClick={() => onBookSlot(slot.id)}>Book Appointment</button>
                       </div>
                     ))}
                   </div>

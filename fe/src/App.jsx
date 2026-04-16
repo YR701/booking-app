@@ -8,7 +8,7 @@ import BookingPage from './pages/BookingPage';
 import mcgillLogo from './assets/mcgill_logo.png';
 
 import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
-import Type2GroupMeetingVotePage from './pages/Type2GroupMeetingVotePage';
+// import Type2GroupMeetingVotePage from './pages/Type2GroupMeetingVotePage';
 import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
 import Type3OwnerOfficeHoursPage from './pages/Type3OwnerOfficeHoursPage';
 import Type3OfficeHoursPublicPage from './pages/Type3OfficeHoursPublicPage';
@@ -21,11 +21,6 @@ function formatDateTime(value) {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
-}
-
-function createMailto(email, subject, body) {
-  const params = new URLSearchParams({ subject, body });
-  return `mailto:${email}?${params.toString()}`;
 }
 
 async function api(path, options = {}, token = '') {
@@ -363,7 +358,7 @@ function App() {
       setError(err.message);
     }
   }
-
+  //type1 owner requests functions
   async function rejectRequest(requestId) {
     setMessage('');
     setError('');
@@ -396,6 +391,8 @@ function App() {
   //   );
   // }
 
+
+  //redirect to booking page
   if (user && (inviteOwnerId || showBookingPage)) {
     return (
       <main className="page">
@@ -403,12 +400,13 @@ function App() {
           onLogout={logout}
           user={user}
           inviteOwnerId={inviteOwnerId || user?.id}
+          onBookSlot={bookSlot}
           onBack={
             inviteOwnerId
               ? null
               : () => {
-                  setShowBookingPage(false);
-                }
+                setShowBookingPage(false);
+              }
           }
         />
       </main>
@@ -530,6 +528,8 @@ function App() {
           onOpenType3Public={() => setCurrentPage('type3-public')}
           owners={owners}
           myBookings={myBookings}
+          onBookSlot={bookSlot}
+          onCancelBooking={cancelBooking}
           loading={loading}
           message={message}
           error={error}

@@ -6,9 +6,9 @@ import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
 import { buildMailto } from '../utils/mailto';
 import { formatDateTimeRange } from '../utils/formatTime';
-import { fetchOfficeHourSlots } from '../utils/fetchOfficeHourSlots';
+import { fetchOfficeHourSlots } from '../utils/OfficeHour';
 
-function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
+function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null }) {
     const [localMessage, setLocalMessage] = useState('');
     const [localError, setLocalError] = useState('');
     const [slots, setSlots] = useState([]);
@@ -45,32 +45,6 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
             setSlots([]);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleBook = async (slot) => {
-        try {
-            const token = localStorage.getItem(TOKEN_KEY);
-            const response = await fetch(`${API_BASE}/slots/${slot.id}/book`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || 'Failed to book office hour');
-            }
-
-            setLocalMessage('Office hour booked successfully');
-            setLocalError('');
-            await fetchSlots();
-        } catch (error) {
-            console.error(error);
-            setLocalError(error.message || 'Error booking office hour. Please try again later.');
-            setLocalMessage('');
         }
     };
 
@@ -128,7 +102,7 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
                             <p>{slot.title}</p>
                             <p>{formatDateTimeRange(slot.start, slot.end)}</p>
                             <div className="slot-actions">
-                                <button type="button" onClick={() => handleBook(slot)}>
+                                <button type="button" onClick={() => onBookSlot(slot.id)}>
                                     Book
                                 </button>
                                 <button type="button" onClick={() => window.location.href = `mailto:${slot.owner?.email}`}>
@@ -154,7 +128,7 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBack = null }) {
                             <p>{slot.title}</p>
                             <p>{formatDateTimeRange(slot.start, slot.end)}</p>
                             <div className="slot-actions">
-                                <button type="button" onClick={() => handleBook(slot)}>
+                                <button type="button" onClick={() => onBookSlot(slot)}>
                                     Book
                                 </button>
                                 <button type="button" onClick={() => window.location.href = `mailto:${slot.owner?.email}`}>
