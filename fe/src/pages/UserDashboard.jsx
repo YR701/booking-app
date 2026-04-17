@@ -48,20 +48,20 @@ function UserDashboard({
   const fetchMyGroupmeeting = async () => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
-      const response = await fetch(`${API_BASE}/type2/me`, {
+      const response = await fetch(`${API_BASE}/type2/me/finalized-meetings`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch your booked office hour');
+        throw new Error('Failed to fetch your booked group meeting');
       }
       const data = await response.json();
-      setmyGroupmeeting(data.finalizedMeetings || []);
+      setmyGroupmeeting(data.meetings || []);
       setLocalError('');
     } catch (error) {
       console.error(error);
-      setLocalError('Error loading your booked office hour. Please try again later.');
+      setLocalError('Error loading your booked group meeting. Please try again later.');
       setmyGroupmeeting([]);
     }
   };
@@ -319,17 +319,17 @@ const onCancelOfficeHour = async (id) => {
           )}
           {onOpenType2Vote && (
             <button type="button" onClick={onOpenType2Vote}>
-              Type 2 Vote
+              Type2 Group Meeting Vote
             </button>
           )}
           {onOpenType2Results && (
             <button type="button" onClick={onOpenType2Results}>
-              Type 2 Results
+              Type 2 Group Meeting Results
             </button>
           )}
           {onOpenType3Public && (
             <button type="button" onClick={onOpenType3Public}>
-              Type 3 Public
+              Type 3 Office Hour Booking
             </button>
           )}
         </div>
@@ -386,7 +386,7 @@ const onCancelOfficeHour = async (id) => {
           <p>No office hours booked.</p>
         ) : (
           myGroupmeeting.map(meeting => (
-            <div className="appointment-info" key={meeting.meetingId}>
+            <div className="appointment-info" key={meeting.id}>
               <h2>{meeting.owner?.name}</h2>
               <p>{meeting.title}</p>
               <p>{formatDateTimeRange(meeting.finalSlot?.start, meeting.finalSlot?.end)}</p>

@@ -3,7 +3,8 @@
 import { API_BASE, TOKEN_KEY } from '../config';
 import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
-import UserCalendarTopnav from '../components/CalendarTopnav';
+import './switchButton.css';
+import DashboardTopnav from '../components/DashboardTopnav';
 import CalendarGrid from '../components/CalendarGrid';
 
 function toDateTimeLocalValue(dateInput) {
@@ -30,11 +31,12 @@ function addDays(dateInput, days) {
 }
 
 function Type3CreateRecurringOHPage({
-  onBack,
   onLogout,
   user,
   type3Draft,
   setType3Draft,
+  onBack,
+  onOpenType2Create,
 }) {
   const defaultEditor = {
     start: '',
@@ -516,11 +518,18 @@ function Type3CreateRecurringOHPage({
 
   return (
     <>
-      <UserCalendarTopnav
-        userEmail={user?.email}
+      <DashboardTopnav
+        userEmail={user?.email || 'user@mail.mcgill.ca'}
+        userName={user?.name || 'User'}
         onLogout={onLogout}
-        onBackHome={onBack}
       />
+
+      <div className="switch-buttons">
+        <div className="inline-actions">
+          {onBack && <button onClick={onBack}>Back to Dashboard</button>}
+          {onOpenType2Create && <button onClick={onOpenType2Create}>Create Type2 Group Meeting</button>}
+        </div>
+      </div>
 
       <main className="booking-page">
         <header className="booking-header">

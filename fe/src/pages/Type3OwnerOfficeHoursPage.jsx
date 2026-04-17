@@ -3,7 +3,8 @@
 import { API_BASE, TOKEN_KEY } from '../config';
 import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
-import UserCalendarTopnav from '../components/CalendarTopnav';
+import './switchButton.css';
+import DashboardTopnav from '../components/DashboardTopnav';
 import CalendarGrid from '../components/CalendarGrid';
 
 function formatReadableDateTime(dateInput) {
@@ -131,11 +132,17 @@ function Type3OwnerOfficeHoursPage({ onBack, onLogout, user }) {
 
   return (
     <>
-      <UserCalendarTopnav
-        userEmail={user?.email}
+      <DashboardTopnav
+        userEmail={user?.email || 'user@mail.mcgill.ca'}
+        userName={user?.name || 'User'}
         onLogout={onLogout}
-        onBackHome={onBack}
       />
+
+      <div className="switch-buttons">
+        <div className="inline-actions">
+          {onBack && <button onClick={onBack}>Back to Owner Dashboard</button>}
+        </div>
+      </div>
 
       <main className="booking-page">
         <header className="booking-header">

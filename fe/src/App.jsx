@@ -355,8 +355,8 @@ function App() {
             inviteOwnerId
               ? null
               : () => {
-                  setShowBookingPage(false);
-                }
+                setShowBookingPage(false);
+              }
           }
         />
       </main>
@@ -366,11 +366,11 @@ function App() {
   if (currentPage === 'type2-create') {
     return (
       <Type2CreateGroupMeetingPage
-        onBack={() => setCurrentPage('home')}
         onLogout={logout}
         user={user}
         type2Draft={type2Draft}
         setType2Draft={setType2Draft}
+        onBack={() => setCurrentPage('home')}
       />
     );
   }
@@ -421,13 +421,13 @@ function App() {
   if (currentPage === 'type3-create') {
     return (
       <Type3CreateRecurringOHPage
-        onBack={() => setCurrentPage('home')}
         onLogout={logout}
         user={user}
         type3Draft={type3Draft}
         setType3Draft={setType3Draft}
         onOpenType2Vote={() => setCurrentPage('type2-vote')}
-        onOpenUserDashboard={() => setCurrentPage('home')}
+        onBack={() => setCurrentPage('home')}
+        onOpenType2Create={setCurrentPage('type2-create')}
       />
     );
   }
