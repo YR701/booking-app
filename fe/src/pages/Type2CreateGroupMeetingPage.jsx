@@ -53,9 +53,11 @@ function Type2CreateGroupMeetingPage({
   const [expandedMeetingId, setExpandedMeetingId] = useState(null);
   const [deletingMeetingId, setDeletingMeetingId] = useState(null);
   const [editingSavedMeetingId, setEditingSavedMeetingId] = useState(null);
+  const [updatingMeetingId, setUpdatingMeetingId] = useState(null);
 
   const [savedMeetingInviteeInputs, setSavedMeetingInviteeInputs] = useState({});
   const [savedMeetingSlotInputs, setSavedMeetingSlotInputs] = useState({});
+  const [savedMeetingEditForms, setSavedMeetingEditForms] = useState({});
 
   const inviteeList = useMemo(() => {
     return parseInvitees(type2Draft.invitees);
@@ -151,6 +153,14 @@ function Type2CreateGroupMeetingPage({
       setSavedMeetingDetails((current) => ({
         ...current,
         [meetingId]: data,
+      }));
+
+      setSavedMeetingEditForms((current) => ({
+        ...current,
+        [meetingId]: {
+          title: data.meeting?.title || '',
+          description: data.meeting?.description || '',
+        },
       }));
     } catch (fetchError) {
       console.error(fetchError);
@@ -363,7 +373,7 @@ function Type2CreateGroupMeetingPage({
   };
 
   const handleToggleSavedMeeting = async (meetingId) => {
-    const isSameMeeting = expandedMeetingId === meetingId;
+    const isSameMeeting = String(expandedMeetingId) === String(meetingId);
 
     if (isSameMeeting) {
       setExpandedMeetingId(null);
@@ -380,7 +390,7 @@ function Type2CreateGroupMeetingPage({
   };
 
   const handleEditSavedMeeting = async (meetingId) => {
-    const isSameMeeting = editingSavedMeetingId === meetingId;
+    const isSameMeeting = String(editingSavedMeetingId) === String(meetingId);
 
     if (isSameMeeting) {
       setEditingSavedMeetingId(null);
@@ -393,6 +403,70 @@ function Type2CreateGroupMeetingPage({
 
     if (!savedMeetingDetails[meetingId]) {
       await fetchMeetingDetail(meetingId);
+    }
+  };
+
+  const handleSavedMeetingEditFieldChange = (meetingId, field, value) => {
+    setSavedMeetingEditForms((current) => ({
+      ...current,
+      [meetingId]: {
+        ...(current[meetingId] || { title: '', description: '' }),
+        [field]: value,
+      },
+    }));
+    setMessage('');
+    setError('');
+  };
+
+  const handleUpdateSavedMeeting = async (meetingId) => {
+    try {
+      setMessage('');
+      setError('');
+      setUpdatingMeetingId(meetingId);
+
+      const form = savedMeetingEditForms[meetingId] || {};
+      const title = String(form.title || '').trim();
+      const description = String(form.description || '').trim();
+
+      if (!title) {
+        throw new Error('Meeting title is required.');
+      }
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to edit a Type 2 meeting.');
+      }
+
+      const response = await fetch(`${API_BASE}/type2/meetings/${meetingId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, description }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update Type 2 meeting.');
+      }
+
+      setSavedMeetings((current) =>
+        current.map((meeting) =>
+          String(meeting.id) === String(meetingId) ? data.meeting : meeting
+        )
+      );
+
+      await fetchMeetingDetail(meetingId);
+      setMessage('Saved Group Meeting updated successfully.');
+      setError('');
+    } catch (updateError) {
+      console.error(updateError);
+      setError(updateError.message || 'Unable to update Type 2 meeting.');
+      setMessage('');
+    } finally {
+      setUpdatingMeetingId(null);
     }
   };
 
@@ -676,7 +750,7 @@ function Type2CreateGroupMeetingPage({
             </label>
 
             <div className="invitee-preview-box">
-              <p className="summary-title">Invited Users For This Meeting</p>
+              <p className="summary-title">Invited Users Preview</p>
               {inviteeList.length === 0 ? (
                 <p>No invited users added yet.</p>
               ) : (
@@ -688,13 +762,10 @@ function Type2CreateGroupMeetingPage({
               )}
             </div>
 
-            <h2>Candidate Time Slots</h2>
-            <p className="helper-text">
-              Add several different time slots. All of them belong to this one group meeting.
-            </p>
+            <h3>Candidate Time Slots</h3>
 
             <div className="summary-list">
-              {type2Draft.candidateSlots.map((slot, index) => {
+              {sortedCandidateSlots.map((slot, index) => {
                 const isSelected = slot.id === selectedCandidateId;
 
                 return (
@@ -703,59 +774,49 @@ function Type2CreateGroupMeetingPage({
                     className={`summary-item ${isSelected ? 'selected-summary-item' : ''}`}
                   >
                     <div className="summary-main">
-                      <p
-                        className="summary-title"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setSelectedCandidateId(slot.id)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            setSelectedCandidateId(slot.id);
-                          }
-                        }}
-                      >
-                        Candidate Slot {index + 1}
-                      </p>
+                      <p className="summary-title">Option {index + 1}</p>
 
-                      <label>
-                        Start Date & Time
-                        <input
-                          type="datetime-local"
-                          value={slot.start}
-                          onChange={(event) =>
-                            handleCandidateSlotChange(slot.id, 'start', event.target.value)
-                          }
-                        />
-                      </label>
+                      <div className="same-line-row">
+                        <label>
+                          Start Date & Time
+                          <input
+                            type="datetime-local"
+                            value={slot.start}
+                            onChange={(event) =>
+                              handleCandidateSlotChange(slot.id, 'start', event.target.value)
+                            }
+                          />
+                        </label>
 
-                      <label>
-                        End Date & Time
-                        <input
-                          type="datetime-local"
-                          value={slot.end}
-                          onChange={(event) =>
-                            handleCandidateSlotChange(slot.id, 'end', event.target.value)
-                          }
-                        />
-                      </label>
-                    </div>
+                        <label>
+                          End Date & Time
+                          <input
+                            type="datetime-local"
+                            value={slot.end}
+                            onChange={(event) =>
+                              handleCandidateSlotChange(slot.id, 'end', event.target.value)
+                            }
+                          />
+                        </label>
+                      </div>
 
-                    <div className="inline-actions">
-                      <button
-                        type="button"
-                        className="button secondary"
-                        onClick={() => setSelectedCandidateId(slot.id)}
-                      >
-                        Select
-                      </button>
+                      <div className="inline-actions">
+                        <button
+                          type="button"
+                          className="button secondary"
+                          onClick={() => setSelectedCandidateId(slot.id)}
+                        >
+                          Select
+                        </button>
 
-                      <button
-                        type="button"
-                        className="button secondary"
-                        onClick={() => handleRemoveCandidateSlot(slot.id)}
-                      >
-                        Delete
-                      </button>
+                        <button
+                          type="button"
+                          className="button secondary"
+                          onClick={() => handleRemoveCandidateSlot(slot.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -791,32 +852,33 @@ function Type2CreateGroupMeetingPage({
             ) : (
               <div className="summary-list summary-list-scroll">
                 {savedMeetings.map((meeting) => {
-                  const isExpanded = expandedMeetingId === meeting.id;
+                  const isExpanded = String(expandedMeetingId) === String(meeting.id);
                   const detail = savedMeetingDetails[meeting.id];
-                  const isEditing = editingSavedMeetingId === meeting.id;
+                  const isEditing = String(editingSavedMeetingId) === String(meeting.id);
+                  const editForm = savedMeetingEditForms[meeting.id] || {
+                    title: meeting.title || '',
+                    description: meeting.description || '',
+                  };
 
                   return (
-                    <div key={meeting.id} className="summary-item">
-                      <div className="summary-main">
-                        <p className="summary-title">{meeting.title}</p>
-                        <p>{meeting.description || 'No description.'}</p>
-                        <p>Status: {meeting.status}</p>
+                    <div
+                      key={meeting.id}
+                      className={`saved-meeting-card ${isExpanded ? 'selected-summary-item' : ''}`}
+                    >
+                      <div className="saved-meeting-header">
+                        <div className="saved-meeting-header-main">
+                          <p className="summary-title">{meeting.title}</p>
+                          <p>{meeting.description || 'No description.'}</p>
+                          <p>Status: {meeting.status}</p>
+                        </div>
 
-                        <div className="inline-actions" style={{ marginTop: '10px' }}>
-                          <button
-                            type="button"
-                            className="button secondary"
-                            onClick={() => handleToggleSavedMeeting(meeting.id)}
-                          >
-                            {isExpanded ? 'Hide Meeting Detail' : 'Show Meeting Detail'}
-                          </button>
-
+                        <div className="inline-actions saved-meeting-actions">
                           <button
                             type="button"
                             className="button secondary"
                             onClick={() => handleEditSavedMeeting(meeting.id)}
                           >
-                            {isEditing ? 'Close Edit' : 'Edit Invitees / Time Slots'}
+                            {isEditing ? 'Close Edit' : 'Edit'}
                           </button>
 
                           <button
@@ -825,11 +887,58 @@ function Type2CreateGroupMeetingPage({
                             onClick={() => handleDeleteMeeting(meeting.id)}
                             disabled={deletingMeetingId === meeting.id}
                           >
-                            {deletingMeetingId === meeting.id ? 'Deleting...' : 'Delete Meeting'}
+                            {deletingMeetingId === meeting.id ? 'Deleting...' : 'Delete'}
                           </button>
                         </div>
+                      </div>
 
-                        {isExpanded && detail && (
+                      {isExpanded && detail && (
+                        <div className="saved-meeting-expanded">
+                          {isEditing && (
+                            <div className="saved-invitees-box collapsible-section">
+                              <p className="summary-title">Edit Meeting Info</p>
+
+                              <label>
+                                Title
+                                <input
+                                  type="text"
+                                  value={editForm.title}
+                                  onChange={(event) =>
+                                    handleSavedMeetingEditFieldChange(
+                                      meeting.id,
+                                      'title',
+                                      event.target.value
+                                    )
+                                  }
+                                />
+                              </label>
+
+                              <label style={{ marginTop: '10px' }}>
+                                Description
+                                <textarea
+                                  value={editForm.description}
+                                  onChange={(event) =>
+                                    handleSavedMeetingEditFieldChange(
+                                      meeting.id,
+                                      'description',
+                                      event.target.value
+                                    )
+                                  }
+                                />
+                              </label>
+
+                              <div className="inline-actions" style={{ marginTop: '10px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateSavedMeeting(meeting.id)}
+                                  disabled={updatingMeetingId === meeting.id}
+                                >
+                                  {updatingMeetingId === meeting.id ? 'Saving...' : 'Save Meeting Info'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="saved-invitees-box collapsible-section">
                             <p className="summary-title">Invited Users</p>
 
@@ -842,112 +951,109 @@ function Type2CreateGroupMeetingPage({
                                     <span>
                                       {invitee.name} ({invitee.email})
                                     </span>
-
-                                    {isEditing && (
-                                      <button
-                                        type="button"
-                                        className="button secondary small-button"
-                                        onClick={() =>
-                                          handleRemoveInviteeFromSavedMeeting(meeting.id, invitee.id)
-                                        }
-                                      >
-                                        Remove
-                                      </button>
-                                    )}
+                                    <button
+                                      type="button"
+                                      className="button secondary"
+                                      onClick={() =>
+                                        handleRemoveInviteeFromSavedMeeting(meeting.id, invitee.id)
+                                      }
+                                    >
+                                      Remove
+                                    </button>
                                   </li>
                                 ))}
                               </ul>
                             )}
 
-                            {isEditing && (
-                              <div className="inline-actions" style={{ marginTop: '10px' }}>
-                                <input
-                                  type="email"
-                                  className="invitee-inline-input"
-                                  placeholder="Add invitee email"
-                                  value={savedMeetingInviteeInputs[meeting.id] || ''}
-                                  onChange={(event) =>
-                                    handleSavedMeetingInviteeInputChange(meeting.id, event.target.value)
-                                  }
-                                />
-                                <button
-                                  type="button"
-                                  className="button secondary"
-                                  onClick={() => handleAddInviteeToSavedMeeting(meeting.id)}
-                                >
-                                  Add Invitee
-                                </button>
-                              </div>
-                            )}
+                            <div className="invitee-input-row" style={{ marginTop: '10px' }}>
+                              <input
+                                type="email"
+                                placeholder="Add invitee email"
+                                value={savedMeetingInviteeInputs[meeting.id] || ''}
+                                onChange={(event) =>
+                                  handleSavedMeetingInviteeInputChange(meeting.id, event.target.value)
+                                }
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleAddInviteeToSavedMeeting(meeting.id)}
+                              >
+                                Add Invitee
+                              </button>
+                            </div>
+                          </div>
 
-                            <p className="summary-title" style={{ marginTop: '12px' }}>
-                              Candidate Time Slots
-                            </p>
+                          <div className="saved-invitees-box collapsible-section">
+                            <p className="summary-title">Candidate Slots</p>
 
                             {!detail.slots?.length ? (
                               <p>No candidate slots found.</p>
                             ) : (
-                              <ul className="invitee-list">
-                                {detail.slots.map((slot, index) => (
-                                  <li key={slot.id} className="invitee-row">
-                                    <span>
-                                      Slot {index + 1}: {formatReadableDateTime(slot.start)} — {formatReadableDateTime(slot.end)}
-                                    </span>
+                              <div className="summary-list">
+                                {detail.slots.map((slot) => (
+                                  <div key={slot.id} className="summary-item">
+                                    <div className="summary-main">
+                                      <p>Start: {formatReadableDateTime(slot.start)}</p>
+                                      <p>End: {formatReadableDateTime(slot.end)}</p>
+                                    </div>
 
-                                    {isEditing && (
-                                      <button
-                                        type="button"
-                                        className="button secondary small-button"
-                                        onClick={() => handleRemoveSlotFromSavedMeeting(meeting.id, slot.id)}
-                                      >
-                                        Remove
-                                      </button>
-                                    )}
-                                  </li>
+                                    <button
+                                      type="button"
+                                      className="button secondary"
+                                      onClick={() =>
+                                        handleRemoveSlotFromSavedMeeting(meeting.id, slot.id)
+                                      }
+                                    >
+                                      Remove Slot
+                                    </button>
+                                  </div>
                                 ))}
-                              </ul>
-                            )}
-
-                            {isEditing && (
-                              <div style={{ marginTop: '10px' }}>
-                                <div className="same-line-row">
-                                  <label>
-                                    Start
-                                    <input
-                                      type="datetime-local"
-                                      value={savedMeetingSlotInputs[meeting.id]?.start || ''}
-                                      onChange={(event) =>
-                                        handleSavedMeetingSlotInputChange(meeting.id, 'start', event.target.value)
-                                      }
-                                    />
-                                  </label>
-
-                                  <label>
-                                    End
-                                    <input
-                                      type="datetime-local"
-                                      value={savedMeetingSlotInputs[meeting.id]?.end || ''}
-                                      onChange={(event) =>
-                                        handleSavedMeetingSlotInputChange(meeting.id, 'end', event.target.value)
-                                      }
-                                    />
-                                  </label>
-                                </div>
-
-                                <div className="inline-actions" style={{ marginTop: '10px' }}>
-                                  <button
-                                    type="button"
-                                    className="button secondary"
-                                    onClick={() => handleAddSlotToSavedMeeting(meeting.id)}
-                                  >
-                                    Add Time Slot
-                                  </button>
-                                </div>
                               </div>
                             )}
+
+                            <div className="same-line-row" style={{ marginTop: '10px' }}>
+                              <label>
+                                Start
+                                <input
+                                  type="datetime-local"
+                                  value={savedMeetingSlotInputs[meeting.id]?.start || ''}
+                                  onChange={(event) =>
+                                    handleSavedMeetingSlotInputChange(
+                                      meeting.id,
+                                      'start',
+                                      event.target.value
+                                    )
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                End
+                                <input
+                                  type="datetime-local"
+                                  value={savedMeetingSlotInputs[meeting.id]?.end || ''}
+                                  onChange={(event) =>
+                                    handleSavedMeetingSlotInputChange(
+                                      meeting.id,
+                                      'end',
+                                      event.target.value
+                                    )
+                                  }
+                                />
+                              </label>
+
+                              <div className="inline-actions">
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddSlotToSavedMeeting(meeting.id)}
+                                >
+                                  Add Slot
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -960,7 +1066,7 @@ function Type2CreateGroupMeetingPage({
           <div className="calendar-section-header">
             <h2>Calendar Preview</h2>
             <p>
-              Click one candidate slot row on the left, then select a time range on the calendar to fill that slot.
+              Click one candidate slot row first, then select a time range on the calendar to fill it.
             </p>
           </div>
 

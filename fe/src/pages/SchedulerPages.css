@@ -109,7 +109,7 @@
 .summary-list-scroll {
   flex: 1;
   min-height: 0;
-  max-height: none;
+  max-height: 450px;
   overflow-y: auto;
   padding-right: 6px;
 }
@@ -321,9 +321,126 @@
   grid-template-columns: 1.2fr 1.2fr 0.8fr 0.7fr;
 }
 
+.saved-slot-group {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.saved-slot-details {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.saved-invitees-box {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.saved-invitees-box label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.saved-invitees-box input,
+.saved-invitees-box textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+}
+
+.saved-invitees-box textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.slot-top-actions {
+  align-items: flex-start;
+}
+
+/* NEW: better full-width layout for Saved Group Meetings in Type 2 */
+.saved-meeting-card {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #f9fafb;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.saved-meeting-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.saved-meeting-header-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-meeting-header-main p {
+  margin: 4px 0;
+}
+
+.saved-meeting-actions {
+  flex-shrink: 0;
+}
+
+.saved-meeting-expanded {
+  width: 100%;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.saved-meeting-expanded .saved-invitees-box {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.saved-meeting-expanded .summary-item {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* type3 scroll bar */
+.summary-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.summary-list-scroll::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
 @media (max-width: 900px) {
   .type3-four-column-row {
     grid-template-columns: 1fr;
+  }
+
+  .saved-meeting-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .saved-meeting-actions {
+    width: 100%;
   }
 }
 

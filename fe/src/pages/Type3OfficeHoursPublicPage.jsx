@@ -25,6 +25,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reservingSlotId, setReservingSlotId] = useState(null);
+  const [cancelingSlotId, setCancelingSlotId] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -179,6 +180,48 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
       setError(reserveError.message || 'Unable to reserve Type 3 slot.');
     } finally {
       setReservingSlotId(null);
+    }
+  };
+
+  const handleCancelReservation = async (slotId) => {
+    try {
+      setMessage('');
+      setError('');
+      setCancelingSlotId(slotId);
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to cancel a Type 3 reservation.');
+      }
+
+      const response = await fetch(`${API_BASE}/type3/slots/${slotId}/book`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to cancel Type 3 reservation.');
+      }
+
+      setMessage(data.message || 'Type 3 reservation canceled successfully.');
+
+      setPublicSlots((current) =>
+        current.map((slot) =>
+          String(slot.id) === String(slotId) ? data.slot : slot
+        )
+      );
+
+      setSelectedSlotId(slotId);
+    } catch (cancelError) {
+      console.error(cancelError);
+      setError(cancelError.message || 'Unable to cancel Type 3 reservation.');
+    } finally {
+      setCancelingSlotId(null);
     }
   };
 
@@ -358,6 +401,15 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
                       <p>Reserved: Reserved by you</p>
                       <p>Status: {slot.isFull ? 'Full' : 'Reserved by you'}</p>
                     </div>
+
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={() => handleCancelReservation(slot.id)}
+                      disabled={cancelingSlotId === slot.id}
+                    >
+                      {cancelingSlotId === slot.id ? 'Canceling...' : 'Cancel Reservation'}
+                    </button>
                   </div>
                 );
               })}
@@ -371,7 +423,6 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
           {!selectedSlot ? (
             <p>Select a session from the list or calendar.</p>
           ) : (
-            // <div className="summary-list">
             <div className="summary-list summary-list-scroll">
               <div className="summary-item">
                 <div className="summary-main">
@@ -391,15 +442,26 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
                   </p>
                 </div>
 
-                {!selectedSlot.reservedByMe && selectedSlot.isAvailable && (
+                {selectedSlot.reservedByMe ? (
                   <button
                     type="button"
                     className="button secondary"
-                    onClick={() => handleReserveSlot(selectedSlot.id)}
-                    disabled={reservingSlotId === selectedSlot.id}
+                    onClick={() => handleCancelReservation(selectedSlot.id)}
+                    disabled={cancelingSlotId === selectedSlot.id}
                   >
-                    {reservingSlotId === selectedSlot.id ? 'Reserving...' : 'Reserve'}
+                    {cancelingSlotId === selectedSlot.id ? 'Canceling...' : 'Cancel Reservation'}
                   </button>
+                ) : (
+                  selectedSlot.isAvailable && (
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={() => handleReserveSlot(selectedSlot.id)}
+                      disabled={reservingSlotId === selectedSlot.id}
+                    >
+                      {reservingSlotId === selectedSlot.id ? 'Reserving...' : 'Reserve'}
+                    </button>
+                  )
                 )}
               </div>
             </div>

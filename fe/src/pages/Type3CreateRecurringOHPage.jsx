@@ -42,12 +42,15 @@ function Type3CreateRecurringOHPage({
     capacity: 1,
   };
 
-  const [selectedSavedSlotId, setSelectedSavedSlotId] = useState(null);
   const [slotEditor, setSlotEditor] = useState(defaultEditor);
   const [ownerSlots, setOwnerSlots] = useState([]);
   const [loadingOwnerSlots, setLoadingOwnerSlots] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingSlotId, setDeletingSlotId] = useState(null);
+  const [updatingSlotId, setUpdatingSlotId] = useState(null);
+  const [expandedSlotId, setExpandedSlotId] = useState(null);
+  const [editingSlotId, setEditingSlotId] = useState(null);
+  const [savedSlotEditForms, setSavedSlotEditForms] = useState({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -171,9 +174,14 @@ function Type3CreateRecurringOHPage({
     setError('');
   };
 
-  const resetEditor = () => {
-    setSelectedSavedSlotId(null);
+  const resetCreateEditor = () => {
     setSlotEditor(defaultEditor);
+    setType3Draft((current) => ({
+      ...current,
+      title: 'COMP 307 Office Hours',
+      description: '',
+      weeks: current.weeks || 4,
+    }));
   };
 
   const handleEditorChange = (event) => {
@@ -210,21 +218,47 @@ function Type3CreateRecurringOHPage({
     return '';
   };
 
+  const validateSavedSlotForm = (form) => {
+    if (!form?.title?.trim()) {
+      return 'Title is required.';
+    }
+
+    if (!form?.start || !form?.end) {
+      return 'Please choose both start and end date/time.';
+    }
+
+    const start = new Date(form.start);
+    const end = new Date(form.end);
+    const capacity = Number(form.capacity);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return 'Please enter valid date/time values.';
+    }
+
+    if (end <= start) {
+      return 'End time must be after start time.';
+    }
+
+    if (!capacity || capacity < 1) {
+      return 'Capacity must be at least 1.';
+    }
+
+    return '';
+  };
+
   const handleCalendarSelect = ({ start, end }) => {
     setSlotEditor((current) => ({
       ...current,
       start: toDateTimeLocalValue(start),
       end: toDateTimeLocalValue(end),
     }));
-    setSelectedSavedSlotId(null);
+
     setMessage('');
     setError('');
   };
 
   const handleCalendarEventClick = (calendarEvent) => {
-    if (calendarEvent.extendedProps?.isUnsavedPreview) {
-      return;
-    }
+    if (calendarEvent.extendedProps?.isUnsavedPreview) return;
 
     const matchedSavedSlot = ownerSlots.find(
       (slot) => String(slot.id) === String(calendarEvent.id)
@@ -232,12 +266,20 @@ function Type3CreateRecurringOHPage({
 
     if (!matchedSavedSlot) return;
 
-    setSelectedSavedSlotId(matchedSavedSlot.id);
-    setSlotEditor({
+    const form = {
+      title: matchedSavedSlot.title || '',
+      description: matchedSavedSlot.notes || '',
       start: toDateTimeLocalValue(matchedSavedSlot.start),
       end: toDateTimeLocalValue(matchedSavedSlot.end),
       capacity: matchedSavedSlot.capacity ?? 1,
-    });
+    };
+
+    setExpandedSlotId(matchedSavedSlot.id);
+    setEditingSlotId(matchedSavedSlot.id);
+    setSavedSlotEditForms((current) => ({
+      ...current,
+      [matchedSavedSlot.id]: form,
+    }));
     setMessage('');
     setError('');
   };
@@ -255,11 +297,6 @@ function Type3CreateRecurringOHPage({
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
       setError('You must be logged in to save Type 3 slots.');
-      return;
-    }
-
-    if (selectedSavedSlotId) {
-      setError('Editing existing Type 3 slots is not wired yet. Please create a new series for now.');
       return;
     }
 
@@ -303,7 +340,7 @@ function Type3CreateRecurringOHPage({
 
       await fetchOwnerSlots();
       setMessage(`Saved ${weeks} Type 3 office-hour session(s) to the database.`);
-      resetEditor();
+      resetCreateEditor();
     } catch (saveError) {
       console.error(saveError);
       setError(saveError.message || 'Unable to save recurring office-hour slots.');
@@ -341,9 +378,19 @@ function Type3CreateRecurringOHPage({
         current.filter((slot) => String(slot.id) !== String(slotId))
       );
 
-      if (String(selectedSavedSlotId) === String(slotId)) {
-        resetEditor();
+      if (String(expandedSlotId) === String(slotId)) {
+        setExpandedSlotId(null);
       }
+
+      if (String(editingSlotId) === String(slotId)) {
+        setEditingSlotId(null);
+      }
+
+      setSavedSlotEditForms((current) => {
+        const copy = { ...current };
+        delete copy[slotId];
+        return copy;
+      });
 
       setMessage('Type 3 slot deleted successfully.');
     } catch (deleteError) {
@@ -355,9 +402,116 @@ function Type3CreateRecurringOHPage({
   };
 
   const handleStartNewSelection = () => {
-    resetEditor();
+    resetCreateEditor();
     setMessage('');
     setError('');
+  };
+
+  const handleToggleSavedSlot = (slotId) => {
+    const isSame = String(expandedSlotId) === String(slotId);
+
+    if (isSame) {
+      setExpandedSlotId(null);
+      setEditingSlotId(null);
+      return;
+    }
+
+    setExpandedSlotId(slotId);
+    setEditingSlotId(null);
+  };
+
+  const handleEditSavedSlot = (slot) => {
+    const isSame = String(editingSlotId) === String(slot.id);
+
+    if (isSame) {
+      setEditingSlotId(null);
+      setExpandedSlotId(null);
+      return;
+    }
+
+    setExpandedSlotId(slot.id);
+    setEditingSlotId(slot.id);
+    setSavedSlotEditForms((current) => ({
+      ...current,
+      [slot.id]: {
+        title: slot.title || '',
+        description: slot.notes || '',
+        start: toDateTimeLocalValue(slot.start),
+        end: toDateTimeLocalValue(slot.end),
+        capacity: slot.capacity ?? 1,
+      },
+    }));
+    setMessage('');
+    setError('');
+  };
+
+  const handleSavedSlotEditFieldChange = (slotId, field, value) => {
+    setSavedSlotEditForms((current) => ({
+      ...current,
+      [slotId]: {
+        ...(current[slotId] || {
+          title: '',
+          description: '',
+          start: '',
+          end: '',
+          capacity: 1,
+        }),
+        [field]: value,
+      },
+    }));
+    setMessage('');
+    setError('');
+  };
+
+  const handleUpdateSavedSlot = async (slotId) => {
+    try {
+      setMessage('');
+      setError('');
+      setUpdatingSlotId(slotId);
+
+      const form = savedSlotEditForms[slotId];
+      const validationMessage = validateSavedSlotForm(form);
+
+      if (validationMessage) {
+        throw new Error(validationMessage);
+      }
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error('You must be logged in to edit Type 3 slots.');
+      }
+
+      const response = await fetch(`${API_BASE}/type3/slots/${slotId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: form.title,
+          notes: form.description,
+          start: new Date(form.start).toISOString(),
+          end: new Date(form.end).toISOString(),
+          capacity: Number(form.capacity),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update Type 3 slot.');
+      }
+
+      await fetchOwnerSlots();
+      setMessage(data.message || 'Type 3 slot updated successfully.');
+      setError('');
+    } catch (updateError) {
+      console.error(updateError);
+      setError(updateError.message || 'Unable to update Type 3 slot.');
+      setMessage('');
+    } finally {
+      setUpdatingSlotId(null);
+    }
   };
 
   return (
@@ -372,8 +526,7 @@ function Type3CreateRecurringOHPage({
         <header className="booking-header">
           <h1>Create Recurring Office Hours</h1>
           <p className="booking-subtitle">
-            Create a weekly recurring Type 3 office-hour series. Each weekly occurrence
-            is saved to the backend and only your own created sessions are shown here.
+            Create a weekly recurring Type 3 office-hour series. Saved sessions can be edited directly on the right.
           </p>
         </header>
 
@@ -405,6 +558,17 @@ function Type3CreateRecurringOHPage({
               />
             </label>
 
+            <label>
+              Repeat Weeks
+              <input
+                type="number"
+                name="weeks"
+                min="1"
+                value={type3Draft.weeks}
+                onChange={handleFormChange}
+              />
+            </label>
+
             <div className="same-line-row type3-four-column-row">
               <label>
                 Start Date & Time
@@ -427,17 +591,6 @@ function Type3CreateRecurringOHPage({
               </label>
 
               <label>
-                Repeat Weekly For
-                <input
-                  type="number"
-                  name="weeks"
-                  min="1"
-                  value={type3Draft.weeks}
-                  onChange={handleFormChange}
-                />
-              </label>
-
-              <label>
                 Capacity
                 <input
                   type="number"
@@ -450,8 +603,7 @@ function Type3CreateRecurringOHPage({
             </div>
 
             <p className="helper-text">
-              Unsaved preview sessions are shown on the calendar immediately. Clicking
-              save creates each weekly occurrence in the backend database.
+              Use the left side to create new recurring office-hour sessions. Use the right side to edit existing saved ones.
             </p>
 
             <div className="inline-actions">
@@ -484,54 +636,145 @@ function Type3CreateRecurringOHPage({
             ) : (
               <div className="summary-list summary-list-scroll">
                 {sortedSavedSlots.map((slot) => {
-                  const isSelected = String(slot.id) === String(selectedSavedSlotId);
+                  const isExpanded = String(expandedSlotId) === String(slot.id);
+                  const isEditing = String(editingSlotId) === String(slot.id);
+                  const editForm = savedSlotEditForms[slot.id] || {
+                    title: slot.title || '',
+                    description: slot.notes || '',
+                    start: toDateTimeLocalValue(slot.start),
+                    end: toDateTimeLocalValue(slot.end),
+                    capacity: slot.capacity ?? 1,
+                  };
 
                   return (
                     <div
                       key={slot.id}
-                      className={`summary-item ${isSelected ? 'selected-summary-item' : ''}`}
+                      className={`saved-meeting-card ${isExpanded ? 'selected-summary-item' : ''}`}
                     >
-                      <div
-                        className="summary-main"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => {
-                          setSelectedSavedSlotId(slot.id);
-                          setSlotEditor({
-                            start: toDateTimeLocalValue(slot.start),
-                            end: toDateTimeLocalValue(slot.end),
-                            capacity: slot.capacity ?? 1,
-                          });
-                          setMessage('');
-                          setError('');
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            setSelectedSavedSlotId(slot.id);
-                            setSlotEditor({
-                              start: toDateTimeLocalValue(slot.start),
-                              end: toDateTimeLocalValue(slot.end),
-                              capacity: slot.capacity ?? 1,
-                            });
-                            setMessage('');
-                            setError('');
-                          }
-                        }}
-                      >
-                        <p className="summary-title">{slot.title || 'Office Hour'}</p>
-                        <p>Start: {formatReadableDateTime(slot.start)}</p>
-                        <p>End: {formatReadableDateTime(slot.end)}</p>
-                        <p>Reserved: {slot.bookedCount || 0} / {slot.capacity || 1}</p>
+                      <div className="saved-meeting-header">
+                        <div
+                          className="saved-meeting-header-main"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleToggleSavedSlot(slot.id)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              handleToggleSavedSlot(slot.id);
+                            }
+                          }}
+                        >
+                          <p className="summary-title">{slot.title || 'Office Hour'}</p>
+                          <p>Start: {formatReadableDateTime(slot.start)}</p>
+                          <p>End: {formatReadableDateTime(slot.end)}</p>
+                          <p>Reserved: {slot.bookedCount || 0} / {slot.capacity || 1}</p>
+                        </div>
+
+                        <div className="inline-actions saved-meeting-actions">
+                          <button
+                            type="button"
+                            className="button secondary"
+                            onClick={() => handleEditSavedSlot(slot)}
+                          >
+                            {isEditing ? 'Close Edit' : 'Edit'}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="button secondary"
+                            onClick={() => handleDeleteSlot(slot.id)}
+                            disabled={deletingSlotId === slot.id}
+                          >
+                            {deletingSlotId === slot.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
                       </div>
 
-                      <button
-                        type="button"
-                        className="button secondary"
-                        onClick={() => handleDeleteSlot(slot.id)}
-                        disabled={deletingSlotId === slot.id}
-                      >
-                        {deletingSlotId === slot.id ? 'Deleting...' : 'Delete'}
-                      </button>
+                      {isExpanded && (
+                        <div className="saved-meeting-expanded">
+                          {isEditing ? (
+                            <div className="saved-invitees-box collapsible-section">
+                              <p className="summary-title">Edit Type 3 Session</p>
+
+                              <label>
+                                Title
+                                <input
+                                  type="text"
+                                  value={editForm.title}
+                                  onChange={(event) =>
+                                    handleSavedSlotEditFieldChange(slot.id, 'title', event.target.value)
+                                  }
+                                />
+                              </label>
+
+                              <label style={{ marginTop: '10px' }}>
+                                Description
+                                <textarea
+                                  value={editForm.description}
+                                  onChange={(event) =>
+                                    handleSavedSlotEditFieldChange(slot.id, 'description', event.target.value)
+                                  }
+                                />
+                              </label>
+
+                              <div className="same-line-row type3-four-column-row" style={{ marginTop: '10px' }}>
+                                <label>
+                                  Start Date & Time
+                                  <input
+                                    type="datetime-local"
+                                    value={editForm.start}
+                                    onChange={(event) =>
+                                      handleSavedSlotEditFieldChange(slot.id, 'start', event.target.value)
+                                    }
+                                  />
+                                </label>
+
+                                <label>
+                                  End Date & Time
+                                  <input
+                                    type="datetime-local"
+                                    value={editForm.end}
+                                    onChange={(event) =>
+                                      handleSavedSlotEditFieldChange(slot.id, 'end', event.target.value)
+                                    }
+                                  />
+                                </label>
+
+                                <label>
+                                  Capacity
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={editForm.capacity}
+                                    onChange={(event) =>
+                                      handleSavedSlotEditFieldChange(slot.id, 'capacity', event.target.value)
+                                    }
+                                  />
+                                </label>
+                              </div>
+
+                              <div className="inline-actions" style={{ marginTop: '10px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateSavedSlot(slot.id)}
+                                  disabled={updatingSlotId === slot.id}
+                                >
+                                  {updatingSlotId === slot.id ? 'Saving...' : 'Save Changes'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="saved-invitees-box collapsible-section">
+                              <p className="summary-title">Session Details</p>
+                              <p>Title: {slot.title || 'Office Hour'}</p>
+                              <p>Description: {slot.notes || 'No description.'}</p>
+                              <p>Start: {formatReadableDateTime(slot.start)}</p>
+                              <p>End: {formatReadableDateTime(slot.end)}</p>
+                              <p>Capacity: {slot.capacity || 1}</p>
+                              <p>Reserved: {slot.bookedCount || 0} / {slot.capacity || 1}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -544,8 +787,7 @@ function Type3CreateRecurringOHPage({
           <div className="calendar-section-header">
             <h2>Calendar Preview</h2>
             <p>
-              Existing sessions loaded from the backend and your unsaved recurring preview
-              are shown together here.
+              Existing sessions loaded from the backend and your unsaved recurring preview are shown together here.
             </p>
           </div>
 

@@ -629,7 +629,9 @@ router.post('/type2/meetings/:meetingId/votes', authMiddleware, async (req, res)
 
     if (slotRows.length !== slotIds.length) {
       await connection.rollback();
-      return res.status(400).json({ error: 'One or more selected slots do not belong to this meeting.' });
+      return res.status(400).json({
+        error: 'One or more selected slots do not belong to this meeting.',
+      });
     }
 
     for (const vote of votes) {
@@ -1111,7 +1113,7 @@ router.post('/type2/meetings/:meetingId/slots', authMiddleware, ownerOnly, async
   }
 
   if (new Date(start).getTime() >= new Date(end).getTime()) {
-    return res.status(400).json({ error: 'End time must be after start time.' });
+    return res.status(400).json({ error: 'End time must be after the start time.' });
   }
 
   try {
@@ -1202,369 +1204,57 @@ router.delete('/type2/meetings/:meetingId/slots/:slotId', authMiddleware, ownerO
   }
 });
 
-/* Type 2 helper user routes - moved to bottom */
+router.patch('/type2/meetings/:meetingId', authMiddleware, ownerOnly, async (req, res) => {
+  const meetingId = Number(req.params.meetingId);
+  const title = String(req.body.title || '').trim();
+  const description = String(req.body.description || '').trim();
 
-router.get('/type2/me', authMiddleware, async (req, res) => {
+  if (!title) {
+    return res.status(400).json({ error: 'Meeting title is required.' });
+  }
+
   try {
-    const [userRows] = await pool.execute(
+    const [updateResult] = await pool.execute(
       `
-      SELECT id, name, email, role
-      FROM users
-      WHERE id = ?
-      LIMIT 1
+      UPDATE type2_meetings
+      SET title = ?, description = ?
+      WHERE id = ? AND owner_id = ?
       `,
-      [req.user.id]
+      [title, description || null, meetingId, req.user.id]
     );
 
-    const user = userRows[0];
-
-    if (!user) {
-      return res.status(404).json({ error: 'Current user not found.' });
+    if (!updateResult.affectedRows) {
+      return res.status(404).json({ error: 'Type 2 meeting not found.' });
     }
 
-    const [invitedMeetingRows] = await pool.execute(
+    const [rows] = await pool.execute(
       `
       SELECT
-        m.id AS meetingId,
+        m.id,
         m.title,
         m.description,
         m.status,
         m.final_slot_id AS finalSlotId,
-        s.id AS slotId,
-        s.start_time AS slotStart,
-        s.end_time AS slotEnd
-      FROM type2_meeting_invitees i
-      JOIN type2_meetings m ON m.id = i.meeting_id
-      LEFT JOIN type2_meeting_slots s ON s.meeting_id = m.id
-      WHERE i.user_id = ?
-      ORDER BY m.created_at DESC, s.start_time ASC
-      `,
-      [req.user.id]
-    );
-
-    const [voteRows] = await pool.execute(
-      `
-      SELECT
-        id,
-        meeting_id AS meetingId,
-        slot_id AS slotId,
-        user_id AS userId,
-        is_available AS isAvailable,
-        created_at AS createdAt
-      FROM type2_meeting_votes
-      WHERE user_id = ?
-      ORDER BY meeting_id ASC, slot_id ASC
-      `,
-      [req.user.id]
-    );
-
-    const [ownerMeetingRows] = await pool.execute(
-      `
-      SELECT
-        m.id AS meetingId,
-        m.title,
-        m.description,
-        m.status,
-        m.final_slot_id AS finalSlotId,
-        s.id AS slotId,
-        s.start_time AS slotStart,
-        s.end_time AS slotEnd
-      FROM type2_meetings m
-      LEFT JOIN type2_meeting_slots s ON s.meeting_id = m.id
-      WHERE m.owner_id = ?
-      ORDER BY m.created_at DESC, s.start_time ASC
-      `,
-      [req.user.id]
-    );
-
-    const [finalizedRows] = await pool.execute(
-      `
-      SELECT
-        m.id AS meetingId,
-        m.title,
-        m.description,
-        m.status,
-        m.final_slot_id AS finalSlotId,
-        s.id AS slotId,
-        s.start_time AS slotStart,
-        s.end_time AS slotEnd,
-        owner.id AS ownerId,
+        m.created_at AS createdAt,
+        owner.id AS ownerUserId,
         owner.name AS ownerName,
         owner.email AS ownerEmail,
         owner.role AS ownerRole
-      FROM type2_meeting_invitees i
-      JOIN type2_meetings m ON m.id = i.meeting_id
-      JOIN type2_meeting_slots s ON s.id = m.final_slot_id
-      JOIN users owner ON owner.id = m.owner_id
-      WHERE i.user_id = ?
-        AND m.final_slot_id IS NOT NULL
-      ORDER BY s.start_time ASC
-      `,
-      [req.user.id]
-    );
-
-    return res.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      invitedMeetings: invitedMeetingRows.map((row) => ({
-        meetingId: row.meetingId,
-        title: row.title,
-        description: row.description || '',
-        status: row.status,
-        finalSlotId: row.finalSlotId,
-        slot: row.slotId
-          ? {
-              id: row.slotId,
-              start: toIsoString(row.slotStart),
-              end: toIsoString(row.slotEnd),
-            }
-          : null,
-      })),
-      submittedVotes: voteRows.map(formatVote),
-      ownedMeetings: ownerMeetingRows.map((row) => ({
-        meetingId: row.meetingId,
-        title: row.title,
-        description: row.description || '',
-        status: row.status,
-        finalSlotId: row.finalSlotId,
-        slot: row.slotId
-          ? {
-              id: row.slotId,
-              start: toIsoString(row.slotStart),
-              end: toIsoString(row.slotEnd),
-            }
-          : null,
-      })),
-      finalizedMeetings: finalizedRows.map((row) => ({
-        meetingId: row.meetingId,
-        title: row.title,
-        description: row.description || '',
-        status: row.status,
-        finalSlotId: row.finalSlotId,
-        finalSlot: {
-          id: row.slotId,
-          start: toIsoString(row.slotStart),
-          end: toIsoString(row.slotEnd),
-        },
-        owner: {
-          id: row.ownerId,
-          name: row.ownerName,
-          email: row.ownerEmail,
-          role: row.ownerRole,
-        },
-      })),
-    });
-  } catch (error) {
-    console.error('Get Type 2 current user helper error:', error);
-    return res.status(500).json({ error: 'Unable to fetch current user Type 2 info.' });
-  }
-});
-
-router.get('/type2/users/:userId', authMiddleware, async (req, res) => {
-  try {
-    const userId = Number(req.params.userId);
-
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ error: 'Valid user ID is required.' });
-    }
-
-    const [userRows] = await pool.execute(
-      `
-      SELECT id, name, email, role
-      FROM users
-      WHERE id = ?
-      LIMIT 1
-      `,
-      [userId]
-    );
-
-    const user = userRows[0];
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
-    }
-
-    const [invitedMeetingRows] = await pool.execute(
-      `
-      SELECT
-        m.id AS meetingId,
-        m.title,
-        m.description,
-        m.status,
-        m.final_slot_id AS finalSlotId,
-        s.id AS slotId,
-        s.start_time AS slotStart,
-        s.end_time AS slotEnd
-      FROM type2_meeting_invitees i
-      JOIN type2_meetings m ON m.id = i.meeting_id
-      LEFT JOIN type2_meeting_slots s ON s.meeting_id = m.id
-      WHERE i.user_id = ?
-      ORDER BY m.created_at DESC, s.start_time ASC
-      `,
-      [userId]
-    );
-
-    const [voteRows] = await pool.execute(
-      `
-      SELECT
-        id,
-        meeting_id AS meetingId,
-        slot_id AS slotId,
-        user_id AS userId,
-        is_available AS isAvailable,
-        created_at AS createdAt
-      FROM type2_meeting_votes
-      WHERE user_id = ?
-      ORDER BY meeting_id ASC, slot_id ASC
-      `,
-      [userId]
-    );
-
-    const [finalizedRows] = await pool.execute(
-      `
-      SELECT
-        m.id AS meetingId,
-        m.title,
-        m.description,
-        m.status,
-        m.final_slot_id AS finalSlotId,
-        s.id AS slotId,
-        s.start_time AS slotStart,
-        s.end_time AS slotEnd,
-        owner.id AS ownerId,
-        owner.name AS ownerName,
-        owner.email AS ownerEmail,
-        owner.role AS ownerRole
-      FROM type2_meeting_invitees i
-      JOIN type2_meetings m ON m.id = i.meeting_id
-      JOIN type2_meeting_slots s ON s.id = m.final_slot_id
-      JOIN users owner ON owner.id = m.owner_id
-      WHERE i.user_id = ?
-        AND m.final_slot_id IS NOT NULL
-      ORDER BY s.start_time ASC
-      `,
-      [userId]
-    );
-
-    return res.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      invitedMeetings: invitedMeetingRows.map((row) => ({
-        meetingId: row.meetingId,
-        title: row.title,
-        description: row.description || '',
-        status: row.status,
-        finalSlotId: row.finalSlotId,
-        slot: row.slotId
-          ? {
-              id: row.slotId,
-              start: toIsoString(row.slotStart),
-              end: toIsoString(row.slotEnd),
-            }
-          : null,
-      })),
-      submittedVotes: voteRows.map(formatVote),
-      finalizedMeetings: finalizedRows.map((row) => ({
-        meetingId: row.meetingId,
-        title: row.title,
-        description: row.description || '',
-        status: row.status,
-        finalSlotId: row.finalSlotId,
-        finalSlot: {
-          id: row.slotId,
-          start: toIsoString(row.slotStart),
-          end: toIsoString(row.slotEnd),
-        },
-        owner: {
-          id: row.ownerId,
-          name: row.ownerName,
-          email: row.ownerEmail,
-          role: row.ownerRole,
-        },
-      })),
-    });
-  } catch (error) {
-    console.error('Get Type 2 user helper error:', error);
-    return res.status(500).json({ error: 'Unable to fetch user Type 2 info.' });
-  }
-});
-
-router.get('/type2/owners/:ownerId', authMiddleware, async (req, res) => {
-  try {
-    const ownerId = Number(req.params.ownerId);
-
-    if (!Number.isInteger(ownerId) || ownerId <= 0) {
-      return res.status(400).json({ error: 'Valid owner ID is required.' });
-    }
-
-    const [ownerRows] = await pool.execute(
-      `
-      SELECT id, name, email, role
-      FROM users
-      WHERE id = ? AND role = 'owner'
-      LIMIT 1
-      `,
-      [ownerId]
-    );
-
-    const owner = ownerRows[0];
-
-    if (!owner) {
-      return res.status(404).json({ error: 'Owner not found.' });
-    }
-
-    const [ownedMeetingRows] = await pool.execute(
-      `
-      SELECT
-        m.id AS meetingId,
-        m.title,
-        m.description,
-        m.status,
-        m.final_slot_id AS finalSlotId,
-        s.id AS slotId,
-        s.start_time AS slotStart,
-        s.end_time AS slotEnd
       FROM type2_meetings m
-      LEFT JOIN type2_meeting_slots s ON s.meeting_id = m.id
-      WHERE m.owner_id = ?
-      ORDER BY m.created_at DESC, s.start_time ASC
+      JOIN users owner ON owner.id = m.owner_id
+      WHERE m.id = ?
+      LIMIT 1
       `,
-      [ownerId]
+      [meetingId]
     );
 
     return res.json({
-      owner: {
-        id: owner.id,
-        name: owner.name,
-        email: owner.email,
-        role: owner.role,
-      },
-      ownedMeetings: ownedMeetingRows.map((row) => ({
-        meetingId: row.meetingId,
-        title: row.title,
-        description: row.description || '',
-        status: row.status,
-        finalSlotId: row.finalSlotId,
-        slot: row.slotId
-          ? {
-              id: row.slotId,
-              start: toIsoString(row.slotStart),
-              end: toIsoString(row.slotEnd),
-            }
-          : null,
-      })),
+      meeting: formatMeeting(rows[0]),
+      message: 'Type 2 meeting updated successfully.',
     });
   } catch (error) {
-    console.error('Get Type 2 owner helper error:', error);
-    return res.status(500).json({ error: 'Unable to fetch owner Type 2 info.' });
+    console.error('Update Type 2 meeting error:', error);
+    return res.status(500).json({ error: 'Unable to update Type 2 meeting.' });
   }
 });
 

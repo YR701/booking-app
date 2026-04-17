@@ -53,7 +53,6 @@ router.post('/type3/slots', authMiddleware, ownerOnly, async (req, res) => {
   }
 });
 
-/** API interface: list owners who currently have active, not-full Type 3 slots */
 router.get('/type3/owners', authMiddleware, async (_req, res) => {
   try {
     const [rows] = await pool.execute(`
@@ -88,8 +87,6 @@ router.get('/type3/owners', authMiddleware, async (_req, res) => {
   }
 });
 
-/** Existing general public Type 3 list
- * Also supports query param ?ownerId=123 for filtering */
 router.get('/type3/slots', authMiddleware, async (req, res) => {
   try {
     const ownerId = String(req.query.ownerId || '').trim();
@@ -141,7 +138,6 @@ router.get('/type3/slots', authMiddleware, async (req, res) => {
   }
 });
 
-/** API interface: public Type 3 slots for a specific owner */
 router.get('/type3/owners/:ownerId/slots', authMiddleware, async (req, res) => {
   try {
     const { ownerId } = req.params;
@@ -213,6 +209,127 @@ router.get('/type3/owner/slots', authMiddleware, ownerOnly, async (req, res) => 
   } catch (error) {
     console.error('Get owner Type 3 slots error:', error);
     return res.status(500).json({ error: 'Unable to fetch owner Type 3 slots.' });
+  }
+});
+
+router.patch('/type3/slots/:slotId', authMiddleware, ownerOnly, async (req, res) => {
+  try {
+    const slotId = Number(req.params.slotId);
+    const title = String(req.body.title || '').trim();
+    const start = String(req.body.start || '').trim();
+    const end = String(req.body.end || '').trim();
+    const location = String(req.body.location || '').trim();
+    const notes = String(req.body.notes || '').trim();
+    const capacity = Number(req.body.capacity || 1);
+
+    if (!slotId || slotId <= 0) {
+      return res.status(400).json({ error: 'Valid Type 3 slot ID is required.' });
+    }
+
+    if (!title || !start || !end) {
+      return res.status(400).json({ error: 'Title, start time, and end time are required.' });
+    }
+
+    if (new Date(start).getTime() >= new Date(end).getTime()) {
+      return res.status(400).json({ error: 'End time must be after the start time.' });
+    }
+
+    if (!Number.isInteger(capacity) || capacity < 1) {
+      return res.status(400).json({ error: 'Capacity must be at least 1.' });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      const [slotRows] = await connection.execute(
+        `
+        SELECT id, owner_id AS ownerId
+        FROM type3_slots
+        WHERE id = ?
+        LIMIT 1
+        FOR UPDATE
+        `,
+        [slotId]
+      );
+
+      const slot = slotRows[0];
+
+      if (!slot) {
+        await connection.rollback();
+        return res.status(404).json({ error: 'Type 3 slot not found.' });
+      }
+
+      if (Number(slot.ownerId) !== Number(req.user.id)) {
+        await connection.rollback();
+        return res.status(403).json({ error: 'Not authorized to edit this Type 3 slot.' });
+      }
+
+      const [countRows] = await connection.execute(
+        `
+        SELECT COUNT(*) AS bookedCount
+        FROM type3_slot_bookings
+        WHERE slot_id = ?
+        `,
+        [slotId]
+      );
+
+      const bookedCount = Number(countRows[0]?.bookedCount || 0);
+
+      if (capacity < bookedCount) {
+        await connection.rollback();
+        return res.status(400).json({
+          error: `Capacity cannot be less than the current number of bookings (${bookedCount}).`,
+        });
+      }
+
+      const isFull = bookedCount >= capacity ? 1 : 0;
+
+      await connection.execute(
+        `
+        UPDATE type3_slots
+        SET title = ?, start_time = ?, end_time = ?, location = ?, notes = ?, capacity = ?, is_full = ?
+        WHERE id = ? AND owner_id = ?
+        `,
+        [
+          title,
+          new Date(start),
+          new Date(end),
+          location,
+          notes || null,
+          capacity,
+          isFull,
+          slotId,
+          req.user.id,
+        ]
+      );
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+
+    const [rows] = await pool.execute(
+      `${TYPE3_SLOT_SELECT}
+       WHERE s.id = ?
+       GROUP BY
+         s.id, s.owner_id, s.title, s.start_time, s.end_time, s.location, s.notes, s.is_active, s.capacity, s.is_full,
+         owner.id, owner.name, owner.email, owner.role
+       LIMIT 1`,
+      [slotId]
+    );
+
+    return res.json({
+      slot: formatType3Slot(rows[0], req.user.id),
+      message: 'Type 3 slot updated successfully.',
+    });
+  } catch (error) {
+    console.error('Update Type 3 slot error:', error);
+    return res.status(500).json({ error: 'Unable to update Type 3 slot.' });
   }
 });
 
@@ -340,6 +457,124 @@ router.post('/type3/slots/:slotId/book', authMiddleware, async (req, res) => {
   }
 });
 
+router.delete('/type3/slots/:slotId/book', authMiddleware, async (req, res) => {
+  const slotId = Number(req.params.slotId);
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [slotRows] = await connection.execute(
+      `
+      SELECT id, owner_id, is_active, capacity
+      FROM type3_slots
+      WHERE id = ?
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [slotId]
+    );
+
+    const slot = slotRows[0];
+
+    if (!slot) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Slot not found.' });
+    }
+
+    const [bookingRows] = await connection.execute(
+      `
+      SELECT id
+      FROM type3_slot_bookings
+      WHERE slot_id = ? AND user_id = ?
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [slotId, req.user.id]
+    );
+
+    const booking = bookingRows[0];
+
+    if (!booking) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'You do not have a reservation for this slot.' });
+    }
+
+    await connection.execute(
+      `
+      DELETE FROM type3_slot_bookings
+      WHERE slot_id = ? AND user_id = ?
+      `,
+      [slotId, req.user.id]
+    );
+
+    const [countRows] = await connection.execute(
+      `
+      SELECT COUNT(*) AS bookedCount
+      FROM type3_slot_bookings
+      WHERE slot_id = ?
+      `,
+      [slotId]
+    );
+
+    const bookedCount = Number(countRows[0].bookedCount || 0);
+    const isFull = bookedCount >= Number(slot.capacity) ? 1 : 0;
+
+    await connection.execute(
+      `
+      UPDATE type3_slots
+      SET is_full = ?
+      WHERE id = ?
+      `,
+      [isFull, slotId]
+    );
+
+    await connection.commit();
+
+    const [rows] = await pool.execute(
+      `
+      SELECT
+        s.id,
+        s.owner_id AS ownerId,
+        s.title,
+        s.start_time AS start,
+        s.end_time AS end,
+        s.location,
+        s.notes,
+        s.is_active AS isActive,
+        s.capacity,
+        s.is_full AS isFull,
+        owner.id AS ownerUserId,
+        owner.name AS ownerName,
+        owner.email AS ownerEmail,
+        owner.role AS ownerRole,
+        COUNT(b.id) AS bookedCount,
+        MAX(CASE WHEN b.user_id = ? THEN 1 ELSE 0 END) AS reservedByMe
+      FROM type3_slots s
+      JOIN users owner ON owner.id = s.owner_id
+      LEFT JOIN type3_slot_bookings b ON b.slot_id = s.id
+      WHERE s.id = ?
+      GROUP BY
+        s.id, s.owner_id, s.title, s.start_time, s.end_time, s.location, s.notes, s.is_active, s.capacity, s.is_full,
+        owner.id, owner.name, owner.email, owner.role
+      LIMIT 1
+      `,
+      [req.user.id, slotId]
+    );
+
+    return res.json({
+      slot: formatType3Slot(rows[0], req.user.id),
+      message: 'Type 3 reservation canceled successfully.',
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Cancel Type 3 slot booking error:', error);
+    return res.status(500).json({ error: 'Unable to cancel Type 3 reservation.' });
+  } finally {
+    connection.release();
+  }
+});
+
 router.delete('/type3/slots/:slotId', authMiddleware, ownerOnly, async (req, res) => {
   try {
     const slotId = Number(req.params.slotId);
@@ -379,8 +614,6 @@ router.delete('/type3/slots/:slotId', authMiddleware, ownerOnly, async (req, res
   }
 });
 
-/* Type 3 helper user routes - moved to bottom */
-
 router.get('/type3/me', authMiddleware, async (req, res) => {
   try {
     const [userRows] = await pool.execute(
@@ -399,89 +632,7 @@ router.get('/type3/me', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Current user not found.' });
     }
 
-    const [bookedRows] = await pool.execute(
-      `
-      SELECT
-        s.id,
-        s.owner_id AS ownerId,
-        s.title,
-        s.start_time AS start,
-        s.end_time AS end,
-        s.location,
-        s.notes,
-        s.is_active AS isActive,
-        s.capacity,
-        s.is_full AS isFull,
-        owner.id AS ownerUserId,
-        owner.name AS ownerName,
-        owner.email AS ownerEmail,
-        owner.role AS ownerRole,
-        COUNT(b2.id) AS bookedCount,
-        1 AS reservedByMe
-      FROM type3_slot_bookings b
-      JOIN type3_slots s ON s.id = b.slot_id
-      JOIN users owner ON owner.id = s.owner_id
-      LEFT JOIN type3_slot_bookings b2 ON b2.slot_id = s.id
-      WHERE b.user_id = ?
-      GROUP BY
-        s.id, s.owner_id, s.title, s.start_time, s.end_time, s.location, s.notes, s.is_active, s.capacity, s.is_full,
-        owner.id, owner.name, owner.email, owner.role
-      ORDER BY s.start_time ASC
-      `,
-      [req.user.id]
-    );
-
-    const [ownedRows] = await pool.execute(
-      `${TYPE3_SLOT_SELECT}
-       WHERE s.owner_id = ?
-       GROUP BY
-         s.id, s.owner_id, s.title, s.start_time, s.end_time, s.location, s.notes, s.is_active, s.capacity, s.is_full,
-         owner.id, owner.name, owner.email, owner.role
-       ORDER BY s.start_time ASC`,
-      [req.user.id]
-    );
-
-    return res.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      bookedSlots: bookedRows.map((row) => formatType3Slot(row, req.user.id)),
-      ownedSlots: ownedRows.map((row) => formatType3Slot(row, req.user.id)),
-    });
-  } catch (error) {
-    console.error('Get Type 3 current user helper error:', error);
-    return res.status(500).json({ error: 'Unable to fetch current user Type 3 info.' });
-  }
-});
-
-router.get('/type3/users/:userId', authMiddleware, async (req, res) => {
-  try {
-    const userId = Number(req.params.userId);
-
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ error: 'Valid user ID is required.' });
-    }
-
-    const [userRows] = await pool.execute(
-      `
-      SELECT id, name, email, role
-      FROM users
-      WHERE id = ?
-      LIMIT 1
-      `,
-      [userId]
-    );
-
-    const user = userRows[0];
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
-    }
-
-    const [bookedRows] = await pool.execute(
+    const [rows] = await pool.execute(
       `
       SELECT
         s.id,
@@ -510,70 +661,16 @@ router.get('/type3/users/:userId', authMiddleware, async (req, res) => {
         owner.id, owner.name, owner.email, owner.role
       ORDER BY s.start_time ASC
       `,
-      [req.user.id, userId]
+      [req.user.id, req.user.id]
     );
 
     return res.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      bookedSlots: bookedRows.map((row) => formatType3Slot(row, req.user.id)),
+      user: publicUser(user),
+      bookedSlots: rows.map((row) => formatType3Slot(row, req.user.id)),
     });
   } catch (error) {
-    console.error('Get Type 3 user helper error:', error);
-    return res.status(500).json({ error: 'Unable to fetch user Type 3 info.' });
-  }
-});
-
-router.get('/type3/owners/:ownerId', authMiddleware, async (req, res) => {
-  try {
-    const ownerId = Number(req.params.ownerId);
-
-    if (!Number.isInteger(ownerId) || ownerId <= 0) {
-      return res.status(400).json({ error: 'Valid owner ID is required.' });
-    }
-
-    const [ownerRows] = await pool.execute(
-      `
-      SELECT id, name, email, role
-      FROM users
-      WHERE id = ? AND role = 'owner'
-      LIMIT 1
-      `,
-      [ownerId]
-    );
-
-    const owner = ownerRows[0];
-
-    if (!owner) {
-      return res.status(404).json({ error: 'Owner not found.' });
-    }
-
-    const [ownedRows] = await pool.execute(
-      `${TYPE3_SLOT_SELECT}
-       WHERE s.owner_id = ?
-       GROUP BY
-         s.id, s.owner_id, s.title, s.start_time, s.end_time, s.location, s.notes, s.is_active, s.capacity, s.is_full,
-         owner.id, owner.name, owner.email, owner.role
-       ORDER BY s.start_time ASC`,
-      [ownerId]
-    );
-
-    return res.json({
-      owner: {
-        id: owner.id,
-        name: owner.name,
-        email: owner.email,
-        role: owner.role,
-      },
-      ownedSlots: ownedRows.map((row) => formatType3Slot(row, req.user.id)),
-    });
-  } catch (error) {
-    console.error('Get Type 3 owner helper error:', error);
-    return res.status(500).json({ error: 'Unable to fetch owner Type 3 info.' });
+    console.error('Get my Type 3 bookings error:', error);
+    return res.status(500).json({ error: 'Unable to fetch your Type 3 bookings.' });
   }
 });
 
