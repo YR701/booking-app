@@ -1,4 +1,4 @@
-/* Author: Yongrong Yang */
+﻿/* Author: Yongrong Yang */
 
 /* User Appointment Section */
 .appointment {
@@ -64,23 +64,7 @@
     color: #ffffff;
 }
 
-/* Message Styles */
-.notice {
-    border-left: 4px solid var(--accent);
-    border-radius: 10px;
-    background: #fff0f2;
-    padding: 10px 12px;
-    margin: 0 0 16px;
-}
 
-.notice.success {
-    background: #fff5f6;
-}
-
-.notice.error {
-    background: #ffe8eb;
-    border-left-color: #8f1228;
-}
 
 /* Request Meeting Section */
 .request-meeting {
@@ -117,7 +101,8 @@
     color: #000000;
 }
 
-.request-form input {
+.request-form input,
+.slot-filter-toolbar input {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -135,7 +120,8 @@
 
 }
 
-.request-form button {
+.request-form button,
+.slot-filter-clear {
     background-color: var(--accent);
     border: none;
     color: #000000;
@@ -145,7 +131,8 @@
     font-size: clamp(12px, 3.5vw, 14px);
 }
 
-.request-form button:hover {
+.request-form button:hover,
+.slot-filter-clear:hover {
     background-color: #757575;
     color: #ffffff;
 }
@@ -231,6 +218,23 @@
     color: #ffffff;
 }
 
+.slot-filter-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin: 10px 16px 16px;
+    max-width: 360px;
+}
+
+.slot-filter-toolbar label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #000000;
+    font-size: clamp(12px, 3.5vw, 14px);
+}
+
 .slots-list {
     display: flex;
     flex-direction: column;
@@ -271,8 +275,73 @@
     color: #ffffff;
 }
 
+/* Accordion and scroll styles for both appointments and slots */
+
+.list-scroll {
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.accordion-section {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fffafa;
+    margin: 4px 0;
+    overflow: hidden;
+}
+
+.accordion-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    background: #fffafa;
+    padding: 12px 14px;
+    cursor: pointer;
+    font-size: clamp(14px, 3.8vw, 20px);
+    font-weight: 600;
+    text-align: left;
+    color: #111827;
+    border-bottom: 1px solid #f1d9dc;
+}
+
+.accordion-header:hover {
+    background: #757575;
+    color: #ffffff;
+}
+
+.accordion-header span:last-child {
+    min-width: 36px;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #8f1228;
+}
+
+.accordion-content {
+    background: #ffffff;
+    padding: 8px 8px 10px;
+}
+
 /* Responsive Design for smaller screens */
 @media (max-width: 900px) {
+    .list-scroll {
+        max-height: 280px;
+    }
+
+    .accordion-header {
+        padding: 10px 12px;
+    }
+
     .appointment-info {
         flex-direction: column;
         text-align: center;
@@ -289,6 +358,11 @@
         flex-direction: column;
         text-align: center;
 
+    }
+
+    .slot-filter-toolbar {
+        grid-template-columns: 1fr;
+        margin: 10px 8px 12px;
     }
 
     .slots-item {

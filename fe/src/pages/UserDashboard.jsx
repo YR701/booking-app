@@ -34,9 +34,28 @@ function UserDashboard({
   const [currentOwner, setCurrentOwner] = useState(null);
   const [requests, setRequests] = useState([]);
   const [selectedRequestOwnerId, setSelectedRequestOwnerId] = useState('');
+  const [expandedAppointmentSection, setExpandedAppointmentSection] = useState('one-time');
+  const [expandedAvailableSection, setExpandedAvailableSection] = useState('one-time-slots');
+  const [slotFilterDate, setSlotFilterDate] = useState('');
 
   const [localMessage, setLocalMessage] = useState('');
   const [localError, setLocalError] = useState('');
+
+  const toggleAppointmentSection = (sectionKey) => {
+    setExpandedAppointmentSection((current) =>
+      current === sectionKey ? '' : sectionKey
+    );
+  };
+
+  const toggleAvailableSection = (sectionKey) => {
+    setExpandedAvailableSection((current) =>
+      current === sectionKey ? '' : sectionKey
+    );
+  };
+
+  const clearSlotFilters = () => {
+    setSlotFilterDate('');
+  };
 
   useEffect(() => {
     fetchRequests();
@@ -302,8 +321,32 @@ const onCancelOfficeHour = async (id) => {
   }
 };
 
+// Advanced function to filter slots by date 
+
+  const filterSlotsByDate = (slotsList, filterDate) => {
+    const normalizedFilterDate = filterDate || '';
+
+    return slotsList.filter((slot) => {
+      const slotStart = new Date(slot.start);
+
+      if (Number.isNaN(slotStart.getTime())) {
+        return false;
+      }
+
+      if (!normalizedFilterDate) {
+        return true;
+      }
+
+      const slotDateString = slotStart.toISOString().slice(0, 10);
+      return slotDateString === normalizedFilterDate;
+    });
+  };
+
+  const filteredOneTimeSlots = filterSlotsByDate(oneTimeSlots, slotFilterDate);
+  const filteredOfficeHourSlots = filterSlotsByDate(officeHourSlots, slotFilterDate);
+
   return (
-    <div>
+    <>
       <DashboardTopnav
         userEmail={user?.email || 'user@mail.mcgill.ca'}
         userName={user?.name || 'Student'}
@@ -341,82 +384,148 @@ const onCancelOfficeHour = async (id) => {
       {localError && <div className="notice error">{localError}</div>}
 
       <div className="appointment">
-        <h1>My One-time Appointments</h1>
-        {loading ? (
-          <p>Loading appointments...</p>
-        ) : myBookings.length === 0 ? (
-          <p>No appointments booked.</p>
-        ) : (
-          myBookings.map(appointment => (
-            <div className="appointment-info" key={appointment.id}>
-              <h2>{appointment.owner?.name}</h2>
-              <p>{appointment.title}</p>
-              <p>{formatDateTimeRange(appointment.start, appointment.end)}</p>
-              <div className="appointment-buttons">
-                <button onClick={() => window.location.href = `mailto:${appointment.owner?.email}`}>
-                  Email
-                </button>
-                <button onClick={() => onCancelBooking(appointment.id)}>Cancel</button>
-              </div>
-            </div>
-          ))
-        )}
+        <h1>My Appointments</h1>
 
-        <h1> My Meeting Requests Status</h1>
-        {requests.length === 0 ? (
-          <p>No meeting requests.</p>
-        ) : (
-          requests.map(request => (
-            <div className="appointment-info" key={request.id}>
-              <h2>{request.owner?.name}</h2>
-              <p>{request.title}</p>
-              <p>{formatDateTimeRange(request.start, request.end)}</p>
-              <p>{request.status}</p>
-              {request.status === 'Pending' && (
-                <button type="button" onClick={() => handleCancelRequest(request.id)}>
-                  Cancel request
-                </button>
+        <section className="accordion-section">
+          <button
+            type="button"
+            className="accordion-header"
+            onClick={() => toggleAppointmentSection('one-time')}
+          >
+            <span>My One-time Appointments</span>
+            <span>{myBookings.length}</span>
+          </button>
+
+          {expandedAppointmentSection === 'one-time' && (
+            <div className="accordion-content">
+              {loading ? (
+                <p>Loading appointments...</p>
+              ) : myBookings.length === 0 ? (
+                <p>No appointments booked.</p>
+              ) : (
+                <div className="list-scroll">
+                  {myBookings.map(appointment => (
+                    <div className="appointment-info" key={appointment.id}>
+                      <h2>{appointment.owner?.name}</h2>
+                      <p>{appointment.title}</p>
+                      <p>{formatDateTimeRange(appointment.start, appointment.end)}</p>
+                      <div className="appointment-buttons">
+                        <button onClick={() => window.location.href = `mailto:${appointment.owner?.email}`}>
+                          Email
+                        </button>
+                        <button onClick={() => onCancelBooking(appointment.id)}>Cancel</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-          ))
-        )}
+          )}
+        </section>
 
-        <h1>My Group Meeting</h1>
-        {myGroupmeeting.length === 0 ? (
-          <p>No office hours booked.</p>
-        ) : (
-          myGroupmeeting.map(meeting => (
-            <div className="appointment-info" key={meeting.id}>
-              <h2>{meeting.owner?.name}</h2>
-              <p>{meeting.title}</p>
-              <p>{formatDateTimeRange(meeting.finalSlot?.start, meeting.finalSlot?.end)}</p>
-              <div className="appointment-buttons">
-                <button onClick={() => window.location.href = `mailto:${meeting.owner?.email}`}>
-                  Email
-                </button>
-              </div>
-            </div>
-          ))
-        )}
+        <section className="accordion-section">
+          <button
+            type="button"
+            className="accordion-header"
+            onClick={() => toggleAppointmentSection('requests')}
+          >
+            <span>My Meeting Requests Status</span>
+            <span>{requests.length}</span>
+          </button>
 
-        <h1>My Office Hours</h1>
-        {myOfficehours.length === 0 ? (
-          <p>No office hours booked.</p>
-        ) : (
-          myOfficehours.map(oh => (
-            <div className="appointment-info" key={oh.id}>
-              <h2>{oh.owner?.name}</h2>
-              <p>{oh.title}</p>
-              <p>{formatDateTimeRange(oh.start, oh.end)}</p>
-              <div className="appointment-buttons">
-                <button onClick={() => window.location.href = `mailto:${oh.owner?.email}`}>
-                  Email
-                </button>
-                <button onClick={() => onCancelOfficeHour(oh.id)}>Cancel</button>
-              </div>
+          {expandedAppointmentSection === 'requests' && (
+            <div className="accordion-content">
+              {requests.length === 0 ? (
+                <p>No meeting requests.</p>
+              ) : (
+                <div className="list-scroll">
+                  {requests.map(request => (
+                    <div className="appointment-info" key={request.id}>
+                      <h2>{request.owner?.name}</h2>
+                      <p>{request.title}</p>
+                      <p>{formatDateTimeRange(request.start, request.end)}</p>
+                      <p>{request.status}</p>
+                      {request.status === 'Pending' && (
+                        <button type="button" onClick={() => handleCancelRequest(request.id)}>
+                          Cancel request
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ))
-        )}
+          )}
+        </section>
+
+        <section className="accordion-section">
+          <button
+            type="button"
+            className="accordion-header"
+            onClick={() => toggleAppointmentSection('group')}
+          >
+            <span>My Group Meeting</span>
+            <span>{myGroupmeeting.length}</span>
+          </button>
+
+          {expandedAppointmentSection === 'group' && (
+            <div className="accordion-content">
+              {myGroupmeeting.length === 0 ? (
+                <p>No office hours booked.</p>
+              ) : (
+                <div className="list-scroll">
+                  {myGroupmeeting.map(meeting => (
+                    <div className="appointment-info" key={meeting.id}>
+                      <h2>{meeting.owner?.name}</h2>
+                      <p>{meeting.title}</p>
+                      <p>{formatDateTimeRange(meeting.finalSlot?.start, meeting.finalSlot?.end)}</p>
+                      <div className="appointment-buttons">
+                        <button onClick={() => window.location.href = `mailto:${meeting.owner?.email}`}>
+                          Email
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="accordion-section">
+          <button
+            type="button"
+            className="accordion-header"
+            onClick={() => toggleAppointmentSection('office-hours')}
+          >
+            <span>My Office Hours</span>
+            <span>{myOfficehours.length}</span>
+          </button>
+
+          {expandedAppointmentSection === 'office-hours' && (
+            <div className="accordion-content">
+              {myOfficehours.length === 0 ? (
+                <p>No office hours booked.</p>
+              ) : (
+                <div className="list-scroll">
+                  {myOfficehours.map(oh => (
+                    <div className="appointment-info" key={oh.id}>
+                      <h2>{oh.owner?.name}</h2>
+                      <p>{oh.title}</p>
+                      <p>{formatDateTimeRange(oh.start, oh.end)}</p>
+                      <div className="appointment-buttons">
+                        <button onClick={() => window.location.href = `mailto:${oh.owner?.email}`}>
+                          Email
+                        </button>
+                        <button onClick={() => onCancelOfficeHour(oh.id)}>Cancel</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
       </div>
 
       <div className="request-meeting">
@@ -481,36 +590,84 @@ const onCancelOfficeHour = async (id) => {
                 </div>
               </div>
 
+              <div className="slot-filter-toolbar">
+                <label>
+                  Date
+                  <input
+                    type="date"
+                    value={slotFilterDate}
+                    onChange={(event) => setSlotFilterDate(event.target.value)}
+                  />
+                </label>
+                <button type="button" className="slot-filter-clear" onClick={clearSlotFilters}>
+                  Clear
+                </button>
+              </div>
+
               <div>
                 <h3>One-time Slots</h3>
-                {oneTimeSlots.length === 0 ? (
-                  <p>No one-time slots available.</p>
-                ) : (
-                  <div className='slots-list'>
-                    {oneTimeSlots.map((slot) => (
-                      <div className='slots-item' key={slot.id}>
-                        <p className="slot-time">{formatDateTimeRange(slot.start, slot.end)}</p>
-                        <button onClick={() => onBookSlot(slot.id)}>Book Appointment</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <section className="accordion-section">
+                  <button
+                    type="button"
+                    className="accordion-header"
+                    onClick={() => toggleAvailableSection('one-time-slots')}
+                  >
+                    <span>One-time Slots</span>
+                    <span>{filteredOneTimeSlots.length}</span>
+                  </button>
+
+                  {expandedAvailableSection === 'one-time-slots' && (
+                    <div className="accordion-content">
+                      {filteredOneTimeSlots.length === 0 ? (
+                        <p>No one-time slots available.</p>
+                      ) : (
+                        <div className="list-scroll">
+                          <div className='slots-list'>
+                            {filteredOneTimeSlots.map((slot) => (
+                              <div className='slots-item' key={slot.id}>
+                                <p className="slot-time">{formatDateTimeRange(slot.start, slot.end)}</p>
+                                <button onClick={() => onBookSlot(slot.id)}>Book Appointment</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
               </div>
 
               <div>
                 <h3>Office Hours</h3>
-                {officeHourSlots.length === 0 ? (
-                  <p>No office hours available.</p>
-                ) : (
-                  <div className='slots-list'>
-                    {officeHourSlots.map((slot) => (
-                      <div className='slots-item' key={slot.id}>
-                        <p className="slot-time">{formatDateTimeRange(slot.start, slot.end)}</p>
-                        <button onClick={() => bookOfficeHour(slot.id)}>Book Office Hour</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <section className="accordion-section">
+                  <button
+                    type="button"
+                    className="accordion-header"
+                    onClick={() => toggleAvailableSection('office-hour-slots')}
+                  >
+                    <span>Office Hours</span>
+                    <span>{filteredOfficeHourSlots.length}</span>
+                  </button>
+
+                  {expandedAvailableSection === 'office-hour-slots' && (
+                    <div className="accordion-content">
+                      {filteredOfficeHourSlots.length === 0 ? (
+                        <p>No office hours available.</p>
+                      ) : (
+                        <div className="list-scroll">
+                          <div className='slots-list'>
+                            {filteredOfficeHourSlots.map((slot) => (
+                              <div className='slots-item' key={slot.id}>
+                                <p className="slot-time">{formatDateTimeRange(slot.start, slot.end)}</p>
+                                <button onClick={() => bookOfficeHour(slot.id)}>Book Office Hour</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
               </div>
             </div>
           </div>
@@ -518,7 +675,7 @@ const onCancelOfficeHour = async (id) => {
           <p>Please select an owner to see available time slots.</p>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
