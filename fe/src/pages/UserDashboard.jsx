@@ -16,7 +16,7 @@ function UserDashboard({
   onOpenType2Results,
   onOpenType3Public,
   owners = [],
-  myBookings = [],
+  myBookings = [],//type1
   onBookSlot,
   onCancelBooking,
   loading = false,
@@ -43,6 +43,7 @@ function UserDashboard({
     fetchMyGroupmeeting();
     fetchMyOfficeHour();
   }, []);
+
 
   const fetchMyGroupmeeting = async () => {
     try {
@@ -85,6 +86,36 @@ function UserDashboard({
       setmyOfficehours([]);
     }
   };
+
+  //cancel OfficeHour
+const onCancelOfficeHour = async (id) => {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const response = await fetch(`${API_BASE}/type3/slots/${id}/book`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error('Failed to cancel appointment');
+    }
+    setLocalMessage('Appointment canceled successfully');
+    setLocalError('');
+    
+    await fetchMyOfficeHour();
+
+    //if the user selected the same owner in the available slot section, also referesh the slots
+    if (selectedOwnerId) {
+      await loadOfficeHourSlots(selectedOwnerId);
+    }
+  } catch (error) {
+    console.error(error);
+    setLocalError('Error canceling appointment. Please try again later.');
+    setLocalMessage('');
+  }
+};
 
 
 
@@ -381,7 +412,7 @@ function UserDashboard({
                 <button onClick={() => window.location.href = `mailto:${oh.owner?.email}`}>
                   Email
                 </button>
-                <button>Cancel</button>
+                <button onClick={() => onCancelOfficeHour(oh.id)}>Cancel</button>
               </div>
             </div>
           ))

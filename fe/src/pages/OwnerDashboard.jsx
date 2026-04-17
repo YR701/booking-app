@@ -3,6 +3,7 @@
 import './OwnerDashboard.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
+import Type1OwnerIncomingRequest from './Type1OwnerIncomingRequest';
 import { useState } from 'react';
 
 /**
@@ -16,8 +17,6 @@ function OwnerDashboard({
   myOwnerSlots,
   invitationUrl,
   ownerRequests,
-  onApproveRequest,
-  onRejectRequest,
   onToggleSlot,
   onDeleteSlot,
   formatDateTime,
@@ -32,6 +31,7 @@ function OwnerDashboard({
   onOpenType3Owner,
   onSwitchToUserDashboard,
   onOpenBookingPage,
+  onRefreshData,
 }) {
   const [inviteStatus, setInviteStatus] = useState('');
   const totalSlots = myOwnerSlots.length;
@@ -220,40 +220,10 @@ function OwnerDashboard({
         </section>
       </section>
 
-      <section className="card request-panel">
-        <h2>Incoming Meeting Requests</h2>
-
-        {ownerRequests?.length === 0 ? (
-          <p>No incoming requests.</p>
-        ) : (
-          <div className="list">
-            {ownerRequests.map((request) => (
-              <div className="item" key={request.id}>
-                <p><strong>{request.title}</strong></p>
-                <p>
-                  From: {request.requester?.name || 'Unknown'} ({request.requester?.email || 'N/A'})
-                </p>
-                <p>
-                  {formatDateTime(request.start)} - {formatDateTime(request.end)}
-                </p>
-                <p>Status: {request.status}</p>
-                <p>{request.reason}</p>
-
-                {request.status === 'Pending' && (
-                  <div className="actions">
-                    <button type="button" onClick={() => onApproveRequest(request.id)}>
-                      Approve
-                    </button>
-                    <button type="button" onClick={() => onRejectRequest(request.id)}>
-                      Reject
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <Type1OwnerIncomingRequest
+        ownerRequests={ownerRequests}
+        onRefreshData={onRefreshData}
+      />
     </div>
   );
 }

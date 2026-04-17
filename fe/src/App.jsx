@@ -339,46 +339,6 @@ function App() {
     }
   }
 
-  async function approveRequest(requestId) {
-    setMessage('');
-    setError('');
-
-    try {
-      await api(
-        `/meetings/requests/${requestId}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({ status: 'Approved' }),
-        },
-        token,
-      );
-      setMessage('Request approved.');
-      refreshData();
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  async function rejectRequest(requestId) {
-    setMessage('');
-    setError('');
-
-    try {
-      await api(
-        `/meetings/requests/${requestId}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({ status: 'Rejected' }),
-        },
-        token,
-      );
-      setMessage('Request rejected.');
-      refreshData();
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
   if (loading) {
     return <main className="page"><p>Loading...</p></main>;
   }
@@ -619,8 +579,6 @@ function App() {
           myOwnerSlots={myOwnerSlots}
           invitationUrl={invitationUrl}
           ownerRequests={ownerRequests}
-          onApproveRequest={approveRequest}
-          onRejectRequest={rejectRequest}
           onToggleSlot={toggleSlot}
           onDeleteSlot={deleteSlot}
           formatDateTime={formatDateTime}
@@ -635,6 +593,7 @@ function App() {
           onOpenType3Owner={() => setCurrentPage('type3-owner')}
           onSwitchToUserDashboard={() => setShowDashboard(true)}
           onOpenBookingPage={() => setShowBookingPage(true)}
+          onRefreshData={refreshData}
         />
       )}
     </main>
