@@ -87,11 +87,6 @@ function OwnerDashboard({
               Switch to User Dashboard
             </button>
           )}
-          {onOpenBookingPage && (
-            <button type="button" onClick={onOpenBookingPage}>
-              Preview Booking Page
-            </button>
-          )}
         </div>
       </div>
 
@@ -167,9 +162,14 @@ function OwnerDashboard({
               <button type="button" onClick={handleCopyInvitationUrl} disabled={!invitationUrl}>
                 Copy link
               </button>
-              {invitationUrl && (
+              {invitationUrl && onOpenBookingPage && (
+                <button type="button" className="button secondary" onClick={onOpenBookingPage}>
+                  Preview Invite Link
+                </button>
+              )}
+              {invitationUrl && !onOpenBookingPage && (
                 <a className="button secondary" href={invitationUrl}>
-                  Open invite link
+                  Preview Invite Link
                 </a>
               )}
             </div>

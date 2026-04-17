@@ -13,6 +13,17 @@
     margin: 5px;
 }
 
+.booking-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.booking-page-header button {
+    flex-shrink: 0;
+}
+
 .slots-info {
     background-color: #ffffff;
     padding: 10px;
@@ -62,6 +73,12 @@
     flex-wrap: wrap;
 }
 
+.slots-list-scroll {
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
 @media (max-width: 700px) {
     .booking-page-header {
         flex-direction: column;
@@ -74,5 +91,9 @@
 
     .slot-actions {
         width: 100%;
+    }
+
+    .slots-list-scroll {
+        max-height: 300px;
     }
 }

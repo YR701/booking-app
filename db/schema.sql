@@ -11,6 +11,23 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('student', 'owner') NOT NULL
 );
 
+-- Type1 Request a Meeting
+CREATE TABLE IF NOT EXISTS request (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    requester_id INT NOT NULL,
+    owner_id INT NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    reason TEXT NULL,
+    status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_request_requester FOREIGN KEY (requester_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_request_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
+    
+);
+
+/* Author: Jenny Hua */
 # One time appointment
 CREATE TABLE IF NOT EXISTS slots (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -27,21 +44,8 @@ CREATE TABLE IF NOT EXISTS slots (
 );
 
 
--- Type1 Request a Meeting
-CREATE TABLE IF NOT EXISTS request (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    requester_id INT NOT NULL,
-    owner_id INT NOT NULL,
-    title VARCHAR(500) NOT NULL,
-    start_time DATETIME NOT NULL,
-    end_time DATETIME NOT NULL,
-    reason TEXT NULL,
-    status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_request_requester FOREIGN KEY (requester_id) REFERENCES users (id) ON DELETE CASCADE,
-    CONSTRAINT fk_request_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
-    
-);
+
+/* Author: Hanjing Zheng */
 
 -- Type2 Group Meeting
 -- CREATE TABLE IF NOT EXISTS group (

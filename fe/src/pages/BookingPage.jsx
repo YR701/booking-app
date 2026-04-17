@@ -88,8 +88,8 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                     <h1>{owner?.name ? `${owner.name}'s Booking Page` : 'Booking Page'}</h1>
                     <p>
                         {owner?.email
-                            ? `Showing only active slots for ${owner.email}.`
-                            : 'Showing available active slots for this owner.'}
+                            ? `Browse active slots for ${owner.name || 'this owner'} (${owner.email}).`
+                            : 'Browse active one-time slots and office-hour slots for this owner.'}
                     </p>
                 </div>
                 {onBack && (
@@ -103,61 +103,65 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
 
             {/* One-time slots */}
             <div className="slots">
-                <h2>Available One-Time Slots</h2>
+                <h2>Available One-Time Slots ({slots.length})</h2>
                 {loading ? (
                     <p>Loading slots...</p>
                 ) : slots.length === 0 ? (
                     <p>No available one-time slots.</p>
                 ) : (
-                    slots.map((slot) => (
-                        <div className="slots-info" key={slot.id}>
-                            <h3>{slot.owner?.name || owner?.name || 'Owner'}</h3>
-                            <p>{slot.title}</p>
-                            <p>{formatDateTimeRange(slot.start, slot.end)}</p>
-                            <div className="slot-actions">
-                                <button type="button" onClick={() => onBookSlot(slot.id)}>
-                                    Book
-                                </button>
-                                <button type="button" onClick={() => {
-                                    const mailtoLink = createMailto(
-                                        slot.owner?.email, `Question about ${slot.title}`, `Hello ${owner?.name},`);
-                                    window.location.href = mailtoLink;
-                                }}>
-                                    Email
-                                </button>
+                    <div className="slots-list-scroll">
+                        {slots.map((slot) => (
+                            <div className="slots-info" key={slot.id}>
+                                <h3>{slot.owner?.name || owner?.name || 'Owner'}</h3>
+                                <p>{slot.title}</p>
+                                <p>{formatDateTimeRange(slot.start, slot.end)}</p>
+                                <div className="slot-actions">
+                                    <button type="button" onClick={() => onBookSlot(slot.id)}>
+                                        Book
+                                    </button>
+                                    <button type="button" onClick={() => {
+                                        const mailtoLink = createMailto(
+                                            slot.owner?.email, `Question about ${slot.title}`, `Hello ${owner?.name},`);
+                                        window.location.href = mailtoLink;
+                                    }}>
+                                        Email
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        ))}
+                    </div>
                 )}
             </div>
 
             {/* Office hour slots */}
             <div className="slots">
-                <h2>Available Office Hour Slots</h2>
+                <h2>Available Office Hour Slots ({officeHourSlots.length})</h2>
                 {loading ? (
                     <p>Loading slots...</p>
                 ) : officeHourSlots.length === 0 ? (
                     <p>No available office hour slots.</p>
                 ) : (
-                    officeHourSlots.map((slot) => (
-                        <div className="slots-info" key={slot.id}>
-                            <h3>{slot.owner?.name || owner?.name || 'Owner'}</h3>
-                            <p>{slot.title}</p>
-                            <p>{formatDateTimeRange(slot.start, slot.end)}</p>
-                            <div className="slot-actions">
-                                <button type="button" onClick={() => bookOfficeHour(slot.id)}>
-                                    Book
-                                </button>
-                                <button type="button" onClick={() => {
-                                    const mailtoLink = createMailto(
-                                        slot.owner?.email, `Question about ${slot.title}`, `Hello ${owner?.name},`);
-                                    window.location.href = mailtoLink;
-                                }}>
-                                    Email
-                                </button>
+                    <div className="slots-list-scroll">
+                        {officeHourSlots.map((slot) => (
+                            <div className="slots-info" key={slot.id}>
+                                <h3>{slot.owner?.name || owner?.name || 'Owner'}</h3>
+                                <p>{slot.title}</p>
+                                <p>{formatDateTimeRange(slot.start, slot.end)}</p>
+                                <div className="slot-actions">
+                                    <button type="button" onClick={() => bookOfficeHour(slot.id)}>
+                                        Book
+                                    </button>
+                                    <button type="button" onClick={() => {
+                                        const mailtoLink = createMailto(
+                                            slot.owner?.email, `Question about ${slot.title}`, `Hello ${owner?.name},`);
+                                        window.location.href = mailtoLink;
+                                    }}>
+                                        Email
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        ))}
+                    </div>
                 )}
             </div>
         </div>
