@@ -4,7 +4,7 @@ import { API_BASE, TOKEN_KEY } from '../config';
 import './BookingPage.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
-import { createMailto } from '../utils/mailto';
+import { openQuestionMail } from '../utils/mailtoSlots';
 import { formatDateTimeRange } from '../utils/formatTime';
 import { fetchOfficeHourSlots, handleBookOfficeHour } from '../utils/OfficeHour';
 
@@ -120,9 +120,16 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                                         Book
                                     </button>
                                     <button type="button" onClick={() => {
-                                        const mailtoLink = createMailto(
-                                            slot.owner?.email, `Question about ${slot.title}`, `Hello ${owner?.name},`);
-                                        window.location.href = mailtoLink;
+                                        openQuestionMail({
+                                            email: slot.owner?.email || owner?.email,
+                                            ownerName: slot.owner?.name || owner?.name || 'Professor',
+                                            topic: slot.title || 'booking slot',
+                                            whenText: formatDateTimeRange(slot.start, slot.end),
+                                            senderName: user?.name || 'Student',
+                                            onMissingEmail: () => {
+                                                setLocalError('No email address available for this owner.');
+                                            },
+                                        });
                                     }}>
                                         Email
                                     </button>
@@ -152,9 +159,16 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                                         Book
                                     </button>
                                     <button type="button" onClick={() => {
-                                        const mailtoLink = createMailto(
-                                            slot.owner?.email, `Question about ${slot.title}`, `Hello ${owner?.name},`);
-                                        window.location.href = mailtoLink;
+                                        openQuestionMail({
+                                            email: slot.owner?.email || owner?.email,
+                                            ownerName: slot.owner?.name || owner?.name || 'Professor',
+                                            topic: slot.title || 'booking slot',
+                                            whenText: formatDateTimeRange(slot.start, slot.end),
+                                            senderName: user?.name || 'Student',
+                                            onMissingEmail: () => {
+                                                setLocalError('No email address available for this owner.');
+                                            },
+                                        });
                                     }}>
                                         Email
                                     </button>

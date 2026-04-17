@@ -5,7 +5,7 @@ import './UserDashboard.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import { useState, useEffect } from 'react';
-import { createMailto } from '../utils/mailto';
+import { openQuestionMail } from '../utils/mailtoSlots';
 import { formatDateTimeRange } from '../utils/formatTime';
 import { fetchOfficeHourSlots, handleBookOfficeHour } from '../utils/OfficeHour';
 
@@ -41,6 +41,7 @@ function UserDashboard({
   const [localMessage, setLocalMessage] = useState('');
   const [localError, setLocalError] = useState('');
 
+  // Toggle functions for accordion sections
   const toggleAppointmentSection = (sectionKey) => {
     setExpandedAppointmentSection((current) =>
       current === sectionKey ? '' : sectionKey
@@ -63,7 +64,7 @@ function UserDashboard({
     fetchMyOfficeHour();
   }, []);
 
-
+  //fetch function for type 2 appointments
   const fetchMyGroupmeeting = async () => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
@@ -85,6 +86,7 @@ function UserDashboard({
     }
   };
 
+  //fetch function for type 3 appointments
   const fetchMyOfficeHour = async () => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
@@ -107,34 +109,34 @@ function UserDashboard({
   };
 
   //cancel OfficeHour
-const onCancelOfficeHour = async (id) => {
-  try {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const response = await fetch(`${API_BASE}/type3/slots/${id}/book`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
+  const onCancelOfficeHour = async (id) => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const response = await fetch(`${API_BASE}/type3/slots/${id}/book`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error('Failed to cancel appointment');
       }
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error('Failed to cancel appointment');
-    }
-    setLocalMessage('Appointment canceled successfully');
-    setLocalError('');
-    
-    await fetchMyOfficeHour();
+      setLocalMessage('Appointment canceled successfully');
+      setLocalError('');
 
-    //if the user selected the same owner in the available slot section, also referesh the slots
-    if (selectedOwnerId) {
-      await loadOfficeHourSlots(selectedOwnerId);
+      await fetchMyOfficeHour();
+
+      //if the user selected the same owner in the available slot section, also referesh the slots
+      if (selectedOwnerId) {
+        await loadOfficeHourSlots(selectedOwnerId);
+      }
+    } catch (error) {
+      console.error(error);
+      setLocalError('Error canceling appointment. Please try again later.');
+      setLocalMessage('');
     }
-  } catch (error) {
-    console.error(error);
-    setLocalError('Error canceling appointment. Please try again later.');
-    setLocalMessage('');
-  }
-};
+  };
 
 
 
@@ -179,23 +181,31 @@ const onCancelOfficeHour = async (id) => {
           reason: reason
         })
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to request a meeting');
       }
+
       setLocalMessage('Meeting request sent successfully');
       setLocalError('');
+
       document.getElementById('startTime').value = '';
       document.getElementById('endTime').value = '';
       document.getElementById('reason').value = '';
       setSelectedRequestOwnerId('');
+
       await fetchRequests();
+
+      // special mailto style, so here we do it manually instead of using the helper function
       const subject = 'New Meeting Request';
       const body = `You have a new meeting request from ${user.name} (${user.email}).\n\n
       Reason: ${reason}\n\n
       Requested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
-      const mailtoLink = createMailto(selectedOwner.email, subject, body);
-      window.location.href = mailtoLink;
+      if (selectedOwner.email) {
+        const params = new URLSearchParams({ subject, body });
+        window.location.href = `mailto:${selectedOwner.email}?${params.toString()}`;
+      }
     } catch (error) {
       console.error(error);
       setLocalError(error.message);
@@ -307,21 +317,21 @@ const onCancelOfficeHour = async (id) => {
 
   const bookOfficeHour = async (slotId) => {
     const result = await handleBookOfficeHour(slotId);
-  if (result.success) {
-    setLocalMessage(result.message);
-    setLocalError('');
+    if (result.success) {
+      setLocalMessage(result.message);
+      setLocalError('');
 
-    if (selectedOwnerId) {
-      await loadOfficeHourSlots(selectedOwnerId);
+      if (selectedOwnerId) {
+        await loadOfficeHourSlots(selectedOwnerId);
+      }
+      await fetchMyOfficeHour();
+    } else {
+      setLocalError(result.message);
+      setLocalMessage('');
     }
-    await fetchMyOfficeHour();
-  } else {
-    setLocalError(result.message);
-    setLocalMessage('');
-  }
-};
+  };
 
-// Advanced function to filter slots by date 
+  // Advanced function to filter slots by date 
 
   const filterSlotsByDate = (slotsList, filterDate) => {
     const normalizedFilterDate = filterDate || '';
@@ -410,7 +420,13 @@ const onCancelOfficeHour = async (id) => {
                       <p>{appointment.title}</p>
                       <p>{formatDateTimeRange(appointment.start, appointment.end)}</p>
                       <div className="appointment-buttons">
-                        <button onClick={() => window.location.href = `mailto:${appointment.owner?.email}`}>
+                        <button onClick={() => openQuestionMail({
+                          email: appointment.owner?.email,
+                          ownerName: appointment.owner?.name,
+                          topic: appointment.title || 'my appointment',
+                          whenText: formatDateTimeRange(appointment.start, appointment.end),
+                          senderName: user?.name || 'Student',
+                        })}>
                           Email
                         </button>
                         <button onClick={() => onCancelBooking(appointment.id)}>Cancel</button>
@@ -480,7 +496,15 @@ const onCancelOfficeHour = async (id) => {
                       <p>{meeting.title}</p>
                       <p>{formatDateTimeRange(meeting.finalSlot?.start, meeting.finalSlot?.end)}</p>
                       <div className="appointment-buttons">
-                        <button onClick={() => window.location.href = `mailto:${meeting.owner?.email}`}>
+                        <button onClick={() => openQuestionMail({
+                          email: meeting.owner?.email,
+                          ownerName: meeting.owner?.name,
+                          topic: meeting.title || 'group meeting',
+                          whenText: meeting.finalSlot?.start && meeting.finalSlot?.end
+                            ? formatDateTimeRange(meeting.finalSlot.start, meeting.finalSlot.end)
+                            : '',
+                          senderName: user?.name || 'Student',
+                        })}>
                           Email
                         </button>
                       </div>
@@ -514,7 +538,13 @@ const onCancelOfficeHour = async (id) => {
                       <p>{oh.title}</p>
                       <p>{formatDateTimeRange(oh.start, oh.end)}</p>
                       <div className="appointment-buttons">
-                        <button onClick={() => window.location.href = `mailto:${oh.owner?.email}`}>
+                        <button onClick={() => openQuestionMail({
+                          email: oh.owner?.email,
+                          ownerName: oh.owner?.name,
+                          topic: oh.title || 'office hour',
+                          whenText: formatDateTimeRange(oh.start, oh.end),
+                          senderName: user?.name || 'Student',
+                        })}>
                           Email
                         </button>
                         <button onClick={() => onCancelOfficeHour(oh.id)}>Cancel</button>
@@ -584,7 +614,12 @@ const onCancelOfficeHour = async (id) => {
                 </div>
                 <div className="owner-contact">
                   <button className="email-button" onClick={() =>
-                    window.location.href = `mailto:${currentOwner.email}`}>
+                    openQuestionMail({
+                      email: currentOwner.email,
+                      ownerName: currentOwner.name,
+                      topic: 'booking availability',
+                      senderName: user?.name || 'Student',
+                    })}>
                     Send Message
                   </button>
                 </div>
