@@ -28,7 +28,7 @@ function OwnerDashboard({
   onOpenType2Create,
   onOpenType2Results,
   onOpenType3Create,
-  onOpenType3Owner,
+  // onOpenType3Owner,
   onSwitchToUserDashboard,
   onOpenBookingPage,
   onRefreshData,
@@ -77,11 +77,11 @@ function OwnerDashboard({
               Create Recurring Office Hours
             </button>
           )}
-          {onOpenType3Owner && (
+          {/* {onOpenType3Owner && (
             <button type="button" onClick={onOpenType3Owner}>
             Recurring Office Hours
             </button>
-          )}
+          )} */}
           {onSwitchToUserDashboard && (
             <button type="button" onClick={onSwitchToUserDashboard}>
               Switch to User

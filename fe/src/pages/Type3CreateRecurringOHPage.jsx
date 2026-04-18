@@ -36,7 +36,6 @@ function Type3CreateRecurringOHPage({
   type3Draft,
   setType3Draft,
   onBack,
-  onOpenType3Owner,
 }) {
   const defaultEditor = {
     start: '',
@@ -114,6 +113,24 @@ function Type3CreateRecurringOHPage({
       (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
     );
   }, [ownerSlots]);
+
+  const totalCapacity = useMemo(() => {
+  return sortedSavedSlots.reduce(
+    (sum, slot) => sum + Number(slot.capacity || 0),
+    0
+  );
+}, [sortedSavedSlots]);
+
+const totalReserved = useMemo(() => {
+  return sortedSavedSlots.reduce(
+    (sum, slot) => sum + Number(slot.bookedCount || 0),
+    0
+  );
+}, [sortedSavedSlots]);
+
+const totalAvailableSeats = useMemo(() => {
+  return Math.max(0, totalCapacity - totalReserved);
+}, [totalCapacity, totalReserved]);
 
   const savedEvents = useMemo(() => {
     return ownerSlots.map((slot) => ({
@@ -527,11 +544,6 @@ function Type3CreateRecurringOHPage({
       <div className="switch-buttons">
         <div className="inline-actions">
           {onBack && <button onClick={onBack}>Back to Dashboard</button>}
-          {onOpenType3Owner && (
-            <button type="button" onClick={onOpenType3Owner}>
-              Recurring Office Hours
-            </button>
-          )}
         </div>
       </div>
 
@@ -548,7 +560,7 @@ function Type3CreateRecurringOHPage({
 
         <section className="booking-layout">
           <section className="card booking-form">
-            <h2>Recurring Office Hours Settings</h2>
+            <h2>Current Recurring Office Hours Draft</h2>
 
             <label>
               Title
@@ -640,7 +652,20 @@ function Type3CreateRecurringOHPage({
           </section>
 
           <section className="card booking-side-panel">
-            <h2>My Saved Type 3 Sessions</h2>
+            <h2>Type 3 Summary</h2>
+
+            {loadingOwnerSlots ? (
+              <p>Loading summary...</p>
+            ) : (
+              <div className="saved-invitees-box" style={{ marginBottom: '14px' }}>
+                <p><strong>Total sessions:</strong> {sortedSavedSlots.length}</p>
+                <p><strong>Total capacity:</strong> {totalCapacity}</p>
+                <p><strong>Total reserved:</strong> {totalReserved}</p>
+                <p><strong>Still available seats:</strong> {totalAvailableSeats}</p>
+              </div>
+            )}
+
+            <h2>Saved Recurring Office Hours</h2>
 
             {loadingOwnerSlots ? (
               <p>Loading your Type 3 sessions...</p>

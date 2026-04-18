@@ -212,7 +212,7 @@ function Type2OwnerGroupMeetingResultsPage({
 
       <main className="booking-page">
         <header className="booking-header">
-          <h1>Type 2 Owner Results</h1>
+          <h1>Group Meeting Results</h1>
           <p className="booking-subtitle">
             Review votes and choose the final meeting time.
           </p>
@@ -231,7 +231,7 @@ function Type2OwnerGroupMeetingResultsPage({
               <label>
                 Meetings
                 <select value={selectedMeetingId} onChange={handleMeetingChange}>
-                  <option value="">-- Select a Type 2 meeting --</option>
+                  <option value="">-- Select a meeting --</option>
                   {meetings.map((meeting) => (
                     <option key={meeting.id} value={meeting.id}>
                       {meeting.title}

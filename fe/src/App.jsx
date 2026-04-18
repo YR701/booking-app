@@ -12,7 +12,6 @@ import Type2GroupMeetingVotePage from './pages/Type2GroupMeetingVotePage';
 import Type2OwnerGroupMeetingResultsPage from './pages/Type2OwnerGroupMeetingResultsPage';
 import Type2UserGroupMeetingResultsPage from './pages/Type2UserGroupMeetingResultsPage';
 import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
-import Type3OwnerOfficeHoursPage from './pages/Type3OwnerOfficeHoursPage';
 import Type3OfficeHoursPublicPage from './pages/Type3OfficeHoursPublicPage';
 
 
@@ -432,19 +431,7 @@ function App() {
         setType3Draft={setType3Draft}
         onOpenType2Vote={() => setCurrentPage('type2-vote')}
         onBack={() => setCurrentPage('home')}
-        onOpenType3Owner={() => setCurrentPage('type3-owner')}
-      />
-    );
-  }
-
-  if (currentPage === 'type3-owner') {
-    return (
-      <Type3OwnerOfficeHoursPage
-        onBack={() => setCurrentPage('home')}
-        onLogout={logout}
-        user={user}
-        type3Draft={type3Draft}
-        onOpenType3Create={() => setCurrentPage('type3-create')}
+        // onOpenType3Owner={() => setCurrentPage('type3-owner')}
       />
     );
   }
@@ -501,7 +488,6 @@ function App() {
               <button onClick={() => setCurrentPage('type2-vote')}>Type 2 Vote</button>
               <button onClick={() => setCurrentPage('type2-user-results')}>Type 2 Results</button>
               <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
-              <button onClick={() => setCurrentPage('type3-owner')}>Type 3 Owner</button>
               <button onClick={() => setCurrentPage('type3-public')}>Type 3 Public</button>
             </div>
           </header>
@@ -595,7 +581,6 @@ function App() {
           onOpenType2Create={() => setCurrentPage('type2-create')}
           onOpenType2Results={() => setCurrentPage('type2-owner-results')}
           onOpenType3Create={() => setCurrentPage('type3-create')}
-          onOpenType3Owner={() => setCurrentPage('type3-owner')}
           onSwitchToUserDashboard={() => setShowDashboard(true)}
           onOpenBookingPage={() => setShowBookingPage(true)}
           onRefreshData={refreshData}
