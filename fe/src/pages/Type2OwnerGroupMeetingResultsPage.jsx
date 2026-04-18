@@ -17,6 +17,12 @@ function formatReadableDateTime(dateInput) {
   });
 }
 
+function isSlotEditable(slot) {
+  const startTime = new Date(slot?.start).getTime();
+  if (Number.isNaN(startTime)) return false;
+  return startTime > Date.now();
+}
+
 function Type2OwnerGroupMeetingResultsPage({
   onLogout,
   user,
@@ -131,6 +137,13 @@ function Type2OwnerGroupMeetingResultsPage({
       setError('');
       setMessage('');
 
+      const targetSlot = resultsData?.results?.find(
+        (item) => Number(item.slot.id) === Number(slotId)
+      )?.slot;
+      if (!targetSlot || !isSlotEditable(targetSlot)) {
+        throw new Error('This slot is in the past and cannot be changed.');
+      }
+
       const token = localStorage.getItem(TOKEN_KEY);
       const response = await fetch(
         `${API_BASE}/type2/meetings/${selectedMeetingId}/final-slot`,
@@ -165,6 +178,13 @@ function Type2OwnerGroupMeetingResultsPage({
       setSavingFinalSlotId('clear');
       setError('');
       setMessage('');
+
+      const selectedFinalSlot = resultsData?.results?.find(
+        (item) => Number(item.slot.id) === Number(selectedFinalSlotId)
+      )?.slot;
+      if (!selectedFinalSlot || !isSlotEditable(selectedFinalSlot)) {
+        throw new Error('The selected final slot is in the past and cannot be changed.');
+      }
 
       const token = localStorage.getItem(TOKEN_KEY);
       const response = await fetch(
@@ -269,6 +289,7 @@ function Type2OwnerGroupMeetingResultsPage({
                   const isBest = Number(item.availableCount || 0) === bestAvailableCount;
                   const isSelectedFinal = Number(selectedFinalSlotId) === Number(item.slot.id);
                   const hasAnyFinal = selectedFinalSlotId !== null;
+                  const isPastLocked = !isSlotEditable(item.slot);
 
                   return (
                     <div
@@ -287,29 +308,36 @@ function Type2OwnerGroupMeetingResultsPage({
                         <p>Start: {formatReadableDateTime(item.slot.start)}</p>
                         <p>End: {formatReadableDateTime(item.slot.end)}</p>
                         <p>Available votes: {item.availableCount}</p>
+                        <p>Status: {isPastLocked ? 'Locked (past slot)' : 'Open'}</p>
                       </div>
 
                       {isSelectedFinal ? (
                         <button
                           type="button"
                           className="button secondary"
-                          disabled={savingFinalSlotId === 'clear'}
+                          disabled={savingFinalSlotId === 'clear' || isPastLocked}
                           onClick={handleClearFinalTime}
                         >
-                          {savingFinalSlotId === 'clear' ? 'Clearing...' : 'Unselect'}
+                          {savingFinalSlotId === 'clear'
+                            ? 'Clearing...'
+                            : isPastLocked
+                              ? 'Locked'
+                              : 'Unselect'}
                         </button>
                       ) : (
                         <button
                           type="button"
                           className="button secondary"
-                          disabled={savingFinalSlotId === item.slot.id}
+                          disabled={savingFinalSlotId === item.slot.id || isPastLocked}
                           onClick={() => handleChooseFinalTime(item.slot.id)}
                         >
                           {savingFinalSlotId === item.slot.id
                             ? 'Saving...'
-                            : hasAnyFinal
-                              ? 'Change To This Time'
-                              : 'Choose Final Time'}
+                            : isPastLocked
+                              ? 'Locked'
+                              : hasAnyFinal
+                                ? 'Change To This Time'
+                                : 'Choose Final Time'}
                         </button>
                       )}
                     </div>
