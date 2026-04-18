@@ -365,24 +365,24 @@ function UserDashboard({
 
       <div className="switch-buttons">
         <div className="inline-actions">
-          {user?.role === 'owner' && onSwitchToOwnerDashboard && (
-            <button type="button" onClick={onSwitchToOwnerDashboard}>
-              Return to Owner Dashboard
-            </button>
-          )}
           {onOpenType2Vote && (
             <button type="button" onClick={onOpenType2Vote}>
-              Type2 Group Meeting Vote
+              Group Meeting Vote
             </button>
           )}
           {onOpenType2Results && (
             <button type="button" onClick={onOpenType2Results}>
-              Type 2 Group Meeting Results
+              Group Meeting Results
             </button>
           )}
           {onOpenType3Public && (
             <button type="button" onClick={onOpenType3Public}>
-              Type 3 Office Hour Booking
+              Office Hour Booking
+            </button>
+          )}
+          {user?.role === 'owner' && onSwitchToOwnerDashboard && (
+            <button type="button" onClick={onSwitchToOwnerDashboard}>
+              Return to Owner
             </button>
           )}
         </div>

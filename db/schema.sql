@@ -47,20 +47,6 @@ CREATE TABLE IF NOT EXISTS slots (
 
 /* Author: Hanjing Zheng */
 
--- Type2 Group Meeting
--- CREATE TABLE IF NOT EXISTS group (
---     id INT AUTO_INCREMENT PRIMARY KEY,
---     owner_id INT NOT NULL,
---     title VARCHAR(500) NOT NULL,
---     start_time DATETIME NOT NULL,
---     end_time DATETIME NOT NULL,
---     notes TEXT NULL,
---     invitees TEXT NULL, -- Store invitee user IDs as a comma-separated string
---     slots_list TEXT NULL,
---     status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
---     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
---     CONSTRAINT fk_group_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
-
 # Type 2
 -- Force drop if previously created tables.
 -- SET FOREIGN_KEY_CHECKS = 0;

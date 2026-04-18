@@ -19,7 +19,7 @@ function createMailto(email) {
   return `mailto:${email}`;
 }
 
-function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, onOpenUserDashboard }) {
+function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboard }) {
   const [publicSlots, setPublicSlots] = useState([]);
   const [selectedOwnerId, setSelectedOwnerId] = useState('');
   const [selectedSlotId, setSelectedSlotId] = useState(null);
@@ -244,11 +244,6 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenType2Vote, o
           {onOpenUserDashboard && (
             <button type="button" onClick={onOpenUserDashboard}>
               Back to User Dashboard
-            </button>
-          )}
-          {onOpenType2Vote && (
-            <button type="button" onClick={onOpenType2Vote}>
-              Type 2 Vote
             </button>
           )}
         </div>

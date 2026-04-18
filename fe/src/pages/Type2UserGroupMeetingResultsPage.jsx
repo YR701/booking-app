@@ -84,7 +84,7 @@ function Type2UserGroupMeetingResultsPage({
       <div className="switch-buttons">
         <div className="inline-actions">
           {onOpenDashboard && <button onClick={onOpenDashboard}>Back to Dashboard</button>}
-          {onOpenType2Vote && <button onClick={onOpenType2Vote}>Type 2 Vote</button>}
+          {onOpenType2Vote && <button onClick={onOpenType2Vote}>Group Meeting Vote</button>}
         </div>
       </div>
 

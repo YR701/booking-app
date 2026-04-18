@@ -64,27 +64,27 @@ function OwnerDashboard({
         <div className="inline-actions">
           {onOpenType2Create && (
             <button type="button" onClick={onOpenType2Create}>
-              Type 2 Create a Group Meeting
+              Create Group Meetings
             </button>
           )}
           {onOpenType2Results && (
             <button type="button" onClick={onOpenType2Results}>
-              Type 2 Group Meeting Vote Results
+              Group Meeting Vote Results
             </button>
           )}
           {onOpenType3Create && (
             <button type="button" onClick={onOpenType3Create}>
-              Type 3 Create Office Hours Slots
+              Create Recurring Office Hours
             </button>
           )}
           {onOpenType3Owner && (
             <button type="button" onClick={onOpenType3Owner}>
-              Type 3 Owner's Office Hours
+            Recurring Office Hours
             </button>
           )}
           {onSwitchToUserDashboard && (
             <button type="button" onClick={onSwitchToUserDashboard}>
-              Switch to User Dashboard
+              Switch to User
             </button>
           )}
         </div>

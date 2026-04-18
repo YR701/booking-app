@@ -36,7 +36,7 @@ function Type3CreateRecurringOHPage({
   type3Draft,
   setType3Draft,
   onBack,
-  onOpenType2Create,
+  onOpenType3Owner,
 }) {
   const defaultEditor = {
     start: '',
@@ -527,7 +527,11 @@ function Type3CreateRecurringOHPage({
       <div className="switch-buttons">
         <div className="inline-actions">
           {onBack && <button onClick={onBack}>Back to Dashboard</button>}
-          {onOpenType2Create && <button onClick={onOpenType2Create}>Create Type2 Group Meeting</button>}
+          {onOpenType3Owner && (
+            <button type="button" onClick={onOpenType3Owner}>
+              Recurring Office Hours
+            </button>
+          )}
         </div>
       </div>
 

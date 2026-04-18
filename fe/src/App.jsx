@@ -375,6 +375,7 @@ function App() {
         type2Draft={type2Draft}
         setType2Draft={setType2Draft}
         onBack={() => setCurrentPage('home')}
+        onOpenType2OwnerResults={() => setCurrentPage('type2-owner-results')}
       />
     );
   }
@@ -389,6 +390,7 @@ function App() {
           setCurrentPage('home');
           setShowDashboard(true);
         }}
+        onOpenType2Results={() => setCurrentPage('type2-user-results')}
       />
     );
   }
@@ -403,7 +405,6 @@ function App() {
           setShowDashboard(false);
         }}
         onOpenType2Create={() => setCurrentPage('type2-create')}
-        onOpenType2UserResults={() => setCurrentPage('type2-user-results')}
       />
     );
   }
@@ -431,7 +432,7 @@ function App() {
         setType3Draft={setType3Draft}
         onOpenType2Vote={() => setCurrentPage('type2-vote')}
         onBack={() => setCurrentPage('home')}
-        onOpenType2Create={setCurrentPage('type2-create')}
+        onOpenType3Owner={() => setCurrentPage('type3-owner')}
       />
     );
   }
@@ -443,6 +444,7 @@ function App() {
         onLogout={logout}
         user={user}
         type3Draft={type3Draft}
+        onOpenType3Create={() => setCurrentPage('type3-create')}
       />
     );
   }
@@ -454,7 +456,6 @@ function App() {
         onLogout={logout}
         user={user}
         type3Draft={type3Draft}
-        onOpenType2Vote={() => setCurrentPage('type2-vote')}
         onOpenUserDashboard={() => {
           setCurrentPage('home');
           setShowDashboard(true);

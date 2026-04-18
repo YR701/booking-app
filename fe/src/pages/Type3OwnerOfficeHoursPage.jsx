@@ -15,7 +15,7 @@ function formatReadableDateTime(dateInput) {
   });
 }
 
-function Type3OwnerOfficeHoursPage({ onBack, onLogout, user }) {
+function Type3OwnerOfficeHoursPage({ onBack, onLogout, user, onOpenType3Create }) {
   const [ownerSlots, setOwnerSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingSlotId, setDeletingSlotId] = useState(null);
@@ -140,7 +140,12 @@ function Type3OwnerOfficeHoursPage({ onBack, onLogout, user }) {
 
       <div className="switch-buttons">
         <div className="inline-actions">
-          {onBack && <button onClick={onBack}>Back to Owner Dashboard</button>}
+          {onBack && <button onClick={onBack}>Back to Dashboard</button>}
+          {onOpenType3Create && (
+            <button type="button" onClick={onOpenType3Create}>
+              Create Recurring Office Hours
+            </button>
+          )}
         </div>
       </div>
 

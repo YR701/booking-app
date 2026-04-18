@@ -42,6 +42,7 @@ function Type2CreateGroupMeetingPage({
   type2Draft,
   setType2Draft,
   onBack,
+  onOpenType2OwnerResults,
 }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -706,7 +707,12 @@ function Type2CreateGroupMeetingPage({
 
       <div className="switch-buttons">
         <div className="inline-actions">
-          {onBack && <button onClick={onBack}>Back to Owner Dashboard</button>}
+          {onBack && <button onClick={onBack}>Back to Dashboard</button>}
+          {onOpenType2OwnerResults && (
+            <button type="button" onClick={onOpenType2OwnerResults}>
+              Group Meeting Results
+            </button>
+          )}
         </div>
       </div>
 

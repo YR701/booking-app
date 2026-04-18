@@ -19,6 +19,7 @@ function Type2GroupMeetingVotePage({
   onLogout,
   user,
   onOpenUserDashboard,
+  onOpenType2Results,
   onOpenType3Public,
 }) {
   const [meetings, setMeetings] = useState([]);
@@ -243,9 +244,14 @@ function Type2GroupMeetingVotePage({
               Back to User Dashboard
             </button>
           )}
+          {onOpenType2Results && (
+            <button type="button" onClick={onOpenType2Results}>
+              Group Meeting Results
+            </button>
+          )}
           {onOpenType3Public && (
             <button type="button" onClick={onOpenType3Public}>
-              Type 3 Public
+              Office Hour Public
             </button>
           )}
         </div>

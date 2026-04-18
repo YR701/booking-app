@@ -22,7 +22,6 @@ function Type2OwnerGroupMeetingResultsPage({
   user,
   onOpenDashboard,
   onOpenType2Create,
-  onOpenType2UserResults,
 }) {
   const [meetings, setMeetings] = useState([]);
   const [selectedMeetingId, setSelectedMeetingId] = useState('');
@@ -207,10 +206,7 @@ function Type2OwnerGroupMeetingResultsPage({
       <div className="switch-buttons">
         <div className="inline-actions">
           {onOpenDashboard && <button onClick={onOpenDashboard}>Back to Dashboard</button>}
-          {onOpenType2Create && <button onClick={onOpenType2Create}>Type 2 Create</button>}
-          {onOpenType2UserResults && (
-            <button onClick={onOpenType2UserResults}>Type 2 User Results</button>
-          )}
+          {onOpenType2Create && <button onClick={onOpenType2Create}>Create Group Meetings</button>}
         </div>
       </div>
 
