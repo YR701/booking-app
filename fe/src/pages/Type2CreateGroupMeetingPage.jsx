@@ -130,7 +130,7 @@ function Type2CreateGroupMeetingPage({
       setSavedMeetings(data.meetings || []);
     } catch (fetchError) {
       console.error(fetchError);
-      setError(fetchError.message || 'Unable to load saved Type 2 meetings.');
+      setError(fetchError.message || 'Unable to load saved group meetings.');
       setSavedMeetings([]);
     } finally {
       setLoadingSavedMeetings(false);
@@ -168,7 +168,7 @@ function Type2CreateGroupMeetingPage({
       }));
     } catch (fetchError) {
       console.error(fetchError);
-      setError(fetchError.message || 'Unable to load Type 2 meeting detail.');
+      setError(fetchError.message || 'Unable to load group meeting detail.');
     }
   };
 
@@ -376,7 +376,7 @@ function Type2CreateGroupMeetingPage({
       await fetchOwnerMeetings();
     } catch (saveError) {
       console.error(saveError);
-      setError(saveError.message || 'Unable to save Type 2 meeting.');
+      setError(saveError.message || 'Unable to save group meeting.');
     } finally {
       setSaving(false);
     }
@@ -473,7 +473,7 @@ function Type2CreateGroupMeetingPage({
       setError('');
     } catch (updateError) {
       console.error(updateError);
-      setError(updateError.message || 'Unable to update Type 2 meeting.');
+      setError(updateError.message || 'Unable to update group meeting.');
       setMessage('');
     } finally {
       setUpdatingMeetingId(null);
@@ -524,7 +524,7 @@ function Type2CreateGroupMeetingPage({
       setMessage('Group meeting deleted successfully.');
     } catch (deleteError) {
       console.error(deleteError);
-      setError(deleteError.message || 'Unable to delete Type 2 meeting.');
+      setError(deleteError.message || 'Unable to delete group meeting.');
     } finally {
       setDeletingMeetingId(null);
     }
@@ -889,7 +889,7 @@ function Type2CreateGroupMeetingPage({
             {loadingSavedMeetings ? (
               <p>Loading saved meetings...</p>
             ) : savedMeetings.length === 0 ? (
-              <p>No saved Type 2 group meetings yet.</p>
+              <p>No saved group meetings yet.</p>
             ) : (
               <div className="summary-list summary-list-scroll">
                 {savedMeetings.map((meeting) => {

@@ -172,7 +172,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
         throw new Error(data.error || 'Failed to reserve Type 3 slot.');
       }
 
-      setMessage('Type 3 slot reserved successfully.');
+      setMessage('Time slot reserved successfully.');
 
       setPublicSlots((current) =>
         current.map((slot) =>
@@ -183,7 +183,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
       setSelectedSlotId(slotId);
     } catch (reserveError) {
       console.error(reserveError);
-      setError(reserveError.message || 'Unable to reserve Type 3 slot.');
+      setError(reserveError.message || 'Unable to reserve time slot.');
     } finally {
       setReservingSlotId(null);
     }
@@ -214,7 +214,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
         throw new Error(data.error || 'Failed to cancel Type 3 reservation.');
       }
 
-      setMessage(data.message || 'Type 3 reservation canceled successfully.');
+      setMessage(data.message || 'Reservation canceled successfully.');
 
       setPublicSlots((current) =>
         current.map((slot) =>
@@ -225,7 +225,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
       setSelectedSlotId(slotId);
     } catch (cancelError) {
       console.error(cancelError);
-      setError(cancelError.message || 'Unable to cancel Type 3 reservation.');
+      setError(cancelError.message || 'Unable to cancel reservation.');
     } finally {
       setCancelingSlotId(null);
     }
@@ -257,7 +257,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
 
       <main className="booking-page">
         <header className="booking-header">
-          <h1>Available Type 3 Office Hours</h1>
+          <h1>Available Office Hours</h1>
           <p className="booking-subtitle">
             Select a professor first, then browse that professor’s office-hour sessions.
             Reserved sessions stay visible below and on the calendar.
@@ -299,7 +299,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
               </div>
             ) : (
               <p className="helper-text">
-                Choose a professor to see only that professor’s Type 3 office hours.
+                Choose a professor to see only that professor’s office hours.
               </p>
             )}
 
@@ -317,7 +317,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
             <h2>Available Sessions</h2>
 
             {loading ? (
-              <p>Loading public Type 3 sessions...</p>
+              <p>Loading public sessions...</p>
             ) : !selectedOwnerId ? (
               <p>Please select a professor first.</p>
             ) : availableSlots.length === 0 ? (
@@ -373,7 +373,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
           {!selectedOwnerId ? (
             <p>Please select a professor first.</p>
           ) : myReservedSlots.length === 0 ? (
-            <p>You have not reserved any Type 3 session for this professor.</p>
+            <p>You have not reserved any session for this professor.</p>
           ) : (
             <div className="summary-list summary-list-scroll">
               {myReservedSlots.map((slot) => {

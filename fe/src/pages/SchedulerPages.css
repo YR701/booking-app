@@ -464,7 +464,7 @@ select:focus {
   background: #e9a1aa;
 }
 
-/* ===== Calendar color override (FullCalendar) ===== */
+/* Calendar color override */
 
 /* Event blocks */
 .fc .fc-event {
@@ -478,7 +478,7 @@ select:focus {
   background-color: #a50e25 !important;
 }
 
-/* Selected day (today / highlight) */
+/* Selected day */
 .fc .fc-day-today {
   background-color: rgba(200, 16, 46, 0.08) !important;
 }
@@ -488,7 +488,7 @@ select:focus {
   background-color: rgba(200, 16, 46, 0.15) !important;
 }
 
-/* Calendar buttons (today, next, prev) */
+/* Calendar buttons */
 .fc .fc-button {
   background-color: #c8102e !important;
   border-color: #c8102e !important;
@@ -505,12 +505,11 @@ select:focus {
   border-color: #8f1228 !important;
 }
 
-/* Header text (optional polish) */
+/* Header text */
 .fc-toolbar-title {
   color: #7a1e2c;
 }
 
-/* Border / grid lines softer */
 .fc-theme-standard td,
 .fc-theme-standard th {
   border-color: #f1c2c7 !important;

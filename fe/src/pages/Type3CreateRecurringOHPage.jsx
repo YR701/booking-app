@@ -99,7 +99,7 @@ function Type3CreateRecurringOHPage({
       setError('');
     } catch (fetchError) {
       console.error(fetchError);
-      setError(fetchError.message || 'Unable to load Type 3 owner slots.');
+      setError(fetchError.message || 'Unable to load time slots.');
       setOwnerSlots([]);
     } finally {
       setLoadingOwnerSlots(false);
@@ -327,7 +327,7 @@ const totalAvailableSeats = useMemo(() => {
 
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
-      setError('You must be logged in to save Type 3 slots.');
+      setError('You must be logged in to save time slots.');
       return;
     }
 
@@ -370,7 +370,7 @@ const totalAvailableSeats = useMemo(() => {
       }
 
       await fetchOwnerSlots();
-      setMessage(`Saved ${weeks} Type 3 office-hour session(s) to the database.`);
+      setMessage(`Saved ${weeks} recurring office-hour session(s) to the database.`);
       resetCreateEditor();
     } catch (saveError) {
       console.error(saveError);
@@ -423,10 +423,10 @@ const totalAvailableSeats = useMemo(() => {
         return copy;
       });
 
-      setMessage('Type 3 slot deleted successfully.');
+      setMessage('Time slot deleted successfully.');
     } catch (deleteError) {
       console.error(deleteError);
-      setError(deleteError.message || 'Unable to delete Type 3 slot.');
+      setError(deleteError.message || 'Unable to delete time slot.');
     } finally {
       setDeletingSlotId(null);
     }
@@ -534,11 +534,11 @@ const totalAvailableSeats = useMemo(() => {
       }
 
       await fetchOwnerSlots();
-      setMessage(data.message || 'Type 3 slot updated successfully.');
+      setMessage(data.message || 'Time slot updated successfully.');
       setError('');
     } catch (updateError) {
       console.error(updateError);
-      setError(updateError.message || 'Unable to update Type 3 slot.');
+      setError(updateError.message || 'Unable to update time slot.');
       setMessage('');
     } finally {
       setUpdatingSlotId(null);
@@ -563,7 +563,7 @@ const totalAvailableSeats = useMemo(() => {
         <header className="booking-header">
           <h1>Create Recurring Office Hours</h1>
           <p className="booking-subtitle">
-            Create a weekly recurring Type 3 office-hour series. Saved sessions can be edited directly on the right.
+            Create a weekly recurring office-hour series. Saved sessions can be edited directly on the right.
           </p>
         </header>
 
@@ -666,7 +666,7 @@ const totalAvailableSeats = useMemo(() => {
           </section>
 
           <section className="card booking-side-panel">
-            <h2>Type 3 Summary</h2>
+            <h2> Summary</h2>
 
             {loadingOwnerSlots ? (
               <p>Loading summary...</p>
@@ -682,9 +682,9 @@ const totalAvailableSeats = useMemo(() => {
             <h2>Saved Recurring Office Hours</h2>
 
             {loadingOwnerSlots ? (
-              <p>Loading your Type 3 sessions...</p>
+              <p>Loading your sessions...</p>
             ) : sortedSavedSlots.length === 0 ? (
-              <p>No Type 3 sessions saved yet.</p>
+              <p>No sessions saved yet.</p>
             ) : (
               <div className="summary-list summary-list-scroll">
                 {sortedSavedSlots.map((slot) => {
@@ -745,7 +745,7 @@ const totalAvailableSeats = useMemo(() => {
                         <div className="saved-meeting-expanded">
                           {isEditing ? (
                             <div className="saved-invitees-box collapsible-section">
-                              <p className="summary-title">Edit Type 3 Session</p>
+                              <p className="summary-title">Edit Session</p>
 
                               <label>
                                 Title

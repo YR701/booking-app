@@ -64,7 +64,7 @@ function Type2GroupMeetingVotePage({
       setMeetings(data.meetings || []);
     } catch (fetchError) {
       console.error(fetchError);
-      setError(fetchError.message || 'Unable to load invited Type 2 meetings.');
+      setError(fetchError.message || 'Unable to load invited group meetings.');
       setMeetings([]);
     } finally {
       setLoadingMeetings(false);
@@ -116,7 +116,7 @@ function Type2GroupMeetingVotePage({
       setMyVotes(voteMap);
     } catch (fetchError) {
       console.error(fetchError);
-      setError(fetchError.message || 'Unable to load Type 2 meeting detail.');
+      setError(fetchError.message || 'Unable to load group meeting detail.');
       setMeetingDetail(null);
       setMyVotes({});
     } finally {
@@ -214,7 +214,7 @@ function Type2GroupMeetingVotePage({
       setMessage('Your availability has been submitted successfully.');
     } catch (submitError) {
       console.error(submitError);
-      setError(submitError.message || 'Unable to submit Type 2 votes.');
+      setError(submitError.message || 'Unable to submit votes.');
     } finally {
       setSubmitting(false);
     }
@@ -294,7 +294,7 @@ function Type2GroupMeetingVotePage({
             {loadingMeetings ? (
               <p>Loading your invited meetings...</p>
             ) : meetings.length === 0 ? (
-              <p>You do not have any Type 2 meeting invitations yet.</p>
+              <p>You do not have any meeting invitations yet.</p>
             ) : (
               <label>
                 Invited Meetings
@@ -406,7 +406,7 @@ function Type2GroupMeetingVotePage({
         <section className="card booking-side-panel" style={{ marginBottom: '24px' }}>
           <h2>Submit Availability</h2>
           <p className="helper-text">
-            Please answer every future candidate slot before submitting your Type 2 votes.
+            Please answer every future candidate slot before submitting your votes.
           </p>
 
           <div className="inline-actions">

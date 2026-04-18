@@ -54,7 +54,7 @@ function Type2OwnerGroupMeetingResultsPage({
       setMeetings(data.meetings || []);
     } catch (fetchError) {
       console.error(fetchError);
-      setError(fetchError.message || 'Unable to load Type 2 meetings.');
+      setError(fetchError.message || 'Unable to load meetings.');
       setMeetings([]);
     } finally {
       setLoadingMeetings(false);
@@ -80,7 +80,7 @@ function Type2OwnerGroupMeetingResultsPage({
       setResultsData(data);
     } catch (fetchError) {
       console.error(fetchError);
-      setError(fetchError.message || 'Unable to load Type 2 results.');
+      setError(fetchError.message || 'Unable to load results.');
       setResultsData(null);
     } finally {
       setLoadingResults(false);
