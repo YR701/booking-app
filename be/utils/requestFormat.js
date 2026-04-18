@@ -1,4 +1,5 @@
 // Author: Yongrong Yang
+
 const REQUEST_SELECT = `
   SELECT
     r.id,
@@ -42,19 +43,19 @@ function formatRequest(row) {
     createdAt: toIsoString(row.createdAt),
     requester: row.requesterUserId
       ? {
-          id: row.requesterUserId,
-          name: row.requesterName,
-          email: row.requesterEmail,
-          role: row.requesterRole,
-        }
+        id: row.requesterUserId,
+        name: row.requesterName,
+        email: row.requesterEmail,
+        role: row.requesterRole,
+      }
       : null,
     owner: row.ownerUserId
       ? {
-          id: row.ownerUserId,
-          name: row.ownerName,
-          email: row.ownerEmail,
-          role: row.ownerRole,
-        }
+        id: row.ownerUserId,
+        name: row.ownerName,
+        email: row.ownerEmail,
+        role: row.ownerRole,
+      }
       : null,
   };
 }

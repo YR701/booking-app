@@ -2,6 +2,7 @@
 import './DashboardTopnav.css';
 import mcgillLogo from '../assets/mcgill_logo.png';
 
+// Topnac for all dashboard and booking pages, showing user info and logout button
 function DashboardTopnav({ userEmail, userName, onLogout }) {
   return (
     <div className="topnav">

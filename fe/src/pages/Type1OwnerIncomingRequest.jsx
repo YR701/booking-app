@@ -11,7 +11,22 @@ function Type1OwnerIncomingRequest({
     const [localMessage, setLocalMessage] = useState('');
     const [localError, setLocalError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showExpired, setShowExpired] = useState(false);
 
+    // Separate active and expired requests based on current time
+    const now = new Date();
+
+    const activeRequests = ownerRequests.filter((req) => {
+        const startTime = new Date(req.start);
+        return startTime >= now;
+    });
+    const expiredRequests = ownerRequests.filter((req) => {
+        const startTime = new Date(req.start);
+        return startTime < now;
+    });
+    const displayRequests = showExpired ? expiredRequests : activeRequests;
+
+    // Approve or reject a request by updating its status via API call
     const handleApproveRequest = async (requestId) => {
         setLocalMessage('');
         setLocalError('');
@@ -78,39 +93,63 @@ function Type1OwnerIncomingRequest({
 
     return (
         <section className="request-panel">
-        <h2>Incoming Meeting Requests</h2>
+            {localMessage && <p>{localMessage}</p>}
+            {localError && <p>{localError}</p>}
+            <div>
+                <h2>Incoming Meeting Requests</h2>
 
-        {ownerRequests?.length === 0 ? (
-          <p>No incoming requests.</p>
-        ) : (
-          <div className="list">
-            {ownerRequests.map((request) => (
-              <div className="item" key={request.id}>
-                <p><strong>{request.title}</strong></p>
-                <p>
-                  From: {request.requester?.name || 'Unknown'} ({request.requester?.email || 'N/A'})
-                </p>
-                <p>
-                  {formatDateTimeRange(request.start, request.end)}
-                </p>
-                <p>Status: {request.status}</p>
-                <p>{request.reason}</p>
-
-                {request.status === 'Pending' && (
-                  <div className="actions">
-                    <button type="button" onClick={() => handleApproveRequest(request.id)}>
-                      Approve
-                    </button>
-                    <button type="button" onClick={() => handleRejectRequest(request.id)}>
-                      Reject
-                    </button>
-                  </div>
+                {/* switch between active and expired */}
+                {expiredRequests.length > 0 && (
+                    <div>
+                        <button
+                            type="button"
+                            className={showExpired ? 'button secondary' : 'button'}
+                            onClick={() => setShowExpired(false)}>
+                            Active ({activeRequests.length})
+                        </button>
+                        <button
+                            type="button"
+                            className={showExpired ? 'button' : 'button secondary'}
+                            onClick={() => setShowExpired(true)}>
+                            Expired ({expiredRequests.length})
+                        </button>
+                    </div>
                 )}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+            </div>
+
+            {ownerRequests?.length === 0 ? (
+                <p>No incoming requests.</p>
+            ) : displayRequests.length === 0 ? (
+                <p>{showExpired ? 'No expired requests.' : 'No active requests.'}</p>
+            ) : (
+                <div className="list">
+                    {displayRequests.map((request) => (
+                        <div className="item" key={request.id}>
+                            <p><strong>{request.title}</strong></p>
+                            <p>
+                                From: {request.requester?.name || 'Unknown'} ({request.requester?.email || 'N/A'})
+                            </p>
+                            <p>
+                                {formatDateTimeRange(request.start, request.end)}
+                            </p>
+                            <p>Status: {request.status}</p>
+                            <p>{request.reason}</p>
+
+                            {request.status === 'Pending' && !showExpired && (
+                                <div className="actions">
+                                    <button type="button" onClick={() => handleApproveRequest(request.id)}>
+                                        Approve
+                                    </button>
+                                    <button type="button" onClick={() => handleRejectRequest(request.id)}>
+                                        Reject
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </section>
     )
 }
 

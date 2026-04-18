@@ -1,10 +1,12 @@
 /* Author: Yongrong Yang */
+
 const express = require('express');
 const router = express.Router();
 const pool = require('../../db/db');
 const { authMiddleware, ownerOnly } = require('../middleware/auth');
 const { REQUEST_SELECT, formatRequest } = require('../utils/requestFormat');
 
+// Create a new meeting request
 router.post('/meetings/request', authMiddleware, async (req, res) => {
     const { ownerId, title, startTime, endTime, reason } = req.body;
 
@@ -19,7 +21,7 @@ router.post('/meetings/request', authMiddleware, async (req, res) => {
             [req.user.id, ownerId, title, new Date(startTime), new Date(endTime), reason]
         );
 
-        return res.status(201).json({ 
+        return res.status(201).json({
             success: true,
             message: 'Meeting request created successfully.',
             requestId: result.insertId
@@ -30,6 +32,7 @@ router.post('/meetings/request', authMiddleware, async (req, res) => {
     }
 });
 
+// for user to see their own requests
 router.get('/meetings/requests', authMiddleware, async (req, res) => {
     try {
         const [rows] = await pool.execute(
@@ -46,6 +49,7 @@ router.get('/meetings/requests', authMiddleware, async (req, res) => {
     }
 });
 
+// for owner to see requests sent to them
 router.get('/meetings/requests/received', authMiddleware, ownerOnly, async (req, res) => {
     try {
         const [rows] = await pool.execute(
@@ -62,6 +66,7 @@ router.get('/meetings/requests/received', authMiddleware, ownerOnly, async (req,
     }
 });
 
+// update request status based on owner approval or rejection, only owner can update
 router.patch('/meetings/requests/:requestId', authMiddleware, ownerOnly, async (req, res) => {
     const requestId = Number(req.params.requestId);
     const status = String(req.body.status || '').trim();
@@ -105,6 +110,7 @@ router.patch('/meetings/requests/:requestId', authMiddleware, ownerOnly, async (
     }
 });
 
+// delete request by user
 router.delete('/meetings/requests/:requestId', authMiddleware, async (req, res) => {
     const requestId = Number(req.params.requestId);
 

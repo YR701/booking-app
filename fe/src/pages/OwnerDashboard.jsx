@@ -29,7 +29,6 @@ function OwnerDashboard({
   onOpenType2Create,
   onOpenType2Results,
   onOpenType3Create,
-  // onOpenType3Owner,
   onSwitchToUserDashboard,
   onOpenBookingPage,
   onRefreshData,

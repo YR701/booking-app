@@ -11,11 +11,21 @@ import { fetchOfficeHourSlots, handleBookOfficeHour } from '../utils/OfficeHour'
 function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null }) {
     const [localMessage, setLocalMessage] = useState('');
     const [localError, setLocalError] = useState('');
-    const [slots, setSlots] = useState([]);
-    const [owner, setOwner] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [officeHourSlots, setOfficeHourSlots] = useState([]);
 
+    const [slots, setSlots] = useState([]);
+    const [officeHourSlots, setOfficeHourSlots] = useState([]);
+    const [owner, setOwner] = useState(null);
+
+
+    useEffect(() => {
+        if (inviteOwnerId) {
+            fetchSlots();
+            loadOfficeHourSlots(inviteOwnerId);
+        }
+    }, [inviteOwnerId, user]);
+
+    //Time limitation for past slots
     const filterFutureSlots = (slotsList) => {
         const now = new Date();
         return (slotsList || []).filter((slot) => {
@@ -26,13 +36,6 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
 
     const visibleOneTimeSlots = filterFutureSlots(slots);
     const visibleOfficeHourSlots = filterFutureSlots(officeHourSlots);
-
-    useEffect(() => {
-        if (inviteOwnerId) {
-            fetchSlots();
-            loadOfficeHourSlots(inviteOwnerId);
-        }
-    }, [inviteOwnerId, user]);
 
     const fetchSlots = async () => {
         setLoading(true);
@@ -59,19 +62,6 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
         }
     };
 
-    const bookOfficeHour = async (slotId) => {
-        const result = await handleBookOfficeHour(slotId);
-        if (result.success) {
-            setLocalMessage(result.message);
-            setLocalError('');
-            await loadOfficeHourSlots(inviteOwnerId);
-        } else {
-            setLocalError(result.message);
-            setLocalMessage('');
-        }
-    };
-
-
     //load owner's office hour slots
     const loadOfficeHourSlots = async (ownerId) => {
         const { slots, owner, error } = await fetchOfficeHourSlots(ownerId);
@@ -87,6 +77,18 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
         }
     }
 
+    const bookOfficeHour = async (slotId) => {
+        const result = await handleBookOfficeHour(slotId);
+        if (result.success) {
+            setLocalMessage(result.message);
+            setLocalError('');
+            await loadOfficeHourSlots(inviteOwnerId);
+        } else {
+            setLocalError(result.message);
+            setLocalMessage('');
+        }
+    };
+
     return (
         <div>
             <DashboardTopnav
@@ -94,6 +96,7 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                 userName={user?.name || 'User'}
                 onLogout={onLogout}
             />
+            {/* provide back button for owner preview */}
             <section className="slots booking-page-header">
                 <div>
                     <h1>{owner?.name ? `${owner.name}'s Booking Page` : 'Booking Page'}</h1>
@@ -109,6 +112,7 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                     </button>
                 )}
             </section>
+
             {localMessage && <div className="notice success">{localMessage}</div>}
             {localError && <div className="notice error">{localError}</div>}
 

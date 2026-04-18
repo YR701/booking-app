@@ -1,5 +1,6 @@
-/* Author: Yongrong Yang */
+-- each team member create tables based on their own features
 
+/* Author: Yongrong Yang */
 CREATE DATABASE IF NOT EXISTS booking_app;
 USE booking_app;
 

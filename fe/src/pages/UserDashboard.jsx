@@ -25,22 +25,33 @@ function UserDashboard({
   error = '',
   onSwitchToOwnerDashboard,
 }) {
-  const [selectedOwnerId, setSelectedOwnerId] = useState(null);
-
+  //my appointments
   const [myOfficehours, setmyOfficehours] = useState([]);
   const [myGroupmeeting, setmyGroupmeeting] = useState([]);
 
+  //available slots
+  const [slotFilterDate, setSlotFilterDate] = useState('');
   const [oneTimeSlots, setOneTimeSlots] = useState([]);
   const [officeHourSlots, setOfficeHourSlots] = useState([]);
   const [currentOwner, setCurrentOwner] = useState(null);
+  const [selectedOwnerId, setSelectedOwnerId] = useState(null);
+
+  //type 1 requests
   const [requests, setRequests] = useState([]);
   const [selectedRequestOwnerId, setSelectedRequestOwnerId] = useState('');
+
+  // Accordion state
   const [expandedAppointmentSection, setExpandedAppointmentSection] = useState('one-time');
   const [expandedAvailableSection, setExpandedAvailableSection] = useState('one-time-slots');
-  const [slotFilterDate, setSlotFilterDate] = useState('');
 
   const [localMessage, setLocalMessage] = useState('');
   const [localError, setLocalError] = useState('');
+
+  useEffect(() => {
+    fetchRequests();
+    fetchMyGroupmeeting();
+    fetchMyOfficeHour();
+  }, []);
 
   // Toggle functions for accordion sections
   const toggleAppointmentSection = (sectionKey) => {
@@ -54,16 +65,6 @@ function UserDashboard({
       current === sectionKey ? '' : sectionKey
     );
   };
-
-  const clearSlotFilters = () => {
-    setSlotFilterDate('');
-  };
-
-  useEffect(() => {
-    fetchRequests();
-    fetchMyGroupmeeting();
-    fetchMyOfficeHour();
-  }, []);
 
   //fetch function for type 2 appointments
   const fetchMyGroupmeeting = async () => {
@@ -139,8 +140,6 @@ function UserDashboard({
     }
   };
 
-
-
   //Type 1 request a meeting function
   const handleRequest = async () => {
     const startTime = document.getElementById('startTime').value;
@@ -162,6 +161,7 @@ function UserDashboard({
     const now = new Date();
     const startDate = new Date(startTime);
     const endDate = new Date(endTime);
+
     if (startDate < now || endDate < now) {
       setLocalError('Meeting time cannot be earlier than the current time.');
       setLocalMessage('');
@@ -269,6 +269,9 @@ function UserDashboard({
     }
   };
 
+  // All available slots functions
+
+
   const handleOwnerChange = async (event) => {
     const value = event.target.value;
 
@@ -342,7 +345,6 @@ function UserDashboard({
   };
 
   // Advanced function to filter slots by date 
-
   const filterSlotsByDate = (slotsList, filterDate) => {
     const normalizedFilterDate = filterDate || '';
     const now = new Date();
@@ -368,6 +370,9 @@ function UserDashboard({
     });
   };
 
+  const clearSlotFilters = () => {
+    setSlotFilterDate('');
+  };
   const filteredOneTimeSlots = filterSlotsByDate(oneTimeSlots, slotFilterDate);
   const filteredOfficeHourSlots = filterSlotsByDate(officeHourSlots, slotFilterDate);
 
@@ -412,6 +417,7 @@ function UserDashboard({
       <div className="appointment">
         <h1>My Appointments</h1>
 
+        {/* one-time appointments */}
         <section className="accordion-section">
           <button
             type="button"
@@ -489,6 +495,7 @@ function UserDashboard({
             </div>
           )}
         </section>
+
         {/* Type 2 group meeting */}
         <section className="accordion-section">
           <button
@@ -531,7 +538,8 @@ function UserDashboard({
             </div>
           )}
         </section>
-        {/* Office hours */}
+
+        {/* Type 3 office hours */}
         <section className="accordion-section">
           <button
             type="button"
@@ -574,6 +582,7 @@ function UserDashboard({
         </section>
       </div>
 
+      {/* Type 1 Request a Meeting */}
       <div className="request-meeting">
         <h3>Request a Meeting </h3>
         <div className='request-form'>
@@ -606,6 +615,7 @@ function UserDashboard({
         </div>
       </div>
 
+      {/* All available slots Section */}
       <div className="OwnerInfo">
         <h1>All available slots</h1>
         <div className='owner-list'>
@@ -641,6 +651,7 @@ function UserDashboard({
                 </div>
               </div>
 
+              {/* filter by date */}
               <div className="slot-filter-toolbar">
                 <label>
                   Date
@@ -655,6 +666,7 @@ function UserDashboard({
                 </button>
               </div>
 
+              {/* One-time Slots */}
               <div>
                 <h3>One-time Slots</h3>
                 <section className="accordion-section">
@@ -688,6 +700,7 @@ function UserDashboard({
                 </section>
               </div>
 
+              {/* Type 3Office Hours */}
               <div>
                 <h3>Office Hours</h3>
                 <section className="accordion-section">
