@@ -443,6 +443,79 @@ select:focus {
   border-radius: 4px;
 }
 
+.vote-button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #d9b1b7;
+  background: #f8d7da;
+  color: #5b2a31;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vote-button.selected-available,
+.vote-button.selected-unavailable {
+  background: #c8102e;
+  color: white;
+  border-color: #c8102e;
+}
+
+.vote-button:hover {
+  background: #e9a1aa;
+}
+
+/* ===== Calendar color override (FullCalendar) ===== */
+
+/* Event blocks */
+.fc .fc-event {
+  background-color: #c8102e !important;
+  border: none !important;
+  color: white !important;
+}
+
+/* Event hover */
+.fc .fc-event:hover {
+  background-color: #a50e25 !important;
+}
+
+/* Selected day (today / highlight) */
+.fc .fc-day-today {
+  background-color: rgba(200, 16, 46, 0.08) !important;
+}
+
+/* Selected cell */
+.fc .fc-daygrid-day.fc-day-selected {
+  background-color: rgba(200, 16, 46, 0.15) !important;
+}
+
+/* Calendar buttons (today, next, prev) */
+.fc .fc-button {
+  background-color: #c8102e !important;
+  border-color: #c8102e !important;
+  color: white !important;
+}
+
+.fc .fc-button:hover {
+  background-color: #a50e25 !important;
+}
+
+/* Active button */
+.fc .fc-button-active {
+  background-color: #8f1228 !important;
+  border-color: #8f1228 !important;
+}
+
+/* Header text (optional polish) */
+.fc-toolbar-title {
+  color: #7a1e2c;
+}
+
+/* Border / grid lines softer */
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: #f1c2c7 !important;
+}
+
 @media (max-width: 900px) {
   .type3-four-column-row {
     grid-template-columns: 1fr;

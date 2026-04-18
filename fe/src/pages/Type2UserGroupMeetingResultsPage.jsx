@@ -1,13 +1,11 @@
 /* Author: Hanjing Zheng */
 
+import { API_BASE, TOKEN_KEY } from '../config';
 import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import CalendarGrid from '../components/CalendarGrid';
-
-const API_BASE = 'http://localhost:4000/api';
-const TOKEN_KEY = 'comp307-booking-token';
 
 function formatReadableDateTime(dateInput) {
   const date = new Date(dateInput);
@@ -90,7 +88,7 @@ function Type2UserGroupMeetingResultsPage({
 
       <main className="booking-page">
         <header className="booking-header">
-          <h1>Type 2 User Results</h1>
+          <h1>User Results</h1>
           <p className="booking-subtitle">
             View finalized group meetings and their decided meeting time.
           </p>

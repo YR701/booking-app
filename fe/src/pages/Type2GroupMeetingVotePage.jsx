@@ -277,7 +277,7 @@ function Type2GroupMeetingVotePage({
 
       <main className="booking-page">
         <header className="booking-header">
-          <h1>Type 2 Group Meeting Vote</h1>
+          <h1>Group Meeting Vote</h1>
           <p className="booking-subtitle">
             Select an invited group meeting, review the candidate slots, and submit your
             availability for each option.
@@ -299,7 +299,7 @@ function Type2GroupMeetingVotePage({
               <label>
                 Invited Meetings
                 <select value={selectedMeetingId} onChange={handleMeetingChange}>
-                  <option value="">-- Select a Type 2 meeting --</option>
+                  <option value="">-- Select a meeting --</option>
                   {meetings.map((meeting) => (
                     <option key={meeting.id} value={meeting.id}>
                       {meeting.title}
@@ -354,7 +354,7 @@ function Type2GroupMeetingVotePage({
                         </p>
                       </div>
 
-                      <div className="inline-actions">
+                      {/* <div className="inline-actions">
                         <button
                           type="button"
                           className="button secondary"
@@ -366,6 +366,29 @@ function Type2GroupMeetingVotePage({
                         <button
                           type="button"
                           className="button secondary"
+                          onClick={() => handleVoteChange(slot, false)}
+                          disabled={locked}
+                        >
+                          Unavailable
+                        </button>
+                      </div> */}
+                      <div className="inline-actions">
+                        <button
+                          type="button"
+                          className={`vote-button ${
+                            currentVote === true ? 'selected-available' : ''
+                          }`}
+                          onClick={() => handleVoteChange(slot, true)}
+                          disabled={locked}
+                        >
+                          Available
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`vote-button ${
+                            currentVote === false ? 'selected-unavailable' : ''
+                          }`}
                           onClick={() => handleVoteChange(slot, false)}
                           disabled={locked}
                         >

@@ -497,14 +497,6 @@ function App() {
               <img src={mcgillLogo} alt="McGill logo" />
             </div>
             <h1>McGill SOCS Booking</h1>
-            <div className="nav-actions">
-              <button onClick={() => setShowDashboard(true)}>User Dashboard</button>
-              <button onClick={() => setCurrentPage('type2-create')}>Type 2 Create</button>
-              <button onClick={() => setCurrentPage('type2-vote')}>Type 2 Vote</button>
-              <button onClick={() => setCurrentPage('type2-user-results')}>Type 2 Results</button>
-              <button onClick={() => setCurrentPage('type3-create')}>Type 3 Create</button>
-              <button onClick={() => setCurrentPage('type3-public')}>Type 3 Public</button>
-            </div>
           </header>
 
           <header className="hero">
