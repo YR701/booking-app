@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { openQuestionMail } from '../utils/mailtoSlots';
 import { formatDateTimeRange } from '../utils/formatTime';
 import { fetchOfficeHourSlots, handleBookOfficeHour } from '../utils/OfficeHour';
+import { getDateTimeLocalNow } from '../utils/dateTimeLocal';
 
 function UserDashboard({
   onLogout,
@@ -154,6 +155,15 @@ function UserDashboard({
     }
     if (startTime >= endTime) {
       setLocalError('Start time must be before end time.');
+      setLocalMessage('');
+      return;
+    }
+
+    const now = new Date();
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+    if (startDate < now || endDate < now) {
+      setLocalError('Meeting time cannot be earlier than the current time.');
       setLocalMessage('');
       return;
     }
@@ -335,11 +345,17 @@ function UserDashboard({
 
   const filterSlotsByDate = (slotsList, filterDate) => {
     const normalizedFilterDate = filterDate || '';
+    const now = new Date();
 
     return slotsList.filter((slot) => {
       const slotStart = new Date(slot.start);
 
       if (Number.isNaN(slotStart.getTime())) {
+        return false;
+      }
+
+      // Hide slots that are already in the past
+      if (slotStart < now) {
         return false;
       }
 
@@ -438,7 +454,7 @@ function UserDashboard({
             </div>
           )}
         </section>
-
+{/* Type 1 request statuses */}
         <section className="accordion-section">
           <button
             type="button"
@@ -473,7 +489,7 @@ function UserDashboard({
             </div>
           )}
         </section>
-
+{/* Type 2 group meeting */}
         <section className="accordion-section">
           <button
             type="button"
@@ -515,7 +531,7 @@ function UserDashboard({
             </div>
           )}
         </section>
-
+{/* Office hours */}
         <section className="accordion-section">
           <button
             type="button"
@@ -576,11 +592,11 @@ function UserDashboard({
 
             <div className='request-form-item'>
               <label htmlFor="time">From</label>
-              <input type="datetime-local" id="startTime" />
+              <input type="datetime-local" id="startTime" min={getDateTimeLocalNow()} />
             </div>
             <div className='request-form-item'>
               <label htmlFor="time">To</label>
-              <input type="datetime-local" id="endTime" />
+              <input type="datetime-local" id="endTime" min={getDateTimeLocalNow()} />
             </div>
             <div className='request-form-item'>
               <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason' />

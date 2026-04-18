@@ -92,8 +92,14 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
   const ownerSlots = useMemo(() => {
     if (!selectedOwnerId) return [];
 
+    const now = new Date();
+
     return publicSlots
       .filter((slot) => String(slot.owner?.id) === String(selectedOwnerId))
+      .filter((slot) => {
+        const slotStart = new Date(slot.start);
+        return !Number.isNaN(slotStart.getTime()) && slotStart >= now;
+      })
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
   }, [publicSlots, selectedOwnerId]);
 
