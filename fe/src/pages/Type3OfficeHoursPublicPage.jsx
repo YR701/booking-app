@@ -6,14 +6,7 @@ import './SchedulerPages.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import CalendarGrid from '../components/CalendarGrid';
-
-function formatReadableDateTime(dateInput) {
-  const date = new Date(dateInput);
-  return date.toLocaleString([], {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-}
+import { formatReadableDateTime } from '../utils/formatTime';
 
 function createMailto(email) {
   return `mailto:${email}`;

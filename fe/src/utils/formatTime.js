@@ -1,6 +1,6 @@
 // Author: Yongrong Yang
 
-// Always show both start and end dates.
+// Format date and time for booking page and userdashboard
 export const formatDateTimeRange = (start, end) => {
   const startDate = new Date(start);
   const endDate = new Date(end);
@@ -15,4 +15,18 @@ export const formatDateTimeRange = (start, end) => {
   const endTimeText = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return `${startDateText} ${startTimeText} - ${endDateText} ${endTimeText}`;
+};
+
+// Formats a single date-time value for Type 2 and 3 pages
+export const formatReadableDateTime = (dateInput) => {
+  const date = new Date(dateInput);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toLocaleString([], {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
 };

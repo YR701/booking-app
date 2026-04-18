@@ -6,24 +6,8 @@ import './SchedulerPages.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import CalendarGrid from '../components/CalendarGrid';
-import { getDateTimeLocalNow } from '../utils/dateTimeLocal';
-
-function toDateTimeLocalValue(dateInput) {
-  const date = new Date(dateInput);
-  if (Number.isNaN(date.getTime())) return '';
-
-  const offset = date.getTimezoneOffset();
-  const localDate = new Date(date.getTime() - offset * 60 * 1000);
-  return localDate.toISOString().slice(0, 16);
-}
-
-function formatReadableDateTime(dateInput) {
-  const date = new Date(dateInput);
-  return date.toLocaleString([], {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-}
+import { getDateTimeLocalNow, toDateTimeLocalValue } from '../utils/dateTimeLocal';
+import { formatReadableDateTime } from '../utils/formatTime';
 
 function addDays(dateInput, days) {
   const next = new Date(dateInput);
