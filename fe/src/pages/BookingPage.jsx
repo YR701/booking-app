@@ -16,6 +16,17 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
     const [loading, setLoading] = useState(true);
     const [officeHourSlots, setOfficeHourSlots] = useState([]);
 
+    const filterFutureSlots = (slotsList) => {
+        const now = new Date();
+        return (slotsList || []).filter((slot) => {
+            const startDate = new Date(slot.start);
+            return !Number.isNaN(startDate.getTime()) && startDate >= now;
+        });
+    };
+
+    const visibleOneTimeSlots = filterFutureSlots(slots);
+    const visibleOfficeHourSlots = filterFutureSlots(officeHourSlots);
+
     useEffect(() => {
         if (inviteOwnerId) {
             fetchSlots();
@@ -103,14 +114,14 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
 
             {/* One-time slots */}
             <div className="slots">
-                <h2>Available One-Time Slots ({slots.length})</h2>
+                <h2>Available One-Time Slots ({visibleOneTimeSlots.length})</h2>
                 {loading ? (
                     <p>Loading slots...</p>
-                ) : slots.length === 0 ? (
+                ) : visibleOneTimeSlots.length === 0 ? (
                     <p>No available one-time slots.</p>
                 ) : (
                     <div className="slots-list-scroll">
-                        {slots.map((slot) => (
+                        {visibleOneTimeSlots.map((slot) => (
                             <div className="slots-info" key={slot.id}>
                                 <h3>{slot.owner?.name || owner?.name || 'Owner'}</h3>
                                 <p>{slot.title}</p>
@@ -142,14 +153,14 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
 
             {/* Office hour slots */}
             <div className="slots">
-                <h2>Available Office Hour Slots ({officeHourSlots.length})</h2>
+                <h2>Available Office Hour Slots ({visibleOfficeHourSlots.length})</h2>
                 {loading ? (
                     <p>Loading slots...</p>
-                ) : officeHourSlots.length === 0 ? (
+                ) : visibleOfficeHourSlots.length === 0 ? (
                     <p>No available office hour slots.</p>
                 ) : (
                     <div className="slots-list-scroll">
-                        {officeHourSlots.map((slot) => (
+                        {visibleOfficeHourSlots.map((slot) => (
                             <div className="slots-info" key={slot.id}>
                                 <h3>{slot.owner?.name || owner?.name || 'Owner'}</h3>
                                 <p>{slot.title}</p>

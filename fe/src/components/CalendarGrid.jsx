@@ -26,6 +26,12 @@ function CalendarGrid({
     });
   };
 
+  const canSelectRange = (selectionInfo) => {
+    if (!selectable) return false;
+    const now = new Date();
+    return selectionInfo.start >= now;
+  };
+
   return (
     <div className="calendar-grid-shell">
       <FullCalendar
@@ -38,6 +44,7 @@ function CalendarGrid({
         }}
         selectable={selectable}
         selectMirror={true}
+        selectAllow={canSelectRange}
         select={handleSelect}
         events={events}
         eventClick={(clickInfo) => {

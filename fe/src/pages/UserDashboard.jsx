@@ -454,7 +454,7 @@ function UserDashboard({
             </div>
           )}
         </section>
-{/* Type 1 request statuses */}
+        {/* Type 1 request statuses */}
         <section className="accordion-section">
           <button
             type="button"
@@ -489,7 +489,7 @@ function UserDashboard({
             </div>
           )}
         </section>
-{/* Type 2 group meeting */}
+        {/* Type 2 group meeting */}
         <section className="accordion-section">
           <button
             type="button"
@@ -531,7 +531,7 @@ function UserDashboard({
             </div>
           )}
         </section>
-{/* Office hours */}
+        {/* Office hours */}
         <section className="accordion-section">
           <button
             type="button"

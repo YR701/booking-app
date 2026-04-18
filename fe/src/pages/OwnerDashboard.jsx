@@ -5,6 +5,7 @@ import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import Type1OwnerIncomingRequest from './Type1OwnerIncomingRequest';
 import { useState } from 'react';
+import { getDateTimeLocalNow } from '../utils/dateTimeLocal';
 
 /**
  * Owner-only UI: create private slots, invitation URL, manage slots.
@@ -38,6 +39,10 @@ function OwnerDashboard({
   const publicSlots = myOwnerSlots.filter((slot) => slot.isActive).length;
   const bookedSlots = myOwnerSlots.filter((slot) => slot.bookedBy).length;
   const pendingRequests = ownerRequests.filter((request) => request.status === 'Pending').length;
+  const nowLocal = getDateTimeLocalNow();
+  const todayDate = nowLocal.slice(0, 10);
+  const minStartTimeToday = nowLocal.slice(11, 16);
+  const isTodaySelected = slotForm.date === todayDate;
 
   async function handleCopyInvitationUrl() {
     if (!invitationUrl) {
@@ -133,6 +138,7 @@ function OwnerDashboard({
           <input
             type="date"
             value={slotForm.date}
+            min={todayDate}
             onChange={(event) =>
               setSlotForm({ ...slotForm, date: event.target.value })
             }
@@ -140,6 +146,7 @@ function OwnerDashboard({
           <input
             type="time"
             value={slotForm.startTime}
+            min={isTodaySelected ? minStartTimeToday : undefined}
             onChange={(event) =>
               setSlotForm({ ...slotForm, startTime: event.target.value })
             }

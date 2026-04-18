@@ -15,6 +15,12 @@ function formatReadableDateTime(dateInput) {
   });
 }
 
+function isSlotVotable(slot) {
+  const startTime = new Date(slot?.start).getTime();
+  if (Number.isNaN(startTime)) return false;
+  return startTime > Date.now();
+}
+
 function Type2GroupMeetingVotePage({
   onLogout,
   user,
@@ -137,10 +143,15 @@ function Type2GroupMeetingVotePage({
     await fetchMeetingDetail(nextMeetingId);
   };
 
-  const handleVoteChange = (slotId, isAvailable) => {
+  const handleVoteChange = (slot, isAvailable) => {
+    if (!isSlotVotable(slot)) {
+      setError('This slot is in the past and can no longer be voted on.');
+      return;
+    }
+
     setMyVotes((current) => ({
       ...current,
-      [String(slotId)]: isAvailable,
+      [String(slot.id)]: isAvailable,
     }));
     setMessage('');
     setError('');
@@ -152,12 +163,19 @@ function Type2GroupMeetingVotePage({
       return;
     }
 
-    const allVotesFilled = meetingDetail.slots.every(
+    const votableSlots = meetingDetail.slots.filter((slot) => isSlotVotable(slot));
+
+    if (votableSlots.length === 0) {
+      setError('All candidate slots are in the past. Voting is closed for this meeting.');
+      return;
+    }
+
+    const allVotesFilled = votableSlots.every(
       (slot) => myVotes[String(slot.id)] === true || myVotes[String(slot.id)] === false
     );
 
     if (!allVotesFilled) {
-      setError('Please choose Available or Unavailable for every candidate slot.');
+      setError('Please choose Available or Unavailable for every future candidate slot.');
       return;
     }
 
@@ -171,7 +189,7 @@ function Type2GroupMeetingVotePage({
         throw new Error('You must be logged in to submit votes.');
       }
 
-      const votesPayload = meetingDetail.slots.map((slot) => ({
+      const votesPayload = votableSlots.map((slot) => ({
         slotId: slot.id,
         isAvailable: Boolean(myVotes[String(slot.id)]),
       }));
@@ -316,6 +334,7 @@ function Type2GroupMeetingVotePage({
               <div className="summary-list summary-list-scroll">
                 {meetingDetail.slots.map((slot) => {
                   const currentVote = myVotes[String(slot.id)];
+                  const locked = !isSlotVotable(slot);
 
                   return (
                     <div key={slot.id} className="summary-item">
@@ -324,6 +343,7 @@ function Type2GroupMeetingVotePage({
                           {formatReadableDateTime(slot.start)}
                         </p>
                         <p>End: {formatReadableDateTime(slot.end)}</p>
+                        <p>Status: {locked ? 'Voting closed (past slot)' : 'Open for voting'}</p>
                         <p>
                           Current choice:{' '}
                           {currentVote === true
@@ -338,14 +358,16 @@ function Type2GroupMeetingVotePage({
                         <button
                           type="button"
                           className="button secondary"
-                          onClick={() => handleVoteChange(slot.id, true)}
+                          onClick={() => handleVoteChange(slot, true)}
+                          disabled={locked}
                         >
                           Available
                         </button>
                         <button
                           type="button"
                           className="button secondary"
-                          onClick={() => handleVoteChange(slot.id, false)}
+                          onClick={() => handleVoteChange(slot, false)}
+                          disabled={locked}
                         >
                           Unavailable
                         </button>
@@ -361,7 +383,7 @@ function Type2GroupMeetingVotePage({
         <section className="card booking-side-panel" style={{ marginBottom: '24px' }}>
           <h2>Submit Availability</h2>
           <p className="helper-text">
-            Please answer every candidate slot before submitting your Type 2 votes.
+            Please answer every future candidate slot before submitting your Type 2 votes.
           </p>
 
           <div className="inline-actions">

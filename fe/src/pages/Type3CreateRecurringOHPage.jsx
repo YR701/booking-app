@@ -6,6 +6,7 @@ import './SchedulerPages.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import CalendarGrid from '../components/CalendarGrid';
+import { getDateTimeLocalNow } from '../utils/dateTimeLocal';
 
 function toDateTimeLocalValue(dateInput) {
   const date = new Date(dateInput);
@@ -54,6 +55,7 @@ function Type3CreateRecurringOHPage({
   const [savedSlotEditForms, setSavedSlotEditForms] = useState({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const minDateTimeLocal = getDateTimeLocalNow();
 
   const isEditorComplete = useMemo(() => {
     if (!slotEditor.start || !slotEditor.end) return false;
@@ -221,6 +223,7 @@ const totalAvailableSeats = useMemo(() => {
     const start = new Date(slotEditor.start);
     const end = new Date(slotEditor.end);
     const capacity = Number(slotEditor.capacity);
+    const now = new Date();
 
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       return 'Please enter valid date/time values.';
@@ -228,6 +231,10 @@ const totalAvailableSeats = useMemo(() => {
 
     if (end <= start) {
       return 'End time must be after start time.';
+    }
+
+    if (start < now) {
+      return 'Start time cannot be in the past.';
     }
 
     if (!capacity || capacity < 1) {
@@ -249,6 +256,7 @@ const totalAvailableSeats = useMemo(() => {
     const start = new Date(form.start);
     const end = new Date(form.end);
     const capacity = Number(form.capacity);
+    const now = new Date();
 
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       return 'Please enter valid date/time values.';
@@ -256,6 +264,10 @@ const totalAvailableSeats = useMemo(() => {
 
     if (end <= start) {
       return 'End time must be after start time.';
+    }
+
+    if (start < now) {
+      return 'Start time cannot be in the past.';
     }
 
     if (!capacity || capacity < 1) {
@@ -600,6 +612,7 @@ const totalAvailableSeats = useMemo(() => {
                 <input
                   type="datetime-local"
                   name="start"
+                  min={minDateTimeLocal}
                   value={slotEditor.start}
                   onChange={handleEditorChange}
                 />
@@ -610,6 +623,7 @@ const totalAvailableSeats = useMemo(() => {
                 <input
                   type="datetime-local"
                   name="end"
+                  min={minDateTimeLocal}
                   value={slotEditor.end}
                   onChange={handleEditorChange}
                 />
@@ -759,6 +773,7 @@ const totalAvailableSeats = useMemo(() => {
                                   Start Date & Time
                                   <input
                                     type="datetime-local"
+                                    min={minDateTimeLocal}
                                     value={editForm.start}
                                     onChange={(event) =>
                                       handleSavedSlotEditFieldChange(slot.id, 'start', event.target.value)
@@ -770,6 +785,7 @@ const totalAvailableSeats = useMemo(() => {
                                   End Date & Time
                                   <input
                                     type="datetime-local"
+                                    min={minDateTimeLocal}
                                     value={editForm.end}
                                     onChange={(event) =>
                                       handleSavedSlotEditFieldChange(slot.id, 'end', event.target.value)

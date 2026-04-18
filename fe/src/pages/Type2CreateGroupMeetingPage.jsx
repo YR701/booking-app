@@ -6,6 +6,7 @@ import './SchedulerPages.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import CalendarGrid from '../components/CalendarGrid';
+import { getDateTimeLocalNow } from '../utils/dateTimeLocal';
 
 function toDateTimeLocalValue(dateInput) {
   const date = new Date(dateInput);
@@ -60,6 +61,7 @@ function Type2CreateGroupMeetingPage({
   const [savedMeetingInviteeInputs, setSavedMeetingInviteeInputs] = useState({});
   const [savedMeetingSlotInputs, setSavedMeetingSlotInputs] = useState({});
   const [savedMeetingEditForms, setSavedMeetingEditForms] = useState({});
+  const minDateTimeLocal = getDateTimeLocalNow();
 
   const inviteeList = useMemo(() => {
     return parseInvitees(type2Draft.invitees);
@@ -286,6 +288,8 @@ function Type2CreateGroupMeetingPage({
       return 'Please add at least one candidate slot.';
     }
 
+    const now = new Date();
+
     for (const slot of candidateSlots) {
       if (!slot.start || !slot.end) {
         return 'Each candidate slot must have both start and end date/time.';
@@ -300,6 +304,10 @@ function Type2CreateGroupMeetingPage({
 
       if (end <= start) {
         return 'Each candidate slot must end after it starts.';
+      }
+
+      if (start < now) {
+        return 'Candidate slots cannot start in the past.';
       }
     }
 
@@ -626,6 +634,24 @@ function Type2CreateGroupMeetingPage({
         return;
       }
 
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+
+      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+        setError('Please enter valid start and end date/time.');
+        return;
+      }
+
+      if (endDate <= startDate) {
+        setError('End time must be after start time.');
+        return;
+      }
+
+      if (startDate < new Date()) {
+        setError('Cannot add a candidate slot in the past.');
+        return;
+      }
+
       const token = localStorage.getItem(TOKEN_KEY);
       if (!token) {
         throw new Error('You must be logged in to add slots.');
@@ -638,8 +664,8 @@ function Type2CreateGroupMeetingPage({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          start: new Date(start).toISOString(),
-          end: new Date(end).toISOString(),
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
         }),
       });
 
@@ -794,6 +820,7 @@ function Type2CreateGroupMeetingPage({
                           Start Date & Time
                           <input
                             type="datetime-local"
+                            min={minDateTimeLocal}
                             value={slot.start}
                             onChange={(event) =>
                               handleCandidateSlotChange(slot.id, 'start', event.target.value)
@@ -805,6 +832,7 @@ function Type2CreateGroupMeetingPage({
                           End Date & Time
                           <input
                             type="datetime-local"
+                            min={minDateTimeLocal}
                             value={slot.end}
                             onChange={(event) =>
                               handleCandidateSlotChange(slot.id, 'end', event.target.value)
@@ -1029,6 +1057,7 @@ function Type2CreateGroupMeetingPage({
                                 Start
                                 <input
                                   type="datetime-local"
+                                  min={minDateTimeLocal}
                                   value={savedMeetingSlotInputs[meeting.id]?.start || ''}
                                   onChange={(event) =>
                                     handleSavedMeetingSlotInputChange(
@@ -1044,6 +1073,7 @@ function Type2CreateGroupMeetingPage({
                                 End
                                 <input
                                   type="datetime-local"
+                                  min={minDateTimeLocal}
                                   value={savedMeetingSlotInputs[meeting.id]?.end || ''}
                                   onChange={(event) =>
                                     handleSavedMeetingSlotInputChange(

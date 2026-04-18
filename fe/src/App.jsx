@@ -255,6 +255,21 @@ function App() {
     const start = new Date(`${slotForm.date}T${slotForm.startTime}`);
     const end = new Date(`${slotForm.date}T${slotForm.endTime}`);
 
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      setError('Please choose a valid date and time.');
+      return;
+    }
+
+    if (end <= start) {
+      setError('End time must be after start time.');
+      return;
+    }
+
+    if (start < new Date()) {
+      setError('Cannot create a slot in the past.');
+      return;
+    }
+
     try {
       await api(
         '/slots',
