@@ -368,7 +368,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
           ) : myReservedSlots.length === 0 ? (
             <p>You have not reserved any session for this professor.</p>
           ) : (
-            <div className="summary-list summary-list-scroll">
+            <div className="summary-list">
               {myReservedSlots.map((slot) => {
                 const isSelected = String(selectedSlotId) === String(slot.id);
 
@@ -417,7 +417,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
           {!selectedSlot ? (
             <p>Select a session from the list or calendar.</p>
           ) : (
-            <div className="summary-list summary-list-scroll">
+            <div className="summary-list">
               <div className="summary-item">
                 <div className="summary-main">
                   <p className="summary-title">{selectedSlot.title}</p>

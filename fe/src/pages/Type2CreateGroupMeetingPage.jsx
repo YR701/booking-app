@@ -53,8 +53,13 @@ function Type2CreateGroupMeetingPage({
 
   const sortedCandidateSlots = useMemo(() => {
     return [...type2Draft.candidateSlots].sort((a, b) => {
-      const aTime = a.start ? new Date(a.start).getTime() : 0;
-      const bTime = b.start ? new Date(b.start).getTime() : 0;
+      const aHasStart = Boolean(a.start);
+      const bHasStart = Boolean(b.start);
+      if (!aHasStart && !bHasStart) return 0;
+      if (!aHasStart) return 1;
+      if (!bHasStart) return -1;
+      const aTime = new Date(a.start).getTime();
+      const bTime = new Date(b.start).getTime();
       return aTime - bTime;
     });
   }, [type2Draft.candidateSlots]);
