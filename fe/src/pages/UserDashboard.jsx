@@ -39,6 +39,7 @@ function UserDashboard({
   //type 1 requests
   const [requests, setRequests] = useState([]);
   const [selectedRequestOwnerId, setSelectedRequestOwnerId] = useState('');
+  const [requestOwners, setRequestOwners] = useState([]);
 
   // Accordion state
   const [expandedAppointmentSection, setExpandedAppointmentSection] = useState('one-time');
@@ -49,6 +50,7 @@ function UserDashboard({
 
   useEffect(() => {
     fetchRequests();
+    fetchRequestOwners();
     fetchMyGroupmeeting();
     fetchMyOfficeHour();
   }, []);
@@ -141,6 +143,29 @@ function UserDashboard({
   };
 
   //Type 1 request a meeting function
+
+  const fetchRequestOwners = async () => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const response = await fetch(`${API_BASE}/meetings/request-owners`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch request owners');
+      }
+
+      const data = await response.json();
+      setRequestOwners(data.owners || []);
+    } catch (error) {
+      console.error(error);
+      setRequestOwners([]);
+    }
+  };
+
+
   const handleRequest = async () => {
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
@@ -168,7 +193,8 @@ function UserDashboard({
       return;
     }
 
-    const selectedOwner = owners.find(owner => String(owner.id) === String(ownerId));
+    const selectedOwner = (requestOwners.length > 0 ? requestOwners : owners)
+      .find(owner => String(owner.id) === String(ownerId));
     if (!selectedOwner) {
       setLocalError('Invalid owner selected.');
       setLocalMessage('');
@@ -270,8 +296,6 @@ function UserDashboard({
   };
 
   // All available slots functions
-
-
   const handleOwnerChange = async (event) => {
     const value = event.target.value;
 
@@ -592,7 +616,7 @@ function UserDashboard({
             <select id="ownersID" value={selectedRequestOwnerId}
               onChange={(e) => setSelectedRequestOwnerId(e.target.value)}>
               <option value="">-- Select an owner --</option>
-              {owners.map(owner => (
+              {(requestOwners.length > 0 ? requestOwners : owners).map(owner => (
                 <option key={owner.id} value={owner.id} disabled={user?.role === 'owner' && owner.id === user.id}>
                   {owner.name} {user?.role === 'owner' && owner.id === user.id && '(You)'}
                 </option>
