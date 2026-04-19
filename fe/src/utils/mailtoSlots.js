@@ -1,5 +1,7 @@
 // Author: Yongrong Yang
 
+import { mailtoQueryString } from './mailtoParams';
+
 // helper function for UserDashboard and BookingPage 
 // to open slots and appointments email function
 export const openQuestionMail = ({
@@ -63,7 +65,7 @@ export const createQuestionMailto = ({
         params.set('body', body);
     }
 
-    const query = params.toString();
+    const query = mailtoQueryString(params);
     return query ? `mailto:${email}?${query}` : `mailto:${email}`;
 };
 

@@ -14,6 +14,7 @@ import Type2OwnerGroupMeetingResultsPage from './pages/Type2OwnerGroupMeetingRes
 import Type2UserGroupMeetingResultsPage from './pages/Type2UserGroupMeetingResultsPage';
 import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
 import Type3OfficeHoursPublicPage from './pages/Type3OfficeHoursPublicPage';
+import { mailtoQueryString } from './utils/mailtoParams';
 
 function formatDateTime(value) {
   return new Date(value).toLocaleString([], {
@@ -24,7 +25,7 @@ function formatDateTime(value) {
 
 function createMailto(email, subject, body) {
   const params = new URLSearchParams({ subject, body });
-  return `mailto:${email}?${params.toString()}`;
+  return `mailto:${email}?${mailtoQueryString(params)}`;
 }
 
 async function api(path, options = {}, token = '') {

@@ -9,6 +9,7 @@ import { openQuestionMail } from '../utils/mailtoSlots';
 import { formatDateTimeRange } from '../utils/formatTime';
 import { fetchOfficeHourSlots, handleBookOfficeHour } from '../utils/OfficeHour';
 import { getDateTimeLocalNow } from '../utils/dateTimeLocal';
+import { mailtoQueryString } from '../utils/mailtoParams';
 
 function UserDashboard({
   onLogout,
@@ -240,7 +241,7 @@ function UserDashboard({
       Requested Time: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`;
       if (selectedOwner.email) {
         const params = new URLSearchParams({ subject, body });
-        window.location.href = `mailto:${selectedOwner.email}?${params.toString()}`;
+        window.location.href = `mailto:${selectedOwner.email}?${mailtoQueryString(params)}`;
       }
     } catch (error) {
       console.error(error);

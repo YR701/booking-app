@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { API_BASE, TOKEN_KEY } from '../config';
 import { formatDateTimeRange } from '../utils/formatTime';
+import { mailtoQueryString } from '../utils/mailtoParams';
 
 function Type1OwnerIncomingRequest({
     ownerRequests = [],
@@ -43,7 +44,7 @@ function Type1OwnerIncomingRequest({
         ].join('\n');
 
         const params = new URLSearchParams({ subject, body });
-        window.location.href = `mailto:${requesterEmail}?${params.toString()}`;
+        window.location.href = `mailto:${requesterEmail}?${mailtoQueryString(params)}`;
     };
 
     // Approve or reject a request by updating its status via API call
