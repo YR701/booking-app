@@ -6,6 +6,23 @@ const pool = require('../../db/db');
 const { authMiddleware, ownerOnly } = require('../middleware/auth');
 const { REQUEST_SELECT, formatRequest } = require('../utils/requestFormat');
 
+// return all owners for meeting request
+router.get('/meetings/request-owners', authMiddleware, async (_req, res) => {
+    try {
+        const [rows] = await pool.execute(
+            `SELECT id, name, email, role
+             FROM users
+             WHERE role = 'owner'
+             ORDER BY name ASC`
+        );
+
+        return res.json({ owners: rows });
+    } catch (error) {
+        console.error('Error fetching request owners:', error);
+        return res.status(500).json({ error: 'Error fetching request owners' });
+    }
+});
+
 // Create a new meeting request
 router.post('/meetings/request', authMiddleware, async (req, res) => {
     const { ownerId, title, startTime, endTime, reason } = req.body;
