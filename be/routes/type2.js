@@ -635,14 +635,24 @@ router.post('/type2/meetings/:meetingId/votes', authMiddleware, async (req, res)
     }
 
     for (const vote of votes) {
+      const upsertVoteSql = pool.driver === 'sqlite'
+        ? `
+          INSERT INTO type2_meeting_votes (meeting_id, slot_id, user_id, is_available)
+          VALUES (?, ?, ?, ?)
+          ON CONFLICT(meeting_id, slot_id, user_id) DO UPDATE SET
+            is_available = excluded.is_available,
+            created_at = CURRENT_TIMESTAMP
+          `
+        : `
+          INSERT INTO type2_meeting_votes (meeting_id, slot_id, user_id, is_available)
+          VALUES (?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+            is_available = VALUES(is_available),
+            created_at = CURRENT_TIMESTAMP
+          `;
+
       await connection.execute(
-        `
-        INSERT INTO type2_meeting_votes (meeting_id, slot_id, user_id, is_available)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          is_available = VALUES(is_available),
-          created_at = CURRENT_TIMESTAMP
-        `,
+        upsertVoteSql,
         [
           meetingId,
           Number(vote.slotId),
