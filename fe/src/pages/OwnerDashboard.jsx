@@ -4,7 +4,8 @@ import './OwnerDashboard.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
 import Type1OwnerIncomingRequest from './Type1OwnerIncomingRequest';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { API_BASE, TOKEN_KEY } from '../config';
 import { getDateTimeLocalNow } from '../utils/dateTimeLocal';
 
 /**
@@ -34,14 +35,81 @@ function OwnerDashboard({
   onRefreshData,
 }) {
   const [inviteStatus, setInviteStatus] = useState('');
+  const [overviewError, setOverviewError] = useState('');
+  const [type2Stats, setType2Stats] = useState({ total: 0, finalized: 0 });
+  const [type3Stats, setType3Stats] = useState({ total: 0, reserved: 0 });
   const totalSlots = myOwnerSlots.length;
   const publicSlots = myOwnerSlots.filter((slot) => slot.isActive).length;
   const bookedSlots = myOwnerSlots.filter((slot) => slot.bookedBy).length;
+  const totalType1Requests = ownerRequests.length;
   const pendingRequests = ownerRequests.filter((request) => request.status === 'Pending').length;
   const nowLocal = getDateTimeLocalNow();
   const todayDate = nowLocal.slice(0, 10);
   const minStartTimeToday = nowLocal.slice(11, 16);
   const isTodaySelected = slotForm.date === todayDate;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTypeOverviewStats() {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        return;
+      }
+
+      const [type2Result, type3Result] = await Promise.allSettled([
+        fetch(`${API_BASE}/type2/owner/meetings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE}/type3/owner/slots`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      let nextOverviewError = '';
+      let nextType2Stats = { total: 0, finalized: 0 };
+      let nextType3Stats = { total: 0, reserved: 0 };
+
+      if (type2Result.status === 'fulfilled' && type2Result.value.ok) {
+        const data = await type2Result.value.json().catch(() => ({}));
+        const meetings = data.meetings || [];
+        nextType2Stats = {
+          total: meetings.length,
+          finalized: meetings.filter(
+            (meeting) =>
+              meeting.finalSlotId ||
+              meeting.finalSlot?.id ||
+              String(meeting.status || '').toLowerCase().includes('final')
+          ).length,
+        };
+      } else {
+        nextOverviewError = 'Some Type 2 / Type 3 overview stats could not be loaded.';
+      }
+
+      if (type3Result.status === 'fulfilled' && type3Result.value.ok) {
+        const data = await type3Result.value.json().catch(() => ({}));
+        const slots = data.slots || [];
+        nextType3Stats = {
+          total: slots.length,
+          reserved: slots.reduce((sum, slot) => sum + Number(slot.bookedCount || 0), 0),
+        };
+      } else {
+        nextOverviewError = 'Some Type 2 / Type 3 overview stats could not be loaded.';
+      }
+
+      if (!cancelled) {
+        setType2Stats(nextType2Stats);
+        setType3Stats(nextType3Stats);
+        setOverviewError(nextOverviewError);
+      }
+    }
+
+    void loadTypeOverviewStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   async function handleCopyInvitationUrl() {
     if (!invitationUrl) {
@@ -97,6 +165,7 @@ function OwnerDashboard({
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
       {inviteStatus && <div className="notice success">{inviteStatus}</div>}
+      {overviewError && <div className="notice error">{overviewError}</div>}
 
       <section className="card owner-summary">
         <div>
@@ -107,19 +176,39 @@ function OwnerDashboard({
         <div className="owner-summary-stats">
           <div className="owner-stat">
             <strong>{totalSlots}</strong>
-            <span>Total slots</span>
+            <span>One-time slots</span>
           </div>
           <div className="owner-stat">
             <strong>{publicSlots}</strong>
-            <span>Public slots</span>
+            <span>Public one-time</span>
           </div>
           <div className="owner-stat">
             <strong>{bookedSlots}</strong>
-            <span>Booked slots</span>
+            <span>Booked one-time</span>
+          </div>
+          <div className="owner-stat">
+            <strong>{totalType1Requests}</strong>
+            <span>Type 1 total</span>
           </div>
           <div className="owner-stat">
             <strong>{pendingRequests}</strong>
-            <span>Pending requests</span>
+            <span>Type 1 pending</span>
+          </div>
+          <div className="owner-stat">
+            <strong>{type2Stats.total}</strong>
+            <span>Type 2 meetings</span>
+          </div>
+          <div className="owner-stat">
+            <strong>{type2Stats.finalized}</strong>
+            <span>Type 2 finalized</span>
+          </div>
+          <div className="owner-stat">
+            <strong>{type3Stats.total}</strong>
+            <span>Type 3 slots</span>
+          </div>
+          <div className="owner-stat">
+            <strong>{type3Stats.reserved}</strong>
+            <span>Type 3 reserved</span>
           </div>
         </div>
       </section>
