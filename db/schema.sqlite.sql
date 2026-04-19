@@ -1,3 +1,4 @@
+-- Author: Jenny Hua
 -- SQLite schema for the COMP 307 booking app
 PRAGMA foreign_keys = ON;
 
