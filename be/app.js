@@ -1,5 +1,7 @@
 // Author: Jenny Hua
 
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
@@ -22,5 +24,18 @@ app.use('/api', slotsRoutes);
 app.use('/api', requestRoutes);
 app.use('/api', type2Routes);
 app.use('/api', type3Routes);
+
+const staticRoots = [
+  path.resolve(__dirname, '../../app'),
+  path.resolve(__dirname, '../fe/dist'),
+];
+const staticRoot = staticRoots.find((candidate) => fs.existsSync(path.join(candidate, 'index.html')));
+
+if (staticRoot) {
+  app.use(express.static(staticRoot));
+  app.get(/^(?!\/api).*/, (_req, res) => {
+    res.sendFile(path.join(staticRoot, 'index.html'));
+  });
+}
 
 module.exports = app;

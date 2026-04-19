@@ -5,6 +5,7 @@ import './App.css';
 import OwnerDashboard from './pages/OwnerDashboard';
 import UserDashboard from './pages/UserDashboard';
 import BookingPage from './pages/BookingPage';
+import { API_BASE, TOKEN_KEY } from './config';
 import mcgillLogo from './assets/mcgill_logo.png';
 
 import Type2CreateGroupMeetingPage from './pages/Type2CreateGroupMeetingPage';
@@ -13,10 +14,6 @@ import Type2OwnerGroupMeetingResultsPage from './pages/Type2OwnerGroupMeetingRes
 import Type2UserGroupMeetingResultsPage from './pages/Type2UserGroupMeetingResultsPage';
 import Type3CreateRecurringOHPage from './pages/Type3CreateRecurringOHPage';
 import Type3OfficeHoursPublicPage from './pages/Type3OfficeHoursPublicPage';
-
-
-const API_BASE = 'http://localhost:4000/api';
-const TOKEN_KEY = 'comp307-booking-token';
 
 function formatDateTime(value) {
   return new Date(value).toLocaleString([], {
