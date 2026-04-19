@@ -188,27 +188,27 @@ function OwnerDashboard({
           </div>
           <div className="owner-stat">
             <strong>{totalType1Requests}</strong>
-            <span>Type 1 total</span>
+            <span>Meeting requests total</span>
           </div>
           <div className="owner-stat">
             <strong>{pendingRequests}</strong>
-            <span>Type 1 pending</span>
+            <span>Meeting requests pending</span>
           </div>
           <div className="owner-stat">
             <strong>{type2Stats.total}</strong>
-            <span>Type 2 meetings</span>
+            <span>Group meetings pending</span>
           </div>
           <div className="owner-stat">
             <strong>{type2Stats.finalized}</strong>
-            <span>Type 2 finalized</span>
+            <span>Group meetings finalized</span>
           </div>
           <div className="owner-stat">
             <strong>{type3Stats.total}</strong>
-            <span>Type 3 slots</span>
+            <span>Office Hours slots</span>
           </div>
           <div className="owner-stat">
             <strong>{type3Stats.reserved}</strong>
-            <span>Type 3 reserved</span>
+            <span>Office Hours reserved</span>
           </div>
         </div>
       </section>

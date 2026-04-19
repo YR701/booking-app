@@ -26,15 +26,35 @@ function Type1OwnerIncomingRequest({
     });
     const displayRequests = showExpired ? expiredRequests : activeRequests;
 
+    const openRequestStatusMail = (request, status) => {
+        const requesterEmail = request?.requester?.email;
+        if (!requesterEmail) {
+            return;
+        }
+
+        const subject = `Meeting request ${status.toLowerCase()}`;
+        const body = [
+            `Hello ${request?.requester?.name || 'Student'},`,
+            '',
+            `Your meeting request "${request?.title || 'Meeting Request'}" has been ${status.toLowerCase()}.`,
+            `Time: ${formatDateTimeRange(request?.start, request?.end)}`,
+            '',
+            'Thanks.',
+        ].join('\n');
+
+        const params = new URLSearchParams({ subject, body });
+        window.location.href = `mailto:${requesterEmail}?${params.toString()}`;
+    };
+
     // Approve or reject a request by updating its status via API call
-    const handleApproveRequest = async (requestId) => {
+    const handleApproveRequest = async (request) => {
         setLocalMessage('');
         setLocalError('');
         setLoading(true);
 
         try {
             const token = localStorage.getItem(TOKEN_KEY);
-            const response = await fetch(`${API_BASE}/meetings/requests/${requestId}`, {
+            const response = await fetch(`${API_BASE}/meetings/requests/${request.id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -52,6 +72,7 @@ function Type1OwnerIncomingRequest({
             if (onRefreshData) {
                 onRefreshData();
             }
+            openRequestStatusMail(request, 'Approved');
         } catch (err) {
             setLocalError(err.message);
         } finally {
@@ -59,14 +80,14 @@ function Type1OwnerIncomingRequest({
         }
     }
 
-    const handleRejectRequest = async (requestId) => {
+    const handleRejectRequest = async (request) => {
         setLocalMessage('');
         setLocalError('');
         setLoading(true);
 
         try {
             const token = localStorage.getItem(TOKEN_KEY);
-            const response = await fetch(`${API_BASE}/meetings/requests/${requestId}`, {
+            const response = await fetch(`${API_BASE}/meetings/requests/${request.id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -84,6 +105,7 @@ function Type1OwnerIncomingRequest({
             if (onRefreshData) {
                 onRefreshData();
             }
+            openRequestStatusMail(request, 'Rejected');
         } catch (err) {
             setLocalError(err.message);
         } finally {
@@ -137,10 +159,10 @@ function Type1OwnerIncomingRequest({
 
                             {request.status === 'Pending' && !showExpired && (
                                 <div className="actions">
-                                    <button type="button" onClick={() => handleApproveRequest(request.id)}>
+                                    <button type="button" onClick={() => handleApproveRequest(request)}>
                                         Approve
                                     </button>
-                                    <button type="button" onClick={() => handleRejectRequest(request.id)}>
+                                    <button type="button" onClick={() => handleRejectRequest(request)}>
                                         Reject
                                     </button>
                                 </div>
