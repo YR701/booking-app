@@ -92,11 +92,24 @@
     gap: 12px;
 }
 
+/* Professor + From + To in one row (compact widget) */
+.request-form-row-compact {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px 14px;
+    align-items: end;
+}
+
 .request-form-item {
     display: flex;
     flex-direction: column;
     gap: 5px;
     flex-wrap: wrap;
+    min-width: 0;
+}
+
+.request-form-reason-row {
+    width: 100%;
 }
 
 .request-form-item label {
@@ -105,12 +118,18 @@
 }
 
 .request-form input,
+.request-form select,
 .slot-filter-toolbar input {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
     width: 100%;
     font-size: clamp(12px, 3.5vw, 14px);
+    box-sizing: border-box;
+}
+
+.request-form select {
+    background: #fff;
 }
 
 .request-reason {
@@ -337,6 +356,13 @@
 .accordion-content {
     background: #ffffff;
     padding: 8px 8px 10px;
+}
+
+@media (max-width: 960px) {
+    .request-form-row-compact {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
 }
 
 /* Responsive Design for smaller screens */

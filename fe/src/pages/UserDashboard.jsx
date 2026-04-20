@@ -676,35 +676,44 @@ function UserDashboard({
       {/* Type 1 Request a Meeting */}
       <div className="request-meeting">
         <h3>Request a Meeting </h3>
-        <div className='request-form'>
-          <div className='request-form-item'>
-
-            <label>Select a Professor</label>
-            <select id="ownersID" value={selectedRequestOwnerId}
-              onChange={(e) => setSelectedRequestOwnerId(e.target.value)}>
-              <option value="">-- Select an owner --</option>
-              {(requestOwners.length > 0 ? requestOwners : owners).map(owner => (
-                <option key={owner.id} value={owner.id} disabled={user?.role === 'owner' && owner.id === user.id}>
-                  {owner.name} {user?.role === 'owner' && owner.id === user.id && '(You)'}
-                </option>
-              ))}
-            </select>
-
-            <div className='request-form-item'>
-              <label htmlFor="time">From</label>
+        <div className="request-form">
+          <div className="request-form-row request-form-row-compact">
+            <div className="request-form-item">
+              <label htmlFor="ownersID">Select a Professor</label>
+              <select
+                id="ownersID"
+                value={selectedRequestOwnerId}
+                onChange={(e) => setSelectedRequestOwnerId(e.target.value)}
+              >
+                <option value="">-- Select an owner --</option>
+                {(requestOwners.length > 0 ? requestOwners : owners).map(owner => (
+                  <option key={owner.id} value={owner.id} disabled={user?.role === 'owner' && owner.id === user.id}>
+                    {owner.name} {user?.role === 'owner' && owner.id === user.id && '(You)'}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="request-form-item">
+              <label htmlFor="startTime">From</label>
               <input type="datetime-local" id="startTime" min={getDateTimeLocalNow()} />
             </div>
-            <div className='request-form-item'>
-              <label htmlFor="time">To</label>
+            <div className="request-form-item">
+              <label htmlFor="endTime">To</label>
               <input type="datetime-local" id="endTime" min={getDateTimeLocalNow()} />
             </div>
-            <div className='request-form-item'>
-              <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason' />
-            </div>
-            <button type="button" className="btn-primary btn-request-submit" onClick={handleRequest}>
-              Submit
-            </button>
           </div>
+          <div className="request-form-item request-form-reason-row">
+            <input
+              type="text"
+              id="reason"
+              placeholder="Reason for meeting"
+              className="request-reason"
+              aria-label="Reason for meeting"
+            />
+          </div>
+          <button type="button" className="btn-primary btn-request-submit" onClick={handleRequest}>
+            Submit
+          </button>
         </div>
       </div>
 
