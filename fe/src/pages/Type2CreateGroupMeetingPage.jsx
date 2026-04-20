@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
+import ConfirmDialog from '../components/ConfirmDialog';
 import CalendarGrid from '../components/CalendarGrid';
 import { getDateTimeLocalNow, toDateTimeLocalValue } from '../utils/dateTimeLocal';
 import { formatReadableDateTime } from '../utils/formatTime';
@@ -39,6 +40,7 @@ function Type2CreateGroupMeetingPage({
   const [savedMeetingDetails, setSavedMeetingDetails] = useState({});
   const [expandedMeetingId, setExpandedMeetingId] = useState(null);
   const [deletingMeetingId, setDeletingMeetingId] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
   const [editingSavedMeetingId, setEditingSavedMeetingId] = useState(null);
   const [updatingMeetingId, setUpdatingMeetingId] = useState(null);
 
@@ -519,6 +521,21 @@ function Type2CreateGroupMeetingPage({
     }
   };
 
+  const closePendingDelete = () => setPendingDelete(null);
+
+  const runPendingDelete = () => {
+    const p = pendingDelete;
+    setPendingDelete(null);
+    if (!p) {
+      return;
+    }
+    if (p.kind === 'candidate') {
+      handleRemoveCandidateSlot(p.slotId);
+    } else if (p.kind === 'meeting') {
+      void handleDeleteMeeting(p.meetingId);
+    }
+  };
+
   const handleSavedMeetingInviteeInputChange = (meetingId, value) => {
     setSavedMeetingInviteeInputs((current) => ({
       ...current,
@@ -714,6 +731,23 @@ function Type2CreateGroupMeetingPage({
 
   return (
     <>
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title={
+          pendingDelete?.kind === 'meeting'
+            ? 'Delete this saved group meeting?'
+            : 'Remove this candidate time slot?'
+        }
+        confirmLabel={pendingDelete?.kind === 'meeting' ? 'Delete meeting' : 'Remove slot'}
+        cancelLabel="Go back"
+        onClose={closePendingDelete}
+        onConfirm={runPendingDelete}
+      >
+        {pendingDelete?.kind === 'meeting'
+          ? 'This permanently removes the meeting and its invitations from the system.'
+          : 'This removes the option from your draft. You can add another slot afterward.'}
+      </ConfirmDialog>
+
       <DashboardTopnav
         userEmail={user?.email || 'user@mail.mcgill.ca'}
         userName={user?.name || 'User'}
@@ -833,7 +867,7 @@ function Type2CreateGroupMeetingPage({
                       <div className="inline-actions">
                         <button
                           type="button"
-                          className="button secondary"
+                          className="btn-primary"
                           onClick={() => setSelectedCandidateId(slot.id)}
                         >
                           Select
@@ -841,8 +875,8 @@ function Type2CreateGroupMeetingPage({
 
                         <button
                           type="button"
-                          className="button secondary"
-                          onClick={() => handleRemoveCandidateSlot(slot.id)}
+                          className="btn-secondary"
+                          onClick={() => setPendingDelete({ kind: 'candidate', slotId: slot.id })}
                         >
                           Delete
                         </button>
@@ -856,7 +890,7 @@ function Type2CreateGroupMeetingPage({
             <div className="inline-actions">
               <button
                 type="button"
-                className="button secondary"
+                className="btn-secondary"
                 onClick={handleAddCandidateSlot}
               >
                 Add Another Time Slot
@@ -864,6 +898,7 @@ function Type2CreateGroupMeetingPage({
 
               <button
                 type="button"
+                className="btn-primary"
                 onClick={handleSaveGroupMeeting}
                 disabled={saving}
               >
@@ -905,7 +940,7 @@ function Type2CreateGroupMeetingPage({
                         <div className="inline-actions saved-meeting-actions">
                           <button
                             type="button"
-                            className="button secondary"
+                            className="btn-primary"
                             onClick={() => handleEditSavedMeeting(meeting.id)}
                           >
                             {isEditing ? 'Close Edit' : 'Edit'}
@@ -913,8 +948,8 @@ function Type2CreateGroupMeetingPage({
 
                           <button
                             type="button"
-                            className="button secondary"
-                            onClick={() => handleDeleteMeeting(meeting.id)}
+                            className="btn-secondary"
+                            onClick={() => setPendingDelete({ kind: 'meeting', meetingId: meeting.id })}
                             disabled={deletingMeetingId === meeting.id}
                           >
                             {deletingMeetingId === meeting.id ? 'Deleting...' : 'Delete'}

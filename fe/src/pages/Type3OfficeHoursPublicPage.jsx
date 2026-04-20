@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
+import ConfirmDialog from '../components/ConfirmDialog';
 import CalendarGrid from '../components/CalendarGrid';
 import { formatReadableDateTime } from '../utils/formatTime';
 
@@ -19,6 +20,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
   const [loading, setLoading] = useState(true);
   const [reservingSlotId, setReservingSlotId] = useState(null);
   const [cancelingSlotId, setCancelingSlotId] = useState(null);
+  const [cancelConfirmSlotId, setCancelConfirmSlotId] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -224,6 +226,16 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
     }
   };
 
+  const closeCancelDialog = () => setCancelConfirmSlotId(null);
+
+  const confirmCancelReservation = () => {
+    const id = cancelConfirmSlotId;
+    closeCancelDialog();
+    if (id != null) {
+      void handleCancelReservation(id);
+    }
+  };
+
   const handleCalendarEventClick = (calendarEvent) => {
     setSelectedSlotId(calendarEvent.id);
     setMessage('');
@@ -232,6 +244,17 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
 
   return (
     <>
+      <ConfirmDialog
+        open={cancelConfirmSlotId != null}
+        title="Cancel this reservation?"
+        confirmLabel="Yes, cancel"
+        cancelLabel="Keep reservation"
+        onClose={closeCancelDialog}
+        onConfirm={confirmCancelReservation}
+      >
+        You will release this office hour slot. It may become available for others if the session is not full.
+      </ConfirmDialog>
+
       <DashboardTopnav
         userEmail={user?.email || 'user@mail.mcgill.ca'}
         userName={user?.name || 'Student'}
@@ -398,8 +421,8 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
 
                     <button
                       type="button"
-                      className="button secondary"
-                      onClick={() => handleCancelReservation(slot.id)}
+                      className="btn-secondary"
+                      onClick={() => setCancelConfirmSlotId(slot.id)}
                       disabled={cancelingSlotId === slot.id}
                     >
                       {cancelingSlotId === slot.id ? 'Canceling...' : 'Cancel Reservation'}
@@ -439,8 +462,8 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
                 {selectedSlot.reservedByMe ? (
                   <button
                     type="button"
-                    className="button secondary"
-                    onClick={() => handleCancelReservation(selectedSlot.id)}
+                    className="btn-secondary"
+                    onClick={() => setCancelConfirmSlotId(selectedSlot.id)}
                     disabled={cancelingSlotId === selectedSlot.id}
                   >
                     {cancelingSlotId === selectedSlot.id ? 'Canceling...' : 'Cancel Reservation'}
@@ -449,7 +472,7 @@ function Type3OfficeHoursPublicPage({ onBack, onLogout, user, onOpenUserDashboar
                   selectedSlot.isAvailable && (
                     <button
                       type="button"
-                      className="button secondary"
+                      className="btn-primary"
                       onClick={() => handleReserveSlot(selectedSlot.id)}
                       disabled={reservingSlotId === selectedSlot.id}
                     >

@@ -50,27 +50,31 @@
 }
 
 .slots-info button {
-    background-color: var(--accent);
-    border: 1px solid #ffffff;
-    color: #000000;
-    padding: 8px 20px;
-    border-radius: 5px;
+    padding: 8px 18px;
+    border-radius: 6px;
     cursor: pointer;
-    margin: 10px;
+    margin: 4px 0 4px 8px;
     text-align: center;
     font-size: 15px;
     text-decoration: none;
     white-space: nowrap;
 }
 
-.slots-info button:hover {
-    background-color: #757575;
+.slots-info button.btn-primary:hover {
+    background-color: var(--accent-hover);
     color: #ffffff;
+}
+
+.slots-info button.btn-secondary:hover {
+    background-color: var(--secondary-button-hover);
+    color: var(--text-h) !important;
 }
 
 .slot-actions {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
 }
 
 .slots-list-scroll {

@@ -4,6 +4,7 @@ import { API_BASE, TOKEN_KEY } from '../config';
 import './UserDashboard.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useState, useEffect } from 'react';
 import { openQuestionMail } from '../utils/mailtoSlots';
 import { formatDateTimeRange } from '../utils/formatTime';
@@ -48,6 +49,7 @@ function UserDashboard({
 
   const [localMessage, setLocalMessage] = useState('');
   const [localError, setLocalError] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   useEffect(() => {
     fetchRequests();
@@ -401,8 +403,29 @@ function UserDashboard({
   const filteredOneTimeSlots = filterSlotsByDate(oneTimeSlots, slotFilterDate);
   const filteredOfficeHourSlots = filterSlotsByDate(officeHourSlots, slotFilterDate);
 
+  const closeConfirm = () => setConfirmDialog(null);
+
+  const runConfirm = () => {
+    const fn = confirmDialog?.onConfirm;
+    closeConfirm();
+    if (typeof fn === 'function') {
+      void fn();
+    }
+  };
+
   return (
     <>
+      <ConfirmDialog
+        open={!!confirmDialog}
+        title={confirmDialog?.title || ''}
+        confirmLabel={confirmDialog?.confirmLabel || 'Confirm'}
+        cancelLabel={confirmDialog?.cancelLabel || 'Go back'}
+        onClose={closeConfirm}
+        onConfirm={runConfirm}
+      >
+        {confirmDialog?.message}
+      </ConfirmDialog>
+
       <DashboardTopnav
         userEmail={user?.email || 'user@mail.mcgill.ca'}
         userName={user?.name || 'Student'}
@@ -467,16 +490,31 @@ function UserDashboard({
                       <p>{appointment.title}</p>
                       <p>{formatDateTimeRange(appointment.start, appointment.end)}</p>
                       <div className="appointment-buttons">
-                        <button onClick={() => openQuestionMail({
-                          email: appointment.owner?.email,
-                          ownerName: appointment.owner?.name,
-                          topic: appointment.title || 'my appointment',
-                          whenText: formatDateTimeRange(appointment.start, appointment.end),
-                          senderName: user?.name || 'Student',
-                        })}>
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          onClick={() => openQuestionMail({
+                            email: appointment.owner?.email,
+                            ownerName: appointment.owner?.name,
+                            topic: appointment.title || 'my appointment',
+                            whenText: formatDateTimeRange(appointment.start, appointment.end),
+                            senderName: user?.name || 'Student',
+                          })}
+                        >
                           Email
                         </button>
-                        <button onClick={() => onCancelBooking(appointment.id)}>Cancel</button>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => setConfirmDialog({
+                            title: 'Cancel this appointment?',
+                            message: `Cancel your booking with ${appointment.owner?.name || 'the owner'} for ${formatDateTimeRange(appointment.start, appointment.end)}?`,
+                            confirmLabel: 'Yes, cancel',
+                            onConfirm: () => onCancelBooking(appointment.id),
+                          })}
+                        >
+                          Cancel
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -509,7 +547,16 @@ function UserDashboard({
                       <p>{formatDateTimeRange(request.start, request.end)}</p>
                       <p>{request.status}</p>
                       {request.status === 'Pending' && (
-                        <button type="button" onClick={() => handleCancelRequest(request.id)}>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => setConfirmDialog({
+                            title: 'Cancel meeting request?',
+                            message: `Withdraw your pending request to ${request.owner?.name || 'the owner'}?`,
+                            confirmLabel: 'Yes, cancel request',
+                            onConfirm: () => handleCancelRequest(request.id),
+                          })}
+                        >
                           Cancel request
                         </button>
                       )}
@@ -544,15 +591,19 @@ function UserDashboard({
                       <p>{meeting.title}</p>
                       <p>{formatDateTimeRange(meeting.finalSlot?.start, meeting.finalSlot?.end)}</p>
                       <div className="appointment-buttons">
-                        <button onClick={() => openQuestionMail({
-                          email: meeting.owner?.email,
-                          ownerName: meeting.owner?.name,
-                          topic: meeting.title || 'group meeting',
-                          whenText: meeting.finalSlot?.start && meeting.finalSlot?.end
-                            ? formatDateTimeRange(meeting.finalSlot.start, meeting.finalSlot.end)
-                            : '',
-                          senderName: user?.name || 'Student',
-                        })}>
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          onClick={() => openQuestionMail({
+                            email: meeting.owner?.email,
+                            ownerName: meeting.owner?.name,
+                            topic: meeting.title || 'group meeting',
+                            whenText: meeting.finalSlot?.start && meeting.finalSlot?.end
+                              ? formatDateTimeRange(meeting.finalSlot.start, meeting.finalSlot.end)
+                              : '',
+                            senderName: user?.name || 'Student',
+                          })}
+                        >
                           Email
                         </button>
                       </div>
@@ -587,16 +638,31 @@ function UserDashboard({
                       <p>{oh.title}</p>
                       <p>{formatDateTimeRange(oh.start, oh.end)}</p>
                       <div className="appointment-buttons">
-                        <button onClick={() => openQuestionMail({
-                          email: oh.owner?.email,
-                          ownerName: oh.owner?.name,
-                          topic: oh.title || 'office hour',
-                          whenText: formatDateTimeRange(oh.start, oh.end),
-                          senderName: user?.name || 'Student',
-                        })}>
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          onClick={() => openQuestionMail({
+                            email: oh.owner?.email,
+                            ownerName: oh.owner?.name,
+                            topic: oh.title || 'office hour',
+                            whenText: formatDateTimeRange(oh.start, oh.end),
+                            senderName: user?.name || 'Student',
+                          })}
+                        >
                           Email
                         </button>
-                        <button onClick={() => onCancelOfficeHour(oh.id)}>Cancel</button>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => setConfirmDialog({
+                            title: 'Cancel office hour booking?',
+                            message: `Release your slot with ${oh.owner?.name || 'the owner'} (${formatDateTimeRange(oh.start, oh.end)})?`,
+                            confirmLabel: 'Yes, cancel',
+                            onConfirm: () => onCancelOfficeHour(oh.id),
+                          })}
+                        >
+                          Cancel
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -635,7 +701,9 @@ function UserDashboard({
             <div className='request-form-item'>
               <input type="text" id="reason" placeholder="Reason for meeting" className='request-reason' />
             </div>
-            <button onClick={handleRequest}>Submit</button>
+            <button type="button" className="btn-primary btn-request-submit" onClick={handleRequest}>
+              Submit
+            </button>
           </div>
         </div>
       </div>
@@ -664,13 +732,17 @@ function UserDashboard({
                   <h3>{currentOwner.email}</h3>
                 </div>
                 <div className="owner-contact">
-                  <button className="email-button" onClick={() =>
-                    openQuestionMail({
-                      email: currentOwner.email,
-                      ownerName: currentOwner.name,
-                      topic: 'booking availability',
-                      senderName: user?.name || 'Student',
-                    })}>
+                  <button
+                    type="button"
+                    className="email-button btn-primary"
+                    onClick={() =>
+                      openQuestionMail({
+                        email: currentOwner.email,
+                        ownerName: currentOwner.name,
+                        topic: 'booking availability',
+                        senderName: user?.name || 'Student',
+                      })}
+                  >
                     Send Message
                   </button>
                 </div>
@@ -686,7 +758,7 @@ function UserDashboard({
                     onChange={(event) => setSlotFilterDate(event.target.value)}
                   />
                 </label>
-                <button type="button" className="slot-filter-clear" onClick={clearSlotFilters}>
+                <button type="button" className="btn-secondary slot-filter-clear" onClick={clearSlotFilters}>
                   Clear
                 </button>
               </div>
@@ -714,7 +786,9 @@ function UserDashboard({
                             {filteredOneTimeSlots.map((slot) => (
                               <div className='slots-item' key={slot.id}>
                                 <p className="slot-time">{formatDateTimeRange(slot.start, slot.end)}</p>
-                                <button onClick={() => onBookSlot(slot.id)}>Book Appointment</button>
+                                <button type="button" className="btn-primary" onClick={() => onBookSlot(slot.id)}>
+                                  Book appointment
+                                </button>
                               </div>
                             ))}
                           </div>
@@ -748,7 +822,9 @@ function UserDashboard({
                             {filteredOfficeHourSlots.map((slot) => (
                               <div className='slots-item' key={slot.id}>
                                 <p className="slot-time">{formatDateTimeRange(slot.start, slot.end)}</p>
-                                <button onClick={() => bookOfficeHour(slot.id)}>Book Office Hour</button>
+                                <button type="button" className="btn-primary" onClick={() => bookOfficeHour(slot.id)}>
+                                  Book office hour
+                                </button>
                               </div>
                             ))}
                           </div>

@@ -95,6 +95,22 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Space between datetime inputs and row actions (Type 2 candidate options, etc.) */
+.summary-main > .inline-actions {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Smaller row actions so they do not crowd the fields above */
+.summary-main > .inline-actions .btn-primary,
+.summary-main > .inline-actions .btn-secondary {
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 13px;
 }
 
 .form-actions {

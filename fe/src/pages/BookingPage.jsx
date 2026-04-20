@@ -131,10 +131,10 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                                 <p>{slot.title}</p>
                                 <p>{formatDateTimeRange(slot.start, slot.end)}</p>
                                 <div className="slot-actions">
-                                    <button type="button" onClick={() => onBookSlot(slot.id)}>
+                                    <button type="button" className="btn-primary" onClick={() => onBookSlot(slot.id)}>
                                         Book
                                     </button>
-                                    <button type="button" onClick={() => {
+                                    <button type="button" className="btn-secondary" onClick={() => {
                                         openQuestionMail({
                                             email: slot.owner?.email || owner?.email,
                                             ownerName: slot.owner?.name || owner?.name || 'Professor',
@@ -170,10 +170,10 @@ function BookingPage({ onLogout, user, inviteOwnerId, onBookSlot, onBack = null 
                                 <p>{slot.title}</p>
                                 <p>{formatDateTimeRange(slot.start, slot.end)}</p>
                                 <div className="slot-actions">
-                                    <button type="button" onClick={() => bookOfficeHour(slot.id)}>
+                                    <button type="button" className="btn-primary" onClick={() => bookOfficeHour(slot.id)}>
                                         Book
                                     </button>
-                                    <button type="button" onClick={() => {
+                                    <button type="button" className="btn-secondary" onClick={() => {
                                         openQuestionMail({
                                             email: slot.owner?.email || owner?.email,
                                             ownerName: slot.owner?.name || owner?.name || 'Professor',

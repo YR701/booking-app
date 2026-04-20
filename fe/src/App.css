@@ -118,6 +118,7 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   margin-top: 10px;
 }
@@ -168,6 +169,16 @@ button {
   color: #fff;
   border: none;
   cursor: pointer;
+}
+
+button:hover:not(:disabled):not(.accordion-header):not(.btn-secondary) {
+  background: var(--accent-hover, #a30d25);
+  color: #fff;
+}
+
+button.btn-secondary:hover:not(:disabled) {
+  background: var(--secondary-button-hover, #f0ccd2);
+  color: var(--text-h) !important;
 }
 
 @media (max-width: 800px) {

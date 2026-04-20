@@ -3,6 +3,7 @@
 import './OwnerDashboard.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
+import ConfirmDialog from '../components/ConfirmDialog';
 import Type1OwnerIncomingRequest from './Type1OwnerIncomingRequest';
 import { useEffect, useState } from 'react';
 import { API_BASE, TOKEN_KEY } from '../config';
@@ -36,6 +37,7 @@ function OwnerDashboard({
 }) {
   const [inviteStatus, setInviteStatus] = useState('');
   const [overviewError, setOverviewError] = useState('');
+  const [slotPendingDelete, setSlotPendingDelete] = useState(null);
   const [type2Stats, setType2Stats] = useState({ total: 0, finalized: 0 });
   const [type3Stats, setType3Stats] = useState({ total: 0, reserved: 0 });
   const totalSlots = myOwnerSlots.length;
@@ -124,8 +126,31 @@ function OwnerDashboard({
     }
   }
 
+  const closeDeleteDialog = () => setSlotPendingDelete(null);
+
+  const confirmSlotDelete = () => {
+    const slot = slotPendingDelete;
+    closeDeleteDialog();
+    if (slot) {
+      onDeleteSlot(slot);
+    }
+  };
+
   return (
     <div>
+      <ConfirmDialog
+        open={!!slotPendingDelete}
+        title="Delete this slot?"
+        confirmLabel="Delete"
+        cancelLabel="Go back"
+        onClose={closeDeleteDialog}
+        onConfirm={confirmSlotDelete}
+      >
+        {slotPendingDelete
+          ? `Remove “${slotPendingDelete.title}” (${formatDateTime(slotPendingDelete.start)})? Students will lose this booking option.`
+          : ''}
+      </ConfirmDialog>
+
       <DashboardTopnav
         userEmail={user?.email || 'owner@mcgill.ca'}
         userName={user?.name || 'Owner'}
@@ -168,7 +193,7 @@ function OwnerDashboard({
       {overviewError && <div className="notice error">{overviewError}</div>}
 
       <section className="card owner-summary">
-        <div>
+        <div className="owner-summary-intro">
           <h2>Owner overview</h2>
           <p>{user?.name || 'Owner'}</p>
           <p>{user?.email || 'owner@mcgill.ca'}</p>
@@ -246,25 +271,34 @@ function OwnerDashboard({
               setSlotForm({ ...slotForm, endTime: event.target.value })
             }
           />
-          <button type="submit">Create private slot</button>
+          <button type="submit" className="btn-primary">Create private slot</button>
         </form>
 
         <section className="card">
           <h2>Owner slots</h2>
           <div className="owner-invite-bar">
-            <p className="invite-link">Invitation URL: {invitationUrl || 'Loading...'}</p>
+            <p className="invite-link">
+              <span className="invite-link-label">Invitation URL: </span>
+              {invitationUrl ? (
+                <a className="invite-url-value" href={invitationUrl} target="_blank" rel="noopener noreferrer">
+                  {invitationUrl}
+                </a>
+              ) : (
+                <span>Loading…</span>
+              )}
+            </p>
             <div className="actions">
-              <button type="button" onClick={handleCopyInvitationUrl} disabled={!invitationUrl}>
+              <button type="button" className="btn-primary" onClick={handleCopyInvitationUrl} disabled={!invitationUrl}>
                 Copy link
               </button>
               {invitationUrl && onOpenBookingPage && (
-                <button type="button" className="button secondary" onClick={onOpenBookingPage}>
-                  Preview Invite Link
+                <button type="button" className="btn-secondary" onClick={onOpenBookingPage}>
+                  Preview invite link
                 </button>
               )}
               {invitationUrl && !onOpenBookingPage && (
-                <a className="button secondary" href={invitationUrl}>
-                  Preview Invite Link
+                <a className="btn-secondary" href={invitationUrl}>
+                  Preview invite link
                 </a>
               )}
             </div>
@@ -287,13 +321,13 @@ function OwnerDashboard({
                   {slot.bookedBy?.email && <p>{slot.bookedBy.email}</p>}
 
                   <div className="actions">
-                    <button type="button" onClick={() => onToggleSlot(slot)}>
+                    <button type="button" className="btn-primary" onClick={() => onToggleSlot(slot)}>
                       {slot.isActive ? 'Make private' : 'Activate'}
                     </button>
 
                     {slot.bookedBy && (
                       <a
-                        className="button secondary"
+                        className="btn-secondary"
                         href={createMailto(
                           slot.bookedBy.email,
                           `Regarding ${slot.title}`,
@@ -304,7 +338,7 @@ function OwnerDashboard({
                       </a>
                     )}
 
-                    <button type="button" onClick={() => onDeleteSlot(slot)}>
+                    <button type="button" className="btn-secondary" onClick={() => setSlotPendingDelete(slot)}>
                       Delete
                     </button>
                   </div>

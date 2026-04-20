@@ -13,3 +13,4 @@ Team Members:
 - jsonwebtoken & bcryptjs (Authentication and security libraries)
 - cors (Cross-Origin Resource Sharing middleware)
 - Default icons (React/Vite SVGs) and McGill Logo (External asset)
+- UI optimization (fix font color consistency, primary vs seconday function button, confirm before delete button)

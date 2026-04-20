@@ -8,7 +8,11 @@
   --border: #d9b1b7;
   --code-bg: #f8eaec;
   --accent: #c8102e;
+  --accent-hover: #a30d25;
   --secondary-button-bg: #f8dce1;
+  --secondary-button-hover: #f0ccd2;
+  --url-link: #0b5cab;
+  --url-link-hover: #084887;
   --shadow: none;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
@@ -80,4 +84,86 @@ code {
 
 a {
   color: inherit;
+}
+
+/* Solid accent buttons: always light text on dark red */
+button.btn-primary,
+a.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
+  min-height: 2.35rem;
+  padding: 0.5rem 1rem;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff !important;
+  border: 1px solid var(--accent);
+  text-decoration: none;
+}
+
+button.btn-primary:hover,
+a.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: #ffffff !important;
+}
+
+/* Light pink / secondary: dark text for readability */
+button.btn-secondary,
+a.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
+  min-height: 2.35rem;
+  padding: 0.5rem 1rem;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: var(--secondary-button-bg);
+  color: var(--text-h) !important;
+  border: 1px solid var(--border);
+  text-decoration: none;
+}
+
+button.btn-secondary:hover,
+a.btn-secondary:hover {
+  background: var(--secondary-button-hover);
+  color: var(--text-h) !important;
+}
+
+/* Destructive confirm (modal): dark red + white text */
+button.btn-danger-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
+  min-height: 2.35rem;
+  padding: 0.5rem 1rem;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff !important;
+  border: 1px solid var(--accent);
+}
+
+button.btn-danger-solid:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: #ffffff !important;
+}
+
+/* Emphasized booking / invitation URLs */
+a.invite-url-value,
+span.invite-url-value {
+  color: var(--url-link);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  word-break: break-all;
+}
+
+a.invite-url-value:hover {
+  color: var(--url-link-hover);
 }

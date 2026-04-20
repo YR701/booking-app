@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './SchedulerPages.css';
 import './switchButton.css';
 import DashboardTopnav from '../components/DashboardTopnav';
+import ConfirmDialog from '../components/ConfirmDialog';
 import CalendarGrid from '../components/CalendarGrid';
 import { getDateTimeLocalNow, toDateTimeLocalValue } from '../utils/dateTimeLocal';
 import { formatReadableDateTime } from '../utils/formatTime';
@@ -33,6 +34,7 @@ function Type3CreateRecurringOHPage({
   const [loadingOwnerSlots, setLoadingOwnerSlots] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingSlotId, setDeletingSlotId] = useState(null);
+  const [deleteConfirmSlotId, setDeleteConfirmSlotId] = useState(null);
   const [updatingSlotId, setUpdatingSlotId] = useState(null);
   const [expandedSlotId, setExpandedSlotId] = useState(null);
   const [editingSlotId, setEditingSlotId] = useState(null);
@@ -416,6 +418,16 @@ const totalAvailableSeats = useMemo(() => {
     }
   };
 
+  const closeType3DeleteDialog = () => setDeleteConfirmSlotId(null);
+
+  const confirmType3SlotDelete = () => {
+    const id = deleteConfirmSlotId;
+    closeType3DeleteDialog();
+    if (id != null && id !== '') {
+      void handleDeleteSlot(id);
+    }
+  };
+
   const handleStartNewSelection = () => {
     resetCreateEditor();
     setMessage('');
@@ -531,6 +543,17 @@ const totalAvailableSeats = useMemo(() => {
 
   return (
     <>
+      <ConfirmDialog
+        open={deleteConfirmSlotId != null}
+        title="Delete this office hour slot?"
+        confirmLabel="Delete"
+        cancelLabel="Go back"
+        onClose={closeType3DeleteDialog}
+        onConfirm={confirmType3SlotDelete}
+      >
+        This removes the session from your schedule. Students who reserved it may be affected.
+      </ConfirmDialog>
+
       <DashboardTopnav
         userEmail={user?.email || 'user@mail.mcgill.ca'}
         userName={user?.name || 'User'}
@@ -708,7 +731,7 @@ const totalAvailableSeats = useMemo(() => {
                         <div className="inline-actions saved-meeting-actions">
                           <button
                             type="button"
-                            className="button secondary"
+                            className="btn-primary"
                             onClick={() => handleEditSavedSlot(slot)}
                           >
                             {isEditing ? 'Close Edit' : 'Edit'}
@@ -716,8 +739,8 @@ const totalAvailableSeats = useMemo(() => {
 
                           <button
                             type="button"
-                            className="button secondary"
-                            onClick={() => handleDeleteSlot(slot.id)}
+                            className="btn-secondary"
+                            onClick={() => setDeleteConfirmSlotId(slot.id)}
                             disabled={deletingSlotId === slot.id}
                           >
                             {deletingSlotId === slot.id ? 'Deleting...' : 'Delete'}
